@@ -1,0 +1,204 @@
+*debugging.txt*  One :Debug command for Neovim debugging          *debugging.nvim*
+
+Author:   Stefan Bartl
+License:  MIT
+Version:  0.1.0
+
+==============================================================================
+CONTENTS                                                    *debugging-contents*
+
+  1. Introduction .............. |debugging-intro|
+  2. Requirements .............. |debugging-requirements|
+  3. Installation .............. |debugging-installation|
+  4. Configuration ............. |debugging-config|
+  5. The :Debug command ........ |:Debug|
+     5.1 Categories ............ |debugging-categories|
+  6. Tab completion ............ |debugging-completion|
+  7. Health check .............. |debugging-health|
+  8. Architecture .............. |debugging-architecture|
+
+==============================================================================
+1. INTRODUCTION                                                *debugging-intro*
+
+debugging.nvim provides one `:Debug {category} {action}` command that groups
+every debugging tool: message/Noice views, buffer/tab/window reports, autocmd
+inspection (runtime and static source audit), buffer/cursor/variable
+inspection, a terminal keylogger, indent diagnostics, markdown inline-highlight
+debugging, and an opt-in Neo-tree safety bridge.
+
+Depends on lib.nvim (a deliberate shared dependency).
+
+==============================================================================
+2. REQUIREMENTS                                         *debugging-requirements*
+
+  - Neovim 0.9 or later
+  - lib.nvim
+  - Optional: clipboard provider (messages capture), noice.nvim (noice views),
+    Tree-sitter (markdown / indent diagnostics)
+
+==============================================================================
+3. INSTALLATION                                         *debugging-installation*
+
+lazy.nvim: >lua
+  {
+    "StefanBartl/debugging.nvim",
+    event = "VeryLazy",
+    dependencies = { "StefanBartl/lib.nvim" },
+    opts = {},
+  }
+<
+
+==============================================================================
+4. CONFIGURATION                                              *debugging-config*
+
+>lua
+  require("debugging").setup({
+    features = {
+      views        = true,
+      reports      = true,
+      autocmds     = true,
+      tools        = true,
+      terminals    = true,
+      nvim_options = true,
+      markdown     = true,
+      neotree      = false,  -- opt-in, config-specific
+    },
+    views = {
+      keymaps  = { enable = true, prefix = "<lt>" },
+      autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
+      timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3 },
+      capture  = true,
+      output_dir = nil,
+    },
+    command = "Debug",
+  })
+<
+
+A bare `all = true` enables every feature category.
+
+features ~
+  Per-category enable flags. A disabled category's actions are hidden from
+  completion and rejected by the dispatcher.
+
+views ~
+  Keymaps (default prefix "<lt>"), auto-refresh autocmds, capture timings and
+  output directory for the message/Noice views.
+
+command ~
+  Name of the unified user command. Default: "Debug".
+
+==============================================================================
+5. THE :Debug COMMAND                                                  *:Debug*
+
+>
+  :Debug [category] [action] [args]
+<
+
+With no arguments, `:Debug` prints an overview of the enabled categories. An
+unknown or disabled category yields an error/notification.
+
+------------------------------------------------------------------------------
+5.1 Categories                                            *debugging-categories*
+
+messages ~
+  `show`     Open the :messages window.
+  `capture`  Capture :messages to a file and the clipboard.
+  `clear`    Close all debug windows.
+
+noice ~
+  `all`      Show all Noice messages.
+  `errors`   Show Noice errors.
+
+report ~
+  `buf`      Buffer report to :messages.
+  `tab`      Tab report.
+  `win [id]` Window report (optionally for a specific window id).
+
+autocmds ~
+  `runtime [event] [pattern]`   Live view via nvim_get_autocmds().
+  `sources [args]`              Static source-code audit of nvim_create_autocmd
+                                call sites. Args: event=, sort= (source|event|
+                                frequency), impl=, summary=, freq=, root=.
+
+inspect ~
+  `buffer [bufnr]`  Inspect buffer-scoped options and state.
+
+cursor ~
+  `state`    Print cursor / window / buffer state.
+
+dump ~
+  `[varname]`  Recursively dump a global Lua variable, or the word under the
+               cursor when no name is given.
+
+keylogger ~
+  `start` / `stop`  Log keys pressed in the current terminal buffer.
+
+indent ~
+  `show`                  Print indentation-related buffer options.
+  `treesitter [true|false]`  Prefer Tree-sitter indent (disable cindent/
+                             smartindent), or restore with `false`.
+
+markdown ~
+  `inline`   Gather markdown inline-highlight debug information.
+  `log`      Open the most recent debug log.
+
+neotree ~ (opt-in; needs `features.neotree = true`)
+  `status` `exit` `restart` `backup-list` `backup-clean` `dryrun-toggle`
+  `dryrun-report` `queue-status` `queue-clear`
+  Bridges to a user-specific Neo-tree safety layer; degrades gracefully with a
+  notification when that layer is absent.
+
+health ~
+  Run |:checkhealth| debugging.
+
+==============================================================================
+6. TAB COMPLETION                                         *debugging-completion*
+
+`:Debug` completes context-sensitively: >
+
+  :Debug <Tab>                            categories
+  :Debug report <Tab>                     buf tab win
+  :Debug autocmds <Tab>                   runtime sources
+  :Debug autocmds sources <Tab>           event= sort= impl= summary= freq= root=
+  :Debug autocmds sources event=Buf<Tab>  matching event names
+  :Debug indent treesitter <Tab>          true false
+<
+
+==============================================================================
+7. HEALTH CHECK                                              *debugging-health*
+
+>
+  :checkhealth debugging
+<
+
+Checks Neovim version, lib.nvim modules per feature, clipboard providers,
+optional Tree-sitter / Noice, write permissions, and the opt-in Neo-tree bridge.
+
+==============================================================================
+8. ARCHITECTURE                                        *debugging-architecture*
+
+  plugin/debugging.lua        Load guard
+  lua/debugging/
+    init.lua                  setup() — feature gating + :Debug registration
+    @types.lua                LuaLS type definitions
+    config/DEFAULTS.lua       Immutable defaults
+    config/init.lua           Merge + access to active config
+    commands.lua              :Debug dispatcher + two-level completion
+    health.lua                checkhealth provider
+    views/                    messages/Noice capture, display, keymaps, autocmds
+    usercmds/reports.lua      buf/tab/win reports
+    usercmds/neotree_safety.lua  opt-in Neo-tree bridge (pcall-guarded)
+    autocmds/runtime.lua      live nvim_get_autocmds view
+    autocmds/sources.lua      static source-code audit
+    tools/buffer_inspector/   buffer option/state inspection
+    tools/cursor/state.lua    cursor/window/buffer state
+    tools/vardump/            recursive Lua value dump
+    terminals/keylogger.lua   terminal keylogger
+    nvim_options/indent_helpers.lua  indent diagnostics
+    markdown/inline_debug.lua markdown inline-highlight debug
+
+Each leaf exposes plain action functions; commands.lua is the only place that
+registers a user command.
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
