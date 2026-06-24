@@ -50,6 +50,7 @@ shared dependency.
 | `keylogger` | `start` · `stop` | Log keys pressed in the current terminal buffer |
 | `indent` | `show` · `treesitter [true\|false]` | Print indent options / prefer Tree-sitter indent |
 | `markdown` | `inline` · `log` | Gather markdown inline-highlight debug info / open the log |
+| `module` | `reload` | Reload the Lua module of the current buffer |
 | `neotree` | `status` · `exit` · `restart` · `backup-*` · `dryrun-*` · `queue-*` | Neo-tree safety bridge (opt-in, config-specific) |
 | `health` | — | Run `:checkhealth debugging` |
 
@@ -88,6 +89,7 @@ require("debugging").setup({
     terminals    = true,   -- :Debug keylogger
     nvim_options = true,   -- :Debug indent
     markdown     = true,   -- :Debug markdown
+    module_reload = true,  -- :Debug module reload
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
   },
   views = {
@@ -121,6 +123,7 @@ require("debugging").setup({ all = true })
 :Debug keylogger start          " log keys in the current terminal buffer
 :Debug indent treesitter false  " restore cindent/smartindent
 :Debug markdown inline          " gather markdown inline-highlight debug
+:Debug module reload            " reload Lua module of the current buffer
 :Debug neotree status           " Neo-tree quarantine status (opt-in)
 :Debug health                   " run :checkhealth debugging
 ```
@@ -139,6 +142,7 @@ The `autocmds sources` audit accepts `event=`, `sort=` (`source`/`event`/`freque
 :Debug autocmds sources <Tab>      → event= sort= impl= summary= freq= root=
 :Debug autocmds sources event=Buf<Tab>  → event=BufAdd event=BufEnter …
 :Debug indent treesitter <Tab>     → true false
+:Debug module <Tab>                → reload
 ```
 
 ## Health Check
@@ -166,6 +170,7 @@ lua/debugging/
   views/                      messages/Noice capture, display, keymaps, autocmds
   usercmds/
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
+    module_reload.lua         reload Lua module of the current buffer
     neotree_safety.lua        opt-in Neo-tree bridge (pcall-guarded)
   autocmds/
     runtime.lua               live nvim_get_autocmds view
@@ -183,6 +188,3 @@ Each leaf module exposes plain action functions; `commands.lua` is the only
 place that registers a user command. lib.nvim provides notify, `buf_win_tab.*`,
 `fs.*`, `cross`, `lazy`, and `normalize`.
 
-## License
-
-MIT

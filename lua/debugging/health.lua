@@ -78,6 +78,14 @@ function M.check()
     vim.health.error("cannot write to: " .. state_dir)
   end
 
+  -- ── module_reload ─────────────────────────────────────────────────────────
+  vim.health.start("debugging: module_reload")
+  if vim.loader ~= nil then
+    vim.health.ok("vim.loader available (Neovim 0.9+ cache reset supported)")
+  else
+    vim.health.info("vim.loader not available — only package.loaded cache will be cleared")
+  end
+
   -- ── neotree bridge (opt-in, config-specific) ──────────────────────────────
   vim.health.start("debugging: neotree (opt-in)")
   check_require("config.neotree.safety", "neotree.safety bridge", "info")

@@ -16,6 +16,7 @@ local DEFAULTS = {
     nvim_options = true,   -- :Debug indent
     markdown     = true,   -- :Debug markdown
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
+    module_reload = true,  -- :Debug module reload
   },
 
   -- Views subsystem (keymaps, auto-refresh autocmds, capture).

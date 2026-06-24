@@ -60,8 +60,9 @@ lazy.nvim: >lua
       tools        = true,
       terminals    = true,
       nvim_options = true,
-      markdown     = true,
-      neotree      = false,  -- opt-in, config-specific
+      markdown      = true,
+      module_reload = true,  -- :Debug module reload
+      neotree       = false,  -- opt-in, config-specific
     },
     views = {
       keymaps  = { enable = true, prefix = "<lt>" },
@@ -142,6 +143,15 @@ markdown ~
   `inline`   Gather markdown inline-highlight debug information.
   `log`      Open the most recent debug log.
 
+module ~
+  `reload`   Clear `package.loaded` (and `vim.loader` when available) for the
+             Lua module that corresponds to the current buffer, then re-require
+             it. The buffer must be a .lua file inside a `lua/` directory on
+             the runtimepath; the module name is derived from the file path.
+
+             Example: while editing `lua/myplugin/feature.lua` >
+               :Debug module reload   " → reloads "myplugin.feature"
+<
 neotree ~ (opt-in; needs `features.neotree = true`)
   `status` `exit` `restart` `backup-list` `backup-clean` `dryrun-toggle`
   `dryrun-report` `queue-status` `queue-clear`
@@ -162,6 +172,7 @@ health ~
   :Debug autocmds sources <Tab>           event= sort= impl= summary= freq= root=
   :Debug autocmds sources event=Buf<Tab>  matching event names
   :Debug indent treesitter <Tab>          true false
+  :Debug module <Tab>                     reload
 <
 
 ==============================================================================
@@ -172,7 +183,8 @@ health ~
 <
 
 Checks Neovim version, lib.nvim modules per feature, clipboard providers,
-optional Tree-sitter / Noice, write permissions, and the opt-in Neo-tree bridge.
+optional Tree-sitter / Noice, write permissions, vim.loader availability
+(module_reload), and the opt-in Neo-tree bridge.
 
 ==============================================================================
 8. ARCHITECTURE                                        *debugging-architecture*
@@ -186,8 +198,9 @@ optional Tree-sitter / Noice, write permissions, and the opt-in Neo-tree bridge.
     commands.lua              :Debug dispatcher + two-level completion
     health.lua                checkhealth provider
     views/                    messages/Noice capture, display, keymaps, autocmds
-    usercmds/reports.lua      buf/tab/win reports
-    usercmds/neotree_safety.lua  opt-in Neo-tree bridge (pcall-guarded)
+    usercmds/reports.lua          buf/tab/win reports
+    usercmds/module_reload.lua    reload Lua module of current buffer
+    usercmds/neotree_safety.lua   opt-in Neo-tree bridge (pcall-guarded)
     autocmds/runtime.lua      live nvim_get_autocmds view
     autocmds/sources.lua      static source-code audit
     tools/buffer_inspector/   buffer option/state inspection

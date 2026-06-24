@@ -133,6 +133,13 @@ local function build_registry()
         ["queue-clear"]   = function() require("debugging.usercmds.neotree_safety").queue_clear() end,
       },
     },
+    module = {
+      feature = "module_reload",
+      actions = { "reload" },
+      run = {
+        reload = function() require("debugging.usercmds.module_reload").reload_current() end,
+      },
+    },
     health = {
       feature = "__always",
       actions = {},
@@ -164,7 +171,7 @@ end
 local function enabled_categories()
   local order = {
     "messages", "noice", "report", "autocmds", "inspect", "cursor",
-    "dump", "keylogger", "indent", "markdown", "neotree", "health",
+    "dump", "keylogger", "indent", "markdown", "module", "neotree", "health",
   }
   local out = {}
   local reg = registry()

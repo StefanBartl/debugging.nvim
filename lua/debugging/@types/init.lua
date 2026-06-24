@@ -56,14 +56,15 @@ require("debugging.views.@types")
 
 ---@class Dbg.Config.Features
 --- Per-category enable flags for the :Debug command surface.
----@field views boolean         # :Debug messages / noice / windows
----@field reports boolean       # :Debug report buf|tab|win
----@field autocmds boolean      # :Debug autocmds runtime|sources
----@field tools boolean         # :Debug inspect|cursor|dump
----@field terminals boolean     # :Debug keylogger
----@field nvim_options boolean  # :Debug indent
----@field markdown boolean      # :Debug markdown
----@field neotree boolean       # :Debug neotree … (config-specific, opt-in)
+---@field views boolean          # :Debug messages / noice / windows
+---@field reports boolean        # :Debug report buf|tab|win
+---@field autocmds boolean       # :Debug autocmds runtime|sources
+---@field tools boolean          # :Debug inspect|cursor|dump
+---@field terminals boolean      # :Debug keylogger
+---@field nvim_options boolean   # :Debug indent
+---@field markdown boolean       # :Debug markdown
+---@field module_reload boolean  # :Debug module reload
+---@field neotree boolean        # :Debug neotree … (config-specific, opt-in)
 
 ---@class Dbg.Config
 ---@field features Dbg.Config.Features
