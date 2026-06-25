@@ -188,3 +188,6 @@ Each leaf module exposes plain action functions; `commands.lua` is the only
 place that registers a user command. lib.nvim provides notify, `buf_win_tab.*`,
 `fs.*`, `cross`, `lazy`, and `normalize`.
 
+## License
+
+MIT

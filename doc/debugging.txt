@@ -152,6 +152,7 @@ module ~
              Example: while editing `lua/myplugin/feature.lua` >
                :Debug module reload   " → reloads "myplugin.feature"
 <
+
 neotree ~ (opt-in; needs `features.neotree = true`)
   `status` `exit` `restart` `backup-list` `backup-clean` `dryrun-toggle`
   `dryrun-report` `queue-status` `queue-clear`

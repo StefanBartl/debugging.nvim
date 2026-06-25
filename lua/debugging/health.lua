@@ -86,6 +86,7 @@ function M.check()
     vim.health.info("vim.loader not available — only package.loaded cache will be cleared")
   end
 
+
   -- ── neotree bridge (opt-in, config-specific) ──────────────────────────────
   vim.health.start("debugging: neotree (opt-in)")
   check_require("config.neotree.safety", "neotree.safety bridge", "info")
