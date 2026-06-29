@@ -1,0 +1,12 @@
+:Debug	debugging.txt	/*:Debug*
+debugging-architecture	debugging.txt	/*debugging-architecture*
+debugging-categories	debugging.txt	/*debugging-categories*
+debugging-completion	debugging.txt	/*debugging-completion*
+debugging-config	debugging.txt	/*debugging-config*
+debugging-contents	debugging.txt	/*debugging-contents*
+debugging-health	debugging.txt	/*debugging-health*
+debugging-installation	debugging.txt	/*debugging-installation*
+debugging-intro	debugging.txt	/*debugging-intro*
+debugging-requirements	debugging.txt	/*debugging-requirements*
+debugging.nvim	debugging.txt	/*debugging.nvim*
+debugging.txt	debugging.txt	/*debugging.txt*
