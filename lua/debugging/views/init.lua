@@ -1,17 +1,16 @@
 ---@module 'debugging.views'
 ---@brief Unified debug views: :messages / Noice with capture, display, windows.
 ---@description
---- setup() wires optional keymaps + auto-refresh autocmds. The actual actions are
---- exposed as functions and invoked by the central `:Debug` dispatcher; this
---- module no longer registers its own user commands.
+--- setup() resolves timings + keymap/autocmd config for the views subsystem.
+--- The actual keymaps/autocmds/which-key labels are wired by
+--- `debugging.bindings` (see lua/debugging/bindings/); this module exposes
+--- the resolved config via getters plus the plain action functions invoked
+--- by the central `:Debug` dispatcher.
 
 require("debugging.views.@types")
 
-local capture   = require("debugging.views.capture")
-local display   = require("debugging.views.display")
-local keymaps   = require("debugging.views.keymaps")
-local autocmds  = require("debugging.views.autocmds")
-local which_key = require("debugging.views.which_key")
+local capture = require("debugging.views.capture")
+local display = require("debugging.views.display")
 
 local M = {}
 
@@ -23,35 +22,48 @@ local _timings = {
   attempts = 3,
 }
 
+---@type Dbg.Views.Keymaps
+local _keymaps_cfg = { enable = true, prefix = "<lt>" }
+
+---@type Dbg.Views.Autocmds
+local _autocmds_cfg = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true }
+
 ---@param opts Dbg.Views.Modules|nil
 function M.setup(opts)
   opts = opts or {}
 
   _timings = vim.tbl_extend("force", _timings, opts.timings or {})
 
-  local km = vim.tbl_extend("force", {
+  _keymaps_cfg = vim.tbl_extend("force", {
     enable = true,
     map = (vim.keymap and vim.keymap.set) or function() end,
     prefix = "<lt>",
   }, opts.keymaps or {})
 
-  local ac = vim.tbl_extend("force", {
+  _autocmds_cfg = vim.tbl_extend("force", {
     enable = true,
     group_name = "DebugViewsAuto",
     auto_refresh = true,
   }, opts.autocmds or {})
 
-  if km.enable then
-    keymaps.setup(km, _timings)
-    which_key.setup(km.prefix)
-  end
-  if ac.enable then
-    autocmds.setup(ac, _timings)
-  end
-
   if opts.capture and opts.output_dir then
     capture.base_dir = opts.output_dir
   end
+end
+
+---@return Dbg.Views.Timings
+function M.get_timings()
+  return _timings
+end
+
+---@return Dbg.Views.Keymaps
+function M.get_keymaps_config()
+  return _keymaps_cfg
+end
+
+---@return Dbg.Views.Autocmds
+function M.get_autocmds_config()
+  return _autocmds_cfg
 end
 
 -- Action functions (called by the :Debug dispatcher) ---------------------------

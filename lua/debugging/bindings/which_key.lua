@@ -1,10 +1,10 @@
----@module 'debugging.views.which_key'
+---@module 'debugging.bindings.which_key'
 ---@brief Optional, guarded which-key group label for the views keymap prefix.
 ---@description
 --- which-key is a **soft** dependency: if it is not installed this is a no-op.
---- Individual keys already carry their own `desc` (see views/keymaps.lua), so
---- only a group label for the shared prefix is registered. Supports both the
---- which-key v3 (`add`) and v2 (`register`) APIs.
+--- Individual keys already carry their own `desc` (see bindings/keymaps.lua),
+--- so only a group label for the shared prefix is registered. Supports both
+--- the which-key v3 (`add`) and v2 (`register`) APIs.
 
 local M = {}
 

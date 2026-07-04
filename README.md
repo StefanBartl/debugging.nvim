@@ -182,16 +182,21 @@ Neo-tree bridge.
 docs/BINDINGS.lua             Cheatsheet: every keymap, :Debug action, autocmd
 plugin/debugging.lua          Load guard (vim.g.loaded_debugging)
 lua/debugging/
-  init.lua                    setup() — feature gating + :Debug registration
+  init.lua                    setup() — feature gating + bindings registration
   @types.lua                  LuaLS type definitions
   config/
     DEFAULTS.lua              Immutable defaults
     init.lua                  Merge + access to active config
-  commands.lua                :Debug dispatcher + two-level completion
+  commands.lua                :Debug dispatch + two-level completion (logic only)
   health.lua                  :checkhealth debugging
-  views/                      messages/Noice capture, display, keymaps, autocmds
-    which_key.lua              optional which-key group label for the prefix
-  usercmds/
+  bindings/                   Every user-facing trigger — registration only
+    init.lua                   orchestrates usercmds/keymaps/autocmds/which_key
+    usercmds.lua                registers the single :Debug user command
+    keymaps.lua                 views subsystem normal-mode keymaps
+    autocmds.lua                views subsystem auto-refresh + close-window autocmds
+    which_key.lua                optional which-key group label for the prefix
+  views/                      messages/Noice capture, display; timings/keymap/autocmd config
+  actions/                    action logic invoked by the :Debug dispatcher
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
     module_reload.lua         reload Lua module of the current buffer
     neotree_safety.lua        opt-in Neo-tree bridge (pcall-guarded)
@@ -207,6 +212,6 @@ lua/debugging/
   markdown/inline_debug.lua   markdown inline-highlight debug
 ```
 
-Each leaf module exposes plain action functions; `commands.lua` is the only
-place that registers a user command. lib.nvim provides notify, `buf_win_tab.*`,
-`fs.*`, `cross`, `lazy`, and `normalize`.
+Each leaf module exposes plain action functions; `bindings/usercmds.lua` is
+the only place that registers a user command. lib.nvim provides notify,
+`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, and `normalize`.

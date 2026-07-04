@@ -3,18 +3,19 @@
 -- A single, machine-readable overview of every keymap, user command and
 -- autocommand debugging.nvim defines. DOCUMENTATION only: not required at
 -- runtime. It mirrors the source of truth:
---   keymaps   — lua/debugging/views/keymaps.lua
---   commands  — lua/debugging/commands.lua (the unified :Debug dispatcher)
---   autocmds  — lua/debugging/views/autocmds.lua
+--   keymaps   — lua/debugging/bindings/keymaps.lua
+--   commands  — lua/debugging/bindings/usercmds.lua (registration) +
+--               lua/debugging/commands.lua (dispatch/completion logic)
+--   autocmds  — lua/debugging/bindings/autocmds.lua
 -- If you add or rename a binding there, update the matching entry here.
 --
 -- Structure:
---   default_keys   — buffer-local-free normal-mode keymaps installed by
---                     views.setup() (gated by config.views.keymaps.enable,
---                     prefix defaults to "<lt>", i.e. the literal "<" key).
+--   default_keys   — normal-mode keymaps installed by bindings.setup()
+--                     (gated by config.views.keymaps.enable, prefix defaults
+--                     to "<lt>", i.e. the literal "<" key).
 --   commands        — the single :Debug {category} {action} [args] dispatcher.
 --                     Categories are gated by config.features.*.
---   autocmds        — registered by views.setup() into the
+--   autocmds        — registered by bindings.setup() into the
 --                     config.views.autocmds.group_name augroup (default
 --                     "DebugViewsAuto"), plus the FileType close-window autocmd.
 

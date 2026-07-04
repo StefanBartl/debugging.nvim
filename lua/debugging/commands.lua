@@ -4,6 +4,10 @@
 --- `:Debug {category} {action} [args]`. Categories/actions are gated by the
 --- active feature flags. Leaf logic lives in the submodules; this file only
 --- routes to their exposed functions.
+---
+--- The actual `nvim_create_user_command` registration lives in
+--- `debugging.bindings.usercmds`; this module only exposes `dispatch()` and
+--- `complete()` for it to wire up.
 
 local notify = require("lib.nvim.notify").create("[debugging]")
 local config = require("debugging.config")
@@ -39,11 +43,11 @@ local function build_registry()
       feature = "reports",
       actions = { "buf", "tab", "win" },
       run = {
-        buf = function() require("debugging.usercmds.reports").buf() end,
-        tab = function() require("debugging.usercmds.reports").tab() end,
+        buf = function() require("debugging.actions.reports").buf() end,
+        tab = function() require("debugging.actions.reports").tab() end,
         win = function(args)
           local id = args[1] and tonumber(args[1]) or nil
-          require("debugging.usercmds.reports").win(id)
+          require("debugging.actions.reports").win(id)
         end,
       },
     },
@@ -122,22 +126,22 @@ local function build_registry()
         "queue-status", "queue-clear",
       },
       run = {
-        ["status"]        = function() require("debugging.usercmds.neotree_safety").quarantine_status() end,
-        ["exit"]          = function() require("debugging.usercmds.neotree_safety").quarantine_exit() end,
-        ["restart"]       = function() require("debugging.usercmds.neotree_safety").restart_watchers() end,
-        ["backup-list"]   = function() require("debugging.usercmds.neotree_safety").backup_list() end,
-        ["backup-clean"]  = function() require("debugging.usercmds.neotree_safety").backup_clean() end,
-        ["dryrun-toggle"] = function() require("debugging.usercmds.neotree_safety").dryrun_toggle() end,
-        ["dryrun-report"] = function() require("debugging.usercmds.neotree_safety").dryrun_report() end,
-        ["queue-status"]  = function() require("debugging.usercmds.neotree_safety").queue_status() end,
-        ["queue-clear"]   = function() require("debugging.usercmds.neotree_safety").queue_clear() end,
+        ["status"]        = function() require("debugging.actions.neotree_safety").quarantine_status() end,
+        ["exit"]          = function() require("debugging.actions.neotree_safety").quarantine_exit() end,
+        ["restart"]       = function() require("debugging.actions.neotree_safety").restart_watchers() end,
+        ["backup-list"]   = function() require("debugging.actions.neotree_safety").backup_list() end,
+        ["backup-clean"]  = function() require("debugging.actions.neotree_safety").backup_clean() end,
+        ["dryrun-toggle"] = function() require("debugging.actions.neotree_safety").dryrun_toggle() end,
+        ["dryrun-report"] = function() require("debugging.actions.neotree_safety").dryrun_report() end,
+        ["queue-status"]  = function() require("debugging.actions.neotree_safety").queue_status() end,
+        ["queue-clear"]   = function() require("debugging.actions.neotree_safety").queue_clear() end,
       },
     },
     module = {
       feature = "module_reload",
       actions = { "reload" },
       run = {
-        reload = function() require("debugging.usercmds.module_reload").reload_current() end,
+        reload = function() require("debugging.actions.module_reload").reload_current() end,
       },
     },
     health = {
@@ -200,7 +204,7 @@ end
 
 ---@param fargs string[]
 ---@return nil
-local function dispatch(fargs)
+function M.dispatch(fargs)
   if #fargs == 0 then
     overview()
     return
@@ -257,7 +261,7 @@ end
 ---@param arglead string
 ---@param cmdline string
 ---@return string[]
-local function complete(arglead, cmdline, _)
+function M.complete(arglead, cmdline, _)
   local tokens = {}
   for t in cmdline:gmatch("%S+") do tokens[#tokens + 1] = t end
   local trailing = cmdline:sub(-1) == " "
@@ -286,19 +290,6 @@ local function complete(arglead, cmdline, _)
   end
 
   return {}
-end
-
----Register the unified :Debug command.
----@param cfg Dbg.Config
----@return nil
-function M.register(cfg)
-  vim.api.nvim_create_user_command(cfg.command, function(a)
-    dispatch(a.fargs)
-  end, {
-    nargs = "*",
-    complete = complete,
-    desc = "Unified debugging entry point — :" .. cfg.command .. " {category} {action}",
-  })
 end
 
 return M

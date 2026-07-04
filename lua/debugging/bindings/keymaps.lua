@@ -1,6 +1,7 @@
----@module 'debugging.views.keymaps'
+---@module 'debugging.bindings.keymaps'
+---@brief Normal-mode keymaps for the views subsystem (messages/Noice/capture).
 
-local notify = require("lib.nvim.notify").create("[debugging.views.keymaps]")
+local notify = require("lib.nvim.notify").create("[debugging.bindings.keymaps]")
 
 local display = require("debugging.views.display")
 local capture = require("debugging.views.capture")

@@ -31,13 +31,14 @@ function M.setup(opts)
   local config = require("debugging.config")
   local cfg = config.setup(opts)
 
-  -- Views needs its own setup (keymaps + auto-refresh autocmds).
+  -- Views resolves its own timings/keymap/autocmd config first.
   if cfg.features.views then
     require("debugging.views").setup(cfg.views)
   end
 
-  -- The single unified command.
-  require("debugging.commands").register(cfg)
+  -- Bindings: the single unified :Debug command, plus keymaps/autocmds/
+  -- which-key label for the views subsystem (if enabled).
+  require("debugging.bindings").setup(cfg)
 
   vim.g.loaded_debugging = 1
 end

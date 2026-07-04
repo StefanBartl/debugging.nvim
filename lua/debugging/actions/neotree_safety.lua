@@ -1,4 +1,4 @@
----@module 'debugging.usercmds.neotree_safety'
+---@module 'debugging.actions.neotree_safety'
 ---@brief Neo-tree watcher-quarantine / backup / dry-run / queue helpers.
 ---@description
 --- This module bridges to a user-specific Neo-tree safety layer
@@ -10,7 +10,7 @@
 --- Opt-in only (disabled by default) — see `config/DEFAULTS.lua`.
 --- Making the bridge target injectable is a roadmap item.
 
-local notify = require("lib.nvim.notify").create("[debugging.usercmds.neotree_safety]")
+local notify = require("lib.nvim.notify").create("[debugging.actions.neotree_safety]")
 
 local M = {}
 
