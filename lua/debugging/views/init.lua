@@ -7,10 +7,11 @@
 
 require("debugging.views.@types")
 
-local capture  = require("debugging.views.capture")
-local display  = require("debugging.views.display")
-local keymaps  = require("debugging.views.keymaps")
-local autocmds = require("debugging.views.autocmds")
+local capture   = require("debugging.views.capture")
+local display   = require("debugging.views.display")
+local keymaps   = require("debugging.views.keymaps")
+local autocmds  = require("debugging.views.autocmds")
+local which_key = require("debugging.views.which_key")
 
 local M = {}
 
@@ -42,6 +43,7 @@ function M.setup(opts)
 
   if km.enable then
     keymaps.setup(km, _timings)
+    which_key.setup(km.prefix)
   end
   if ac.enable then
     autocmds.setup(ac, _timings)

@@ -8,9 +8,14 @@
         one :Debug command for every Neovim debugging tool
 </pre>
 
+> 💡 Pairs well with [project-insight.nvim](https://github.com/StefanBartl/project-insight.nvim):
+> project-insight analyzes and reports on your codebase (symbols, metrics, file
+> tree), while debugging.nvim inspects live editor state (buffers, autocmds,
+> messages) at runtime.
+
 ![Neovim](https://img.shields.io/badge/Neovim-0.9%2B-57A143?logo=neovim&logoColor=white)
 ![Lua](https://img.shields.io/badge/Made%20with-Lua-2C2D72?logo=lua&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)
 ![Depends](https://img.shields.io/badge/depends-lib.nvim-orange)
 
 ---
@@ -34,7 +39,6 @@ shared dependency.
 - [Tab Completion](#tab-completion)
 - [Health Check](#health-check)
 - [Architecture](#architecture)
-- [License](#license)
 
 ## Features
 
@@ -59,19 +63,36 @@ shared dependency.
 - Neovim 0.9+
 - [lib.nvim](https://github.com/StefanBartl/lib.nvim)
 - Optional: a clipboard provider (for `messages capture`), `noice.nvim` (for
-  `noice` views), Tree-sitter (markdown / indent diagnostics)
+  `noice` views), Tree-sitter (markdown / indent diagnostics), `which-key.nvim`
+  (groups the views keymap prefix)
 
 ## Installation
 
+`cmd = "Debug"` lazy-loads the plugin on first use of the `:Debug` command —
+no `event` or `lazy = false` needed.
+
+### lazy.nvim
+
 ```lua
--- lazy.nvim
 {
   "StefanBartl/debugging.nvim",
-  -- dir = vim.env.REPOS_DIR .. "/debugging.nvim",  -- local checkout
   cmd = "Debug",
   dependencies = { "StefanBartl/lib.nvim" },
   opts = {},
 }
+```
+
+### packer.nvim
+
+```lua
+use({
+  "StefanBartl/debugging.nvim",
+  requires = { "StefanBartl/lib.nvim" },
+  cmd = "Debug",
+  config = function()
+    require("debugging").setup({})
+  end,
+})
 ```
 
 ## Configuration
@@ -158,6 +179,7 @@ Neo-tree bridge.
 ## Architecture
 
 ```
+docs/BINDINGS.lua             Cheatsheet: every keymap, :Debug action, autocmd
 plugin/debugging.lua          Load guard (vim.g.loaded_debugging)
 lua/debugging/
   init.lua                    setup() — feature gating + :Debug registration
@@ -168,6 +190,7 @@ lua/debugging/
   commands.lua                :Debug dispatcher + two-level completion
   health.lua                  :checkhealth debugging
   views/                      messages/Noice capture, display, keymaps, autocmds
+    which_key.lua              optional which-key group label for the prefix
   usercmds/
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
     module_reload.lua         reload Lua module of the current buffer
@@ -187,7 +210,3 @@ lua/debugging/
 Each leaf module exposes plain action functions; `commands.lua` is the only
 place that registers a user command. lib.nvim provides notify, `buf_win_tab.*`,
 `fs.*`, `cross`, `lazy`, and `normalize`.
-
-## License
-
-MIT

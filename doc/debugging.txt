@@ -1,7 +1,6 @@
 *debugging.txt*  One :Debug command for Neovim debugging          *debugging.nvim*
 
 Author:   Stefan Bartl
-License:  MIT
 Version:  0.1.0
 
 ==============================================================================
@@ -34,10 +33,14 @@ Depends on lib.nvim (a deliberate shared dependency).
   - Neovim 0.9 or later
   - lib.nvim
   - Optional: clipboard provider (messages capture), noice.nvim (noice views),
-    Tree-sitter (markdown / indent diagnostics)
+    Tree-sitter (markdown / indent diagnostics), which-key.nvim (groups the
+    views keymap prefix)
 
 ==============================================================================
 3. INSTALLATION                                         *debugging-installation*
+
+`cmd = "Debug"` lazy-loads the plugin on first use of the :Debug command — no
+`event` or `lazy = false` needed.
 
 lazy.nvim: >lua
   {
@@ -46,6 +49,16 @@ lazy.nvim: >lua
     dependencies = { "StefanBartl/lib.nvim" },
     opts = {},
   }
+<
+packer.nvim: >lua
+  use({
+    "StefanBartl/debugging.nvim",
+    requires = { "StefanBartl/lib.nvim" },
+    cmd = "Debug",
+    config = function()
+      require("debugging").setup({})
+    end,
+  })
 <
 
 ==============================================================================
@@ -184,12 +197,13 @@ health ~
 <
 
 Checks Neovim version, lib.nvim modules per feature, clipboard providers,
-optional Tree-sitter / Noice, write permissions, vim.loader availability
-(module_reload), and the opt-in Neo-tree bridge.
+optional Tree-sitter / Noice / which-key, write permissions, vim.loader
+availability (module_reload), and the opt-in Neo-tree bridge.
 
 ==============================================================================
 8. ARCHITECTURE                                        *debugging-architecture*
 
+  docs/BINDINGS.lua           Cheatsheet: every keymap, :Debug action, autocmd
   plugin/debugging.lua        Load guard
   lua/debugging/
     init.lua                  setup() — feature gating + :Debug registration
@@ -199,6 +213,7 @@ optional Tree-sitter / Noice, write permissions, vim.loader availability
     commands.lua              :Debug dispatcher + two-level completion
     health.lua                checkhealth provider
     views/                    messages/Noice capture, display, keymaps, autocmds
+    views/which_key.lua       optional which-key group label for the prefix
     usercmds/reports.lua          buf/tab/win reports
     usercmds/module_reload.lua    reload Lua module of current buffer
     usercmds/neotree_safety.lua   opt-in Neo-tree bridge (pcall-guarded)
