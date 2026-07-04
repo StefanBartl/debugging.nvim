@@ -26,51 +26,53 @@ Schweregrad; jeder Punkt verlinkt auf die Detailbegründung im jeweiligen Audit.
 
 ### 🔴 Kritisch
 
-- [ ] **`WINDOWS`-Registry in `views/display.lua` korrekt pflegen** — wird nur
-  im `capture_lib`-Zweig von `execute_and_refresh()` befüllt, nicht im
-  häufigeren `existing_win`-Zweig. Dadurch findet `clear_all()` oft keine
-  offenen Debug-Fenster. Fix: entweder `WINDOWS` bei jedem gefundenen/erzeugten
-  Fenster konsequent setzen, oder `clear_all()` komplett auf die
-  `vim.w[win].custom_tag`-Suche (wie `find_window_by_tag()`) umstellen und
-  `WINDOWS` ganz entfernen. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#2-modularisierung--strukturprinzipien))
+- [x] **`WINDOWS`-Registry in `views/display.lua` korrekt pflegen** — `clear_all()`
+  nutzt jetzt dieselbe `vim.w[win].custom_tag`-Suche wie `find_window_by_tag()`
+  statt der inkonsistent gepflegten `WINDOWS`-Tabelle (entfernt). Verifiziert
+  per Headless-Test: Fenster wird getaggt → gefunden → `clear_all()` schließt
+  es → nicht mehr auffindbar.
+  ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#2-modularisierung--strukturprinzipien))
 
 ### 🟡 Empfohlen
 
-- [ ] **`print()` durch `lib.nvim.notify` ersetzen** in `tools/buffer_inspector`,
+- [x] **`print()` durch `lib.nvim.notify` ersetzen** in `tools/buffer_inspector`,
   `tools/cursor/state.lua`, `tools/vardump`, `autocmds/runtime.lua`,
   `nvim_options/indent_helpers.lua` — Konsistenz mit dem Rest des Repos.
   ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#1-sicherheitsprinzipien--fehlerbehandlung))
-- [ ] **`tools/vardump`: `M.Vardump` lokal + snake_case machen** (z. B.
-  `local function dump_value`), Tiefenlimit/pcall gegen zyklische Tabellen
-  ergänzen. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#5-dokumentation--annotationen))
-- [ ] **Keylogger: stilles Stoppen sichtbar machen** — `terminals/keylogger.lua`
-  soll notifien, wenn die Rekursionskette abbricht, weil der Buffer kein
-  Terminal mehr ist, statt `M.logging` fälschlich `true` zu lassen.
+- [x] **`tools/vardump`: `M.Vardump` lokal + snake_case machen** (jetzt
+  `local function dump_value`), Tiefenlimit (`MAX_DEPTH = 30`) + `pcall` gegen
+  zyklische Tabellen ergänzt. Verifiziert per Headless-Test mit selbstreferenzierender
+  Tabelle. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#5-dokumentation--annotationen))
+- [x] **Keylogger: stilles Stoppen sichtbar machen** — `terminals/keylogger.lua`
+  notifiziert jetzt ("Stopped: left the terminal buffer") und setzt `M.logging
+  = false`, wenn die Rekursionskette abbricht, weil der Buffer kein Terminal
+  mehr ist. Verifiziert per Headless-Test (gemockter `getcharstr`).
   ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#9-debugbarkeit-eingeplant))
-- [ ] **`views/utils.lua`: redundanten `make_focusable()`-Call entfernen** in
+- [x] **`views/utils.lua`: redundanten `make_focusable()`-Call entfernen** in
   `focus_and_bottom()` (wird bereits intern von `force_focus()` aufgerufen).
   ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#3-kontext-statt-mehrfach-api-zugriffe))
 - [ ] **`autocmds sources`: optionalen Cache erwägen** (z. B. Ergebnis für N
   Sekunden behalten, `refresh=true`-Flag zum Erzwingen), um wiederholte
-  Full-Scans während einer Session zu vermeiden.
+  Full-Scans während einer Session zu vermeiden. Zurückgestellt — Design-
+  Entscheidung (Cache-Invalidierungsstrategie), kein reiner Bugfix.
   ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#7-cache-vorhanden-und-explizit))
 
 ### 🟢 Nice-to-have
 
-- [ ] `@brief`/`@description` in älteren Leaf-Modulen nachziehen (`tools/*`,
-  `terminals/keylogger.lua`, `nvim_options/indent_helpers.lua`).
+- [ ] `@brief`/`@description` in verbleibenden Leaf-Modulen nachziehen
+  (`tools/cursor/state.lua`, `nvim_options/indent_helpers.lua`) — bereits
+  ergänzt in `tools/vardump` und `terminals/keylogger.lua`.
 - [ ] `@types/`-Ordner für `tools/`, `autocmds/`, `actions/`, `bindings/`,
   `terminals/`, `nvim_options/` ergänzen (aktuell nur in `debugging/@types`,
   `views/@types`, `markdown/@types`).
-- [ ] `terminals/keylogger.lua`: deutsche Kommentare ins Englische übersetzen
-  (Rest des Repos ist konsequent englisch).
+- [x] `terminals/keylogger.lua`: deutsche Kommentare ins Englische übersetzt.
 - [ ] `markdown/inline_debug.lua`: veralteten Kopfkommentar-Verweis auf `/tmp`
   korrigieren (tatsächliches Ziel: `stdpath("data")/debuglog/markdown_inline`).
-- [ ] `nvim_options/indent_helpers.lua`: Docstring von `prefer_treesitter_indent`
-  präzisieren (schaltet nur `cindent`/`smartindent` ab, aktiviert Treesitter
+- [x] `nvim_options/indent_helpers.lua`: Docstring von `prefer_treesitter_indent`
+  präzisiert (schaltet nur `cindent`/`smartindent` ab, aktiviert Treesitter
   nicht selbst).
-- [ ] `tools/cursor/state.lua`: erneute `nvim_win_is_valid()`-Prüfung in der
-  Fenster-Iteration ergänzen (Konsistenz, aktuell ungefährlich).
+- [x] `tools/cursor/state.lua`: erneute `nvim_win_is_valid()`-Prüfung in der
+  Fenster-Iteration ergänzt.
 - [ ] Formatter/Linter (`stylua`, `luacheck`) einrichten — `.luarc.json` ist
   jetzt vorhanden ([../.luarc.json](../.luarc.json)), Formatter/Linter fehlen
   noch. ([Checklist.md](./ROADMAP/Checklist.md#7-tooling))
