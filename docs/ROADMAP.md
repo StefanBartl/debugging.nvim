@@ -16,6 +16,67 @@
 
 ---
 
+## Implementierungsplan (aus Architektur-Audit)
+
+Aus dem Abgleich gegen drei persönliche Lua/Neovim-Checklisten
+([docs/ROADMAP/Arch&Coding.md](./ROADMAP/Arch&Coding.md),
+[docs/ROADMAP/Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md),
+[docs/ROADMAP/Checklist.md](./ROADMAP/Checklist.md)). Priorisiert nach
+Schweregrad; jeder Punkt verlinkt auf die Detailbegründung im jeweiligen Audit.
+
+### 🔴 Kritisch
+
+- [ ] **`WINDOWS`-Registry in `views/display.lua` korrekt pflegen** — wird nur
+  im `capture_lib`-Zweig von `execute_and_refresh()` befüllt, nicht im
+  häufigeren `existing_win`-Zweig. Dadurch findet `clear_all()` oft keine
+  offenen Debug-Fenster. Fix: entweder `WINDOWS` bei jedem gefundenen/erzeugten
+  Fenster konsequent setzen, oder `clear_all()` komplett auf die
+  `vim.w[win].custom_tag`-Suche (wie `find_window_by_tag()`) umstellen und
+  `WINDOWS` ganz entfernen. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#2-modularisierung--strukturprinzipien))
+
+### 🟡 Empfohlen
+
+- [ ] **`print()` durch `lib.nvim.notify` ersetzen** in `tools/buffer_inspector`,
+  `tools/cursor/state.lua`, `tools/vardump`, `autocmds/runtime.lua`,
+  `nvim_options/indent_helpers.lua` — Konsistenz mit dem Rest des Repos.
+  ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#1-sicherheitsprinzipien--fehlerbehandlung))
+- [ ] **`tools/vardump`: `M.Vardump` lokal + snake_case machen** (z. B.
+  `local function dump_value`), Tiefenlimit/pcall gegen zyklische Tabellen
+  ergänzen. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#5-dokumentation--annotationen))
+- [ ] **Keylogger: stilles Stoppen sichtbar machen** — `terminals/keylogger.lua`
+  soll notifien, wenn die Rekursionskette abbricht, weil der Buffer kein
+  Terminal mehr ist, statt `M.logging` fälschlich `true` zu lassen.
+  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#9-debugbarkeit-eingeplant))
+- [ ] **`views/utils.lua`: redundanten `make_focusable()`-Call entfernen** in
+  `focus_and_bottom()` (wird bereits intern von `force_focus()` aufgerufen).
+  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#3-kontext-statt-mehrfach-api-zugriffe))
+- [ ] **`autocmds sources`: optionalen Cache erwägen** (z. B. Ergebnis für N
+  Sekunden behalten, `refresh=true`-Flag zum Erzwingen), um wiederholte
+  Full-Scans während einer Session zu vermeiden.
+  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#7-cache-vorhanden-und-explizit))
+
+### 🟢 Nice-to-have
+
+- [ ] `@brief`/`@description` in älteren Leaf-Modulen nachziehen (`tools/*`,
+  `terminals/keylogger.lua`, `nvim_options/indent_helpers.lua`).
+- [ ] `@types/`-Ordner für `tools/`, `autocmds/`, `actions/`, `bindings/`,
+  `terminals/`, `nvim_options/` ergänzen (aktuell nur in `debugging/@types`,
+  `views/@types`, `markdown/@types`).
+- [ ] `terminals/keylogger.lua`: deutsche Kommentare ins Englische übersetzen
+  (Rest des Repos ist konsequent englisch).
+- [ ] `markdown/inline_debug.lua`: veralteten Kopfkommentar-Verweis auf `/tmp`
+  korrigieren (tatsächliches Ziel: `stdpath("data")/debuglog/markdown_inline`).
+- [ ] `nvim_options/indent_helpers.lua`: Docstring von `prefer_treesitter_indent`
+  präzisieren (schaltet nur `cindent`/`smartindent` ab, aktiviert Treesitter
+  nicht selbst).
+- [ ] `tools/cursor/state.lua`: erneute `nvim_win_is_valid()`-Prüfung in der
+  Fenster-Iteration ergänzen (Konsistenz, aktuell ungefährlich).
+- [ ] Formatter/Linter (`stylua`, `luacheck`) einrichten — `.luarc.json` ist
+  jetzt vorhanden ([../.luarc.json](../.luarc.json)), Formatter/Linter fehlen
+  noch. ([Checklist.md](./ROADMAP/Checklist.md#7-tooling))
+
+---
+
 ## Geplante Features
 
 ### Autocmd-Audit
