@@ -206,17 +206,22 @@ availability (module_reload), and the opt-in Neo-tree bridge.
   docs/BINDINGS.lua           Cheatsheet: every keymap, :Debug action, autocmd
   plugin/debugging.lua        Load guard
   lua/debugging/
-    init.lua                  setup() — feature gating + :Debug registration
+    init.lua                  setup() — feature gating + bindings registration
     @types.lua                LuaLS type definitions
     config/DEFAULTS.lua       Immutable defaults
     config/init.lua           Merge + access to active config
-    commands.lua              :Debug dispatcher + two-level completion
+    commands.lua              :Debug dispatch + two-level completion (logic only)
     health.lua                checkhealth provider
-    views/                    messages/Noice capture, display, keymaps, autocmds
-    views/which_key.lua       optional which-key group label for the prefix
-    usercmds/reports.lua          buf/tab/win reports
-    usercmds/module_reload.lua    reload Lua module of current buffer
-    usercmds/neotree_safety.lua   opt-in Neo-tree bridge (pcall-guarded)
+    bindings/                 Every user-facing trigger — registration only
+      init.lua                  orchestrates usercmds/keymaps/autocmds/which_key
+      usercmds.lua              registers the single :Debug user command
+      keymaps.lua               views subsystem normal-mode keymaps
+      autocmds.lua              views subsystem auto-refresh + close-window autocmds
+      which_key.lua             optional which-key group label for the prefix
+    views/                    messages/Noice capture, display; timings/keymap/autocmd config
+    actions/reports.lua           buf/tab/win reports
+    actions/module_reload.lua     reload Lua module of current buffer
+    actions/neotree_safety.lua    opt-in Neo-tree bridge (pcall-guarded)
     autocmds/runtime.lua      live nvim_get_autocmds view
     autocmds/sources.lua      static source-code audit
     tools/buffer_inspector/   buffer option/state inspection
@@ -226,8 +231,8 @@ availability (module_reload), and the opt-in Neo-tree bridge.
     nvim_options/indent_helpers.lua  indent diagnostics
     markdown/inline_debug.lua markdown inline-highlight debug
 
-Each leaf exposes plain action functions; commands.lua is the only place that
-registers a user command.
+Each leaf exposes plain action functions; bindings/usercmds.lua is the only
+place that registers a user command.
 
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help:norl:

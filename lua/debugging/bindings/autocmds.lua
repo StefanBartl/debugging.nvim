@@ -1,4 +1,5 @@
----@module 'debugging.views.autocmds'
+---@module 'debugging.bindings.autocmds'
+---@brief Auto-refresh + close-window autocmds for the views subsystem.
 
 local display = require("debugging.views.display")
 local utils = require("debugging.views.utils")

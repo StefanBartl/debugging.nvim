@@ -1,4 +1,4 @@
----@module 'debugging.usercmds.module_reload'
+---@module 'debugging.actions.module_reload'
 ---@brief Reload the Lua module of the current buffer via :Debug module reload.
 
 local notify = require("lib.nvim.notify").create("[debugging.module_reload]")
