@@ -7,12 +7,9 @@ local api = vim.api
 
 local M = {}
 
----@type Dbg.Views.WindowRegistry
-local WINDOWS = {
-  messages = nil,
-  noice_all = nil,
-  noice_errors = nil,
-}
+---@type string[]  Known view tags — kept in sync with the tags passed to
+--- execute_and_refresh()/refresh_log_view() by debugging.views.
+local KNOWN_TAGS = { "messages", "noice_all", "noice_errors" }
 
 ---@param tag string
 ---@return integer|nil
@@ -74,7 +71,6 @@ function M.execute_and_refresh(tag, cmd, timings)
 
       for _, win in ipairs(result.wins) do
         if api.nvim_win_is_valid(win) then
-          WINDOWS[tag] = win
           utils.make_focusable(win)
           vim.defer_fn(function()
             if not api.nvim_win_is_valid(win) then
@@ -130,11 +126,11 @@ end
 
 ---Clear all debug windows
 function M.clear_all()
-  for tag, win in pairs(WINDOWS) do
+  for _, tag in ipairs(KNOWN_TAGS) do
+    local win = M.find_window_by_tag(tag)
     if win and api.nvim_win_is_valid(win) then
       api.nvim_win_close(win, true)
     end
-    WINDOWS[tag] = nil
   end
 end
 

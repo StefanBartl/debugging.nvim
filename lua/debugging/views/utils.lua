@@ -153,7 +153,6 @@ function M.focus_and_bottom(win, attempts, retry_delay)
     return
   end
 
-  M.make_focusable(win)
   M.force_focus(win)
 
   if not api.nvim_win_is_valid(win) then

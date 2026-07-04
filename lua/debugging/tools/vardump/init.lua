@@ -1,19 +1,28 @@
----@module 'debugging.vardump'
+---@module 'debugging.tools.vardump'
+---@brief Recursively dump a global Lua variable to a report.
+---@description
+--- Usage: :Debug dump [varname]  -- dumps `varname`, or the word under the
+--- cursor when no name is given.
 
--- Simple vardump utility that recursively prints Lua tables and values
--- Usage:
--- :VardumpVar some_var           -> dumps 'some_var'
--- :VardumpVar                    -> dumps variable under cursor
+local notify = require("lib.nvim.notify").create("[debugging.tools.vardump]")
 
-local api =vim.api
+local api = vim.api
 
 local M = {}
 
-function M.Vardump(value, depth, key)
-    local linePrefix = ""
+---@type integer  Hard recursion-depth limit against cyclic tables/huge structures.
+local MAX_DEPTH = 30
+
+---@param value any
+---@param depth integer|nil
+---@param key any
+---@param lines string[]
+---@return nil
+local function dump_value(value, depth, key, lines)
+    local line_prefix = ""
     local spaces = ""
     if key ~= nil then
-        linePrefix = "["..tostring(key).."] = "
+        line_prefix = "["..tostring(key).."] = "
     end
     if depth == nil then
         depth = 0
@@ -22,25 +31,30 @@ function M.Vardump(value, depth, key)
         for _ = 1, depth do spaces = spaces .. "  " end
     end
 
+    if depth > MAX_DEPTH then
+        lines[#lines + 1] = spaces .. line_prefix .. "<max depth reached>"
+        return
+    end
+
     if type(value) == "table" then
         local mTable = getmetatable(value)
         if mTable == nil then
-            print(spaces .. linePrefix .. "(table)")
+            lines[#lines + 1] = spaces .. line_prefix .. "(table)"
         else
-            print(spaces .. "(metatable)")
+            lines[#lines + 1] = spaces .. "(metatable)"
             value = mTable
         end
         for k, v in pairs(value) do
-            M.Vardump(v, depth, k)
+            dump_value(v, depth, k, lines)
         end
     elseif type(value) == "function"
         or type(value) == "thread"
         or type(value) == "userdata"
         or value == nil
     then
-        print(spaces .. tostring(value))
+        lines[#lines + 1] = spaces .. tostring(value)
     else
-        print(spaces .. linePrefix .. "(" .. type(value) .. ") " .. tostring(value))
+        lines[#lines + 1] = spaces .. line_prefix .. "(" .. type(value) .. ") " .. tostring(value)
     end
 end
 
@@ -63,20 +77,21 @@ function M.dump(varname)
     if not varname or varname == "" then
         varname = get_word_under_cursor()
         if not varname then
-            print("[debugging.tools.vardump] No variable provided and no word under cursor")
+            notify.warn("No variable provided and no word under cursor")
             return
         end
     end
 
-    -- Try to get the global variable
-    local success, value = pcall(function() return _G[varname] end)
-    if not success then
-        print(("[debugging.tools.vardump] Variable '%s' not found"):format(varname))
+    local value = _G[varname]
+
+    local lines = { ("Variable '%s':"):format(varname) }
+    local ok, err = pcall(dump_value, value, 0, nil, lines)
+    if not ok then
+        notify.error(("failed to dump '%s': %s"):format(varname, tostring(err)))
         return
     end
 
-    print(("[debugging.tools.vardump] Variable '%s':"):format(varname))
-    M.Vardump(value, 0)
+    notify.info(table.concat(lines, "\n"))
 end
 
 return M
