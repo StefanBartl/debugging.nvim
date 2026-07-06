@@ -203,7 +203,7 @@ availability (module_reload), and the opt-in Neo-tree bridge.
 ==============================================================================
 8. ARCHITECTURE                                        *debugging-architecture*
 
-  docs/BINDINGS.lua           Cheatsheet: every keymap, :Debug action, autocmd
+  docs/BINDINGS.md           Cheatsheet: every keymap, :Debug action, autocmd
   plugin/debugging.lua        Load guard
   lua/debugging/
     init.lua                  setup() — feature gating + bindings registration
