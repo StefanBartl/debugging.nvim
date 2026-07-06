@@ -11,7 +11,7 @@
 - `:checkhealth debugging` covering lib.nvim deps + per-feature externals
 - Neo-tree bridge is pcall-guarded (graceful degrade when config layer absent)
 - Built on lib.nvim as a deliberate shared dependency
-- `docs/BINDINGS.lua` cheatsheet (keymaps, :Debug actions, autocmds)
+- `docs/BINDINGS.md` cheatsheet (keymaps, :Debug actions, autocmds)
 - Optional which-key group label for the views keymap prefix
 
 ---

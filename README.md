@@ -179,7 +179,7 @@ Neo-tree bridge.
 ## Architecture
 
 ```
-docs/BINDINGS.lua             Cheatsheet: every keymap, :Debug action, autocmd
+docs/BINDINGS.md             Cheatsheet: every keymap, :Debug action, autocmd
 plugin/debugging.lua          Load guard (vim.g.loaded_debugging)
 lua/debugging/
   init.lua                    setup() — feature gating + bindings registration
