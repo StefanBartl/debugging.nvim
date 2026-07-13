@@ -150,7 +150,8 @@ require("debugging").setup({ all = true })
 ```
 
 The `autocmds sources` audit accepts `event=`, `sort=` (`source`/`event`/`frequency`),
-`impl=`, `summary=`, `freq=`, and `root=` arguments.
+`impl=`, `summary=`, `freq=`, `root=`, and `refresh=` arguments. Results are
+cached per `root` for a few seconds; pass `refresh=true` to force a rescan.
 
 ## Tab Completion
 
@@ -160,7 +161,7 @@ The `autocmds sources` audit accepts `event=`, `sort=` (`source`/`event`/`freque
 :Debug <Tab>                       → messages noice report autocmds inspect …
 :Debug report <Tab>                → buf tab win
 :Debug autocmds <Tab>              → runtime sources
-:Debug autocmds sources <Tab>      → event= sort= impl= summary= freq= root=
+:Debug autocmds sources <Tab>      → event= sort= impl= summary= freq= root= refresh=
 :Debug autocmds sources event=Buf<Tab>  → event=BufAdd event=BufEnter …
 :Debug indent treesitter <Tab>     → true false
 :Debug module <Tab>                → reload
@@ -190,6 +191,7 @@ lua/debugging/
   commands.lua                :Debug dispatch + two-level completion (logic only)
   health.lua                  :checkhealth debugging
   bindings/                   Every user-facing trigger — registration only
+    @types/init.lua             Dbg.ActionFn, Dbg.Bindings.RegistryEntry
     init.lua                   orchestrates usercmds/keymaps/autocmds/which_key
     usercmds.lua                registers the single :Debug user command
     keymaps.lua                 views subsystem normal-mode keymaps
@@ -201,8 +203,9 @@ lua/debugging/
     module_reload.lua         reload Lua module of the current buffer
     neotree_safety.lua        opt-in Neo-tree bridge (pcall-guarded)
   autocmds/
+    @types/init.lua           Dbg.Autocmds.SourceItem/SourceOpts/SourceCache
     runtime.lua               live nvim_get_autocmds view
-    sources.lua               static source-code audit
+    sources.lua               static source-code audit (cached per root)
   tools/
     buffer_inspector/         buffer option/state inspection
     cursor/state.lua          cursor/window/buffer state

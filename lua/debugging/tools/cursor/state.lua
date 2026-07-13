@@ -1,5 +1,9 @@
-
----@module 'debugging.cursor.state'
+---@module 'debugging.tools.cursor.state'
+---@brief Print the current cursor / window / buffer state for debugging.
+---@description
+--- A one-shot snapshot of the active window/buffer/cursor plus a list of all
+--- windows and their `custom_tag` (see `debugging.views.display`), invoked
+--- via `:Debug cursor state`.
 
 local notify = require("lib.nvim.notify").create("[debugging.tools.cursor.state]")
 

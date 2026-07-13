@@ -1,9 +1,9 @@
----@module 'debugging.markdown.inline_debug_fixed'
---- Module: markdown.inline_debug_fixed
---- Description: Robust collector for diagnostic information about inline-code highlighting
---- in Markdown buffers. Writes a timestamped log to /tmp and provides a user command.
---- This revised version fixes incorrect safe-call semantics, handles deprecated LSP APIs,
---- and makes file I/O and API access more robust across Neovim versions.
+---@module 'debugging.markdown.inline_debug'
+--- Robust collector for diagnostic information about inline-code highlighting
+--- in Markdown buffers. Writes a timestamped log to stdpath("data")/debuglog/
+--- markdown_inline and provides a user command. Uses only non-deprecated
+--- LSP/highlight APIs, guarded with pcall throughout, and makes file I/O and
+--- API access robust across Neovim versions.
 
 ---@return Dbg.MD.InlineDebug
 local notify = require("lib.nvim.notify").create("[debugging.markdown.inline_debug]")
@@ -354,7 +354,7 @@ function M.gather()
   end
 
   -- Notify user
-  vim.notify(("markdown.inline_debug: wrote debug log to %s"):format(out_path), vim.log.levels.INFO)
+  notify.info(("wrote debug log to %s"):format(out_path))
 
   -- Quick echo summary in command line (escape single quotes)
   local quick = {

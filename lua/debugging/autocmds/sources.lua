@@ -6,8 +6,14 @@
 --- reports where each autocmd is DEFINED (path:line + implementation), grouped
 --- by event. Complements `debugging.autocmds.runtime` (the live view).
 ---
+--- Scan results are cached per root for a few seconds so repeated calls
+--- (e.g. trying different `sort=`/`event=` combinations) don't rescan the
+--- whole tree each time; pass `refresh=true` to force a rescan.
+---
 --- Ported from the former `usrcmds.list.autocmd_audit`. The text parser is
 --- intentionally simple; a Tree-sitter rewrite is on the roadmap.
+
+require("debugging.autocmds.@types")
 
 local uv = vim.uv or vim.loop
 local bo = vim.bo
@@ -35,7 +41,15 @@ M.KNOWN_EVENTS = {
 M.SORT_MODES = { "source", "event", "frequency" }
 
 ---@type string[]
-M.ARG_KEYS = { "event=", "sort=", "impl=", "summary=", "freq=", "root=" }
+M.ARG_KEYS = { "event=", "sort=", "impl=", "summary=", "freq=", "root=", "refresh=" }
+
+---@type integer  Cache TTL in seconds — repeated `sources` calls with the
+--- same root within this window reuse the previous scan instead of
+--- rescanning the whole directory tree.
+local CACHE_TTL_SECONDS = 5
+
+---@type Dbg.Autocmds.SourceCache|nil
+local _cache = nil
 
 ---@param raw string
 ---@return string[]
@@ -77,8 +91,8 @@ end
 
 ---@param abs_path string
 ---@param rel_path string
----@param by_event table<string, table[]>
----@param all table[]
+---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
+---@param all Dbg.Autocmds.SourceItem[]
 local function scan_file(abs_path, rel_path, by_event, all)
   local ok, lines = pcall(vim.fn.readfile, abs_path)
   if not ok or type(lines) ~= "table" then return end
@@ -104,8 +118,8 @@ end
 
 ---@param dir string
 ---@param root string
----@param by_event table<string, table[]>
----@param all table[]
+---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
+---@param all Dbg.Autocmds.SourceItem[]
 local function scan_dir(dir, root, by_event, all)
   local fd = uv.fs_scandir(dir)
   if not fd then return end
@@ -122,12 +136,12 @@ local function scan_dir(dir, root, by_event, all)
 end
 
 ---@param args string
----@return { event: string|nil, sort: string, show_impl: boolean, show_summary: boolean, show_freq: boolean, root: string }
+---@return Dbg.Autocmds.SourceOpts
 local function parse_args(args)
   local opts = {
     event = nil, sort = "source",
     show_impl = true, show_summary = true, show_freq = true,
-    root = DEFAULT_ROOT,
+    root = DEFAULT_ROOT, refresh = false,
   }
   for key, val in (args or ""):gmatch("(%w+)=([^%s]+)") do
     if key == "event" then opts.event = val
@@ -135,14 +149,15 @@ local function parse_args(args)
     elseif key == "impl" then opts.show_impl = val ~= "false"
     elseif key == "summary" then opts.show_summary = val ~= "false"
     elseif key == "freq" then opts.show_freq = val ~= "false"
-    elseif key == "root" then opts.root = vim.fn.expand(val) end
+    elseif key == "root" then opts.root = vim.fn.expand(val)
+    elseif key == "refresh" then opts.refresh = val ~= "false" end
   end
   return opts
 end
 
----@param opts table
----@param by_event table<string, table[]>
----@param all table[]
+---@param opts Dbg.Autocmds.SourceOpts
+---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
+---@param all Dbg.Autocmds.SourceItem[]
 ---@return string[]
 local function generate_output(opts, by_event, all)
   local lines = {}
@@ -200,17 +215,32 @@ local function generate_output(opts, by_event, all)
 end
 
 ---Run the static source audit and show the report in a scratch buffer.
----@param args? string  key=value args: event= sort= impl= summary= freq= root=
+--- Results are cached per `root` for `CACHE_TTL_SECONDS`; pass `refresh=true`
+--- to force a rescan.
+---@param args? string  key=value args: event= sort= impl= summary= freq= root= refresh=
 ---@return nil
 function M.run(args)
   local opts = parse_args(args or "")
 
-  local by_event, all = {}, {}
-  if vim.fn.isdirectory(opts.root) ~= 1 then
-    vim.notify("[debugging] autocmd sources: root is not a directory: " .. opts.root, vim.log.levels.ERROR)
-    return
+  ---@type table<string, Dbg.Autocmds.SourceItem[]>, Dbg.Autocmds.SourceItem[]
+  local by_event, all
+  local now = os.time()
+  local cache_valid = _cache
+    and not opts.refresh
+    and _cache.root == opts.root
+    and (now - _cache.scanned_at) < CACHE_TTL_SECONDS
+
+  if cache_valid then
+    by_event, all = _cache.by_event, _cache.all
+  else
+    if vim.fn.isdirectory(opts.root) ~= 1 then
+      vim.notify("[debugging] autocmd sources: root is not a directory: " .. opts.root, vim.log.levels.ERROR)
+      return
+    end
+    by_event, all = {}, {}
+    scan_dir(opts.root, opts.root, by_event, all)
+    _cache = { root = opts.root, scanned_at = now, by_event = by_event, all = all }
   end
-  scan_dir(opts.root, opts.root, by_event, all)
 
   local output = generate_output(opts, by_event, all)
 
@@ -244,7 +274,7 @@ function M.complete(arglead)
     end
     return out
   end
-  if key == "impl" or key == "summary" or key == "freq" then
+  if key == "impl" or key == "summary" or key == "freq" or key == "refresh" then
     return { key .. "=true", key .. "=false" }
   end
   local out = {}

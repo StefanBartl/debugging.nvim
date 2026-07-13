@@ -1,8 +1,9 @@
 ---@module 'debugging.nvim_options.indent_helpers'
--- Helpers to inspect and toggle indentation providers in Neovim.
--- Usage:
--- :Debug indent show
--- :Debug indent treesitter [true|false]
+---@brief Inspect and toggle indentation providers in Neovim.
+---@description
+--- `:Debug indent show` reports the buffer's indent-related options;
+--- `:Debug indent treesitter [true|false]` disables/restores
+--- `cindent`/`smartindent` so an existing Tree-sitter indentexpr can take over.
 
 local notify = require("lib.nvim.notify").create("[debugging.nvim_options.indent_helpers]")
 

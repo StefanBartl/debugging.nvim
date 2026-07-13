@@ -36,7 +36,7 @@ by `config.features.*`.
 | `:Debug noice all\|errors` | Show all Noice messages / only errors |
 | `:Debug report buf\|tab\|win [id]` | Buffer / tab / window report to `:messages` |
 | `:Debug autocmds runtime [event] [pat]` | Live `nvim_get_autocmds()` view |
-| `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=]` | Static source-code audit of `nvim_create_autocmd` call sites |
+| `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=]` | Static source-code audit of `nvim_create_autocmd` call sites (cached per root for a few seconds; `refresh=true` forces a rescan) |
 | `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state |
 | `:Debug cursor state` | Print cursor / window / buffer state |
 | `:Debug dump [varname]` | Recursively dump a global Lua var (or word under cursor) |

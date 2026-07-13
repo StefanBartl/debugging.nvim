@@ -51,31 +51,43 @@ Schweregrad; jeder Punkt verlinkt auf die Detailbegründung im jeweiligen Audit.
 - [x] **`views/utils.lua`: redundanten `make_focusable()`-Call entfernen** in
   `focus_and_bottom()` (wird bereits intern von `force_focus()` aufgerufen).
   ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#3-kontext-statt-mehrfach-api-zugriffe))
-- [ ] **`autocmds sources`: optionalen Cache erwägen** (z. B. Ergebnis für N
-  Sekunden behalten, `refresh=true`-Flag zum Erzwingen), um wiederholte
-  Full-Scans während einer Session zu vermeiden. Zurückgestellt — Design-
-  Entscheidung (Cache-Invalidierungsstrategie), kein reiner Bugfix.
+- [x] **`autocmds sources`: optionalen Cache ergänzt** — Ergebnis wird pro
+  `root` für 5s (`CACHE_TTL_SECONDS`) behalten; `refresh=true` erzwingt einen
+  Rescan. Verifiziert per Headless-Test (Scan-Zähler bleibt beim 2. Aufruf
+  unverändert, verdoppelt sich bei `refresh=true`).
   ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#7-cache-vorhanden-und-explizit))
 
 ### 🟢 Nice-to-have
 
-- [ ] `@brief`/`@description` in verbleibenden Leaf-Modulen nachziehen
-  (`tools/cursor/state.lua`, `nvim_options/indent_helpers.lua`) — bereits
-  ergänzt in `tools/vardump` und `terminals/keylogger.lua`.
-- [ ] `@types/`-Ordner für `tools/`, `autocmds/`, `actions/`, `bindings/`,
-  `terminals/`, `nvim_options/` ergänzen (aktuell nur in `debugging/@types`,
-  `views/@types`, `markdown/@types`).
+- [x] `@brief`/`@description` in `tools/cursor/state.lua` und
+  `nvim_options/indent_helpers.lua` ergänzt (war bereits vorhanden in
+  `tools/vardump` und `terminals/keylogger.lua`).
+- [x] `@types/`-Ordner ergänzt, wo echte strukturierte Daten existieren:
+  `autocmds/@types/init.lua` (`Dbg.Autocmds.SourceItem/SourceOpts/SourceCache`,
+  jetzt auch in `autocmds/sources.lua` verwendet statt anonymer Inline-Shapes)
+  und `bindings/@types/init.lua` (`Dbg.ActionFn`/`Dbg.Bindings.RegistryEntry`,
+  aus `commands.lua` extrahiert). Bewusst **nicht** angelegt für `tools/`,
+  `actions/`, `terminals/`, `nvim_options/` — dort gibt es keine
+  mehrfeldrigen Datenstrukturen, nur Primitive (bufnr, varname, boolesche
+  Flags); ein leerer Platzhalter-Ordner wäre reine Formsache ohne
+  LSP-Mehrwert gewesen.
 - [x] `terminals/keylogger.lua`: deutsche Kommentare ins Englische übersetzt.
-- [ ] `markdown/inline_debug.lua`: veralteten Kopfkommentar-Verweis auf `/tmp`
-  korrigieren (tatsächliches Ziel: `stdpath("data")/debuglog/markdown_inline`).
+- [x] `markdown/inline_debug.lua`: veralteten Kopfkommentar-Verweis auf `/tmp`
+  korrigiert (tatsächliches Ziel: `stdpath("data")/debuglog/markdown_inline`);
+  dabei auch einen toten `local notify`-Import bemerkt und den bisherigen
+  `vim.notify(...)`-Call darauf umgestellt (Konsistenz mit dem Rest des Repos).
 - [x] `nvim_options/indent_helpers.lua`: Docstring von `prefer_treesitter_indent`
   präzisiert (schaltet nur `cindent`/`smartindent` ab, aktiviert Treesitter
   nicht selbst).
 - [x] `tools/cursor/state.lua`: erneute `nvim_win_is_valid()`-Prüfung in der
   Fenster-Iteration ergänzt.
-- [ ] Formatter/Linter (`stylua`, `luacheck`) einrichten — `.luarc.json` ist
-  jetzt vorhanden ([../.luarc.json](../.luarc.json)), Formatter/Linter fehlen
-  noch. ([Checklist.md](./ROADMAP/Checklist.md#7-tooling))
+- [x] Formatter/Linter eingerichtet — [stylua.toml](../stylua.toml) und
+  [.luacheckrc](../.luacheckrc) (Konvention aus markdown.nvim/cascade.nvim
+  übernommen). `luacheck` läuft sauber über alle 32 Lua-Dateien (0
+  Warnungen/Fehler). `stylua --check` zeigt lokal nur Zeilenende-Rauschen
+  (`core.autocrlf=true` auf diesem Windows-Checkout — Git speichert LF, die
+  Working-Copy hat CRLF), keine echten Stilverstöße.
+  ([Checklist.md](./ROADMAP/Checklist.md#7-tooling))
 
 ---
 
