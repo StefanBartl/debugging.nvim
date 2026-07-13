@@ -9,17 +9,17 @@
 --- `debugging.bindings.usercmds`; this module only exposes `dispatch()` and
 --- `complete()` for it to wire up.
 
+require("debugging.bindings.@types")
+
 local notify = require("lib.nvim.notify").create("[debugging]")
 local config = require("debugging.config")
 
 local M = {}
 
----@alias Dbg.ActionFn fun(args: string[]): nil
-
 -- Category -> { action -> fn }. Built lazily so leaf modules load on demand.
 -- Each entry also carries an `actions` order list for completion.
 
----@return table<string, { feature: string, actions: string[], run: table<string, Dbg.ActionFn> }>
+---@return table<string, Dbg.Bindings.RegistryEntry>
 local function build_registry()
   return {
     messages = {
