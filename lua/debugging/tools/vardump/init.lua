@@ -10,54 +10,6 @@ local api = vim.api
 
 local M = {}
 
----@type integer  Hard recursion-depth limit against cyclic tables/huge structures.
-local MAX_DEPTH = 30
-
----@param value any
----@param depth integer|nil
----@param key any
----@param lines string[]
----@return nil
-local function dump_value(value, depth, key, lines)
-    local line_prefix = ""
-    local spaces = ""
-    if key ~= nil then
-        line_prefix = "["..tostring(key).."] = "
-    end
-    if depth == nil then
-        depth = 0
-    else
-        depth = depth + 1
-        for _ = 1, depth do spaces = spaces .. "  " end
-    end
-
-    if depth > MAX_DEPTH then
-        lines[#lines + 1] = spaces .. line_prefix .. "<max depth reached>"
-        return
-    end
-
-    if type(value) == "table" then
-        local mTable = getmetatable(value)
-        if mTable == nil then
-            lines[#lines + 1] = spaces .. line_prefix .. "(table)"
-        else
-            lines[#lines + 1] = spaces .. "(metatable)"
-            value = mTable
-        end
-        for k, v in pairs(value) do
-            dump_value(v, depth, k, lines)
-        end
-    elseif type(value) == "function"
-        or type(value) == "thread"
-        or type(value) == "userdata"
-        or value == nil
-    then
-        lines[#lines + 1] = spaces .. tostring(value)
-    else
-        lines[#lines + 1] = spaces .. line_prefix .. "(" .. type(value) .. ") " .. tostring(value)
-    end
-end
-
 -- Helper to get word under cursor
 local function get_word_under_cursor()
     ---@diagnostic disable-next-line: deprecated
@@ -84,14 +36,17 @@ function M.dump(varname)
 
     local value = _G[varname]
 
-    local lines = { ("Variable '%s':"):format(varname) }
-    local ok, err = pcall(dump_value, value, 0, nil, lines)
+    -- Delegates to lib.lua.dump, which this module's own recursive dumper
+    -- was upstreamed into (with one bugfix versus the original: a
+    -- metatable no longer replaces the value's own fields in the dump
+    -- output, it's shown alongside them).
+    local ok, result = pcall(require("lib.lua.dump").to_string, value)
     if not ok then
-        notify.error(("failed to dump '%s': %s"):format(varname, tostring(err)))
+        notify.error(("failed to dump '%s': %s"):format(varname, tostring(result)))
         return
     end
 
-    notify.info(table.concat(lines, "\n"))
+    notify.info(("Variable '%s':\n%s"):format(varname, result))
 end
 
 return M
