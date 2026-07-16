@@ -2,40 +2,21 @@
 ---@brief Reload the Lua module of the current buffer via :Debug module reload.
 
 local notify = require("lib.nvim.notify").create("[debugging.module_reload]")
+local get_module_path = require("lib.nvim.lua_ls.get_module_path")
 
 local M = {}
 
 ---Convert a buffer file path to its Lua module name.
----Walks vim.api.nvim_list_runtime_paths() looking for a lua/ prefix match;
----falls back to finding /lua/ anywhere in the path.
 ---@param filepath string  Absolute path to a .lua file
 ---@return string|nil module_name
 ---@return string|nil error_msg
 local function path_to_module(filepath)
   filepath = vim.fn.fnamemodify(filepath, ":p")
-
-  for _, rtp in ipairs(vim.api.nvim_list_runtime_paths()) do
-    local lua_path = rtp .. "/lua/"
-    if filepath:sub(1, #lua_path) == lua_path then
-      local rel = filepath:sub(#lua_path + 1)
-      rel = rel:gsub("%.lua$", ""):gsub("%.init$", ""):gsub("/", ".")
-      return rel
-    end
+  local module_name = get_module_path(filepath)
+  if not module_name then
+    return nil, "file is not inside a lua/ directory"
   end
-
-  -- Fallback: find /lua/ segment anywhere in path
-  local idx = filepath:find("/lua/")
-  if not idx then
-    -- Windows paths may use backslashes
-    idx = filepath:find("\\lua\\")
-  end
-  if idx then
-    local rel = filepath:sub(idx + 5)
-    rel = rel:gsub("%.lua$", ""):gsub("%.init$", ""):gsub("[/\\]", ".")
-    return rel
-  end
-
-  return nil, "file is not inside a lua/ directory"
+  return module_name
 end
 
 ---Clear caches and re-require a module by name.
