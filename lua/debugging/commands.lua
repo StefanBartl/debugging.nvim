@@ -144,6 +144,17 @@ local function build_registry()
         reload = function() require("debugging.actions.module_reload").reload_current() end,
       },
     },
+    proc = {
+      feature = "proc_trace",
+      actions = { "start", "stop", "status", "log", "watch" },
+      run = {
+        start  = function(args) require("debugging.tools.proc_trace").start(args) end,
+        stop   = function() require("debugging.tools.proc_trace").stop() end,
+        status = function() require("debugging.tools.proc_trace").status() end,
+        log    = function() require("debugging.tools.proc_trace").open_log() end,
+        watch  = function(args) require("debugging.tools.proc_trace").watch(args) end,
+      },
+    },
     health = {
       feature = "__always",
       actions = {},
@@ -175,7 +186,7 @@ end
 local function enabled_categories()
   local order = {
     "messages", "noice", "report", "autocmds", "inspect", "cursor",
-    "dump", "keylogger", "indent", "markdown", "module", "neotree", "health",
+    "dump", "keylogger", "indent", "markdown", "module", "proc", "neotree", "health",
   }
   local out = {}
   local reg = registry()

@@ -65,6 +65,7 @@ require("debugging.views.@types")
 ---@field markdown boolean       # :Debug markdown
 ---@field module_reload boolean  # :Debug module reload
 ---@field neotree boolean        # :Debug neotree … (config-specific, opt-in)
+---@field proc_trace boolean     # :Debug proc start|stop|status|log|watch
 
 ---@class Dbg.Config
 ---@field features Dbg.Config.Features
