@@ -97,6 +97,26 @@ function M.check()
   vim.health.start("debugging: neotree (opt-in)")
   check_require("config.neotree.safety", "neotree.safety bridge", "info")
   check_require("config.neotree.watcher_quarantine", "neotree.watcher_quarantine bridge", "info")
+
+  -- ── proc_trace (freeze diagnosis) ─────────────────────────────────────────
+  vim.health.start("debugging: proc (freeze diagnosis)")
+  check_require("lib.nvim.system.proc_trace", "lib.nvim.system.proc_trace", "warn")
+  if vim.fn.has("win32") == 1 then
+    local hits = vim.api.nvim_get_runtime_file("scripts/watch-nvim-procs.ps1", false)
+    if hits[1] then
+      vim.health.ok("bundled watcher script found: " .. hits[1])
+    else
+      vim.health.warn("scripts/watch-nvim-procs.ps1 not found on the runtimepath")
+    end
+    if vim.fn.executable("pwsh") == 1 or vim.fn.executable("powershell") == 1 then
+      vim.health.ok("PowerShell available (pwsh or powershell.exe) for `:Debug proc watch`")
+    else
+      vim.health.warn("neither pwsh nor powershell.exe on PATH — `:Debug proc watch` will fail")
+    end
+  else
+    vim.health.info("`:Debug proc watch` is Windows-only (Win32 CIM process tree); "
+      .. "`:Debug proc start/stop/status/log` work on every platform")
+  end
 end
 
 return M

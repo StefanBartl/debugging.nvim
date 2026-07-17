@@ -17,6 +17,7 @@ local DEFAULTS = {
     markdown     = true,   -- :Debug markdown
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
     module_reload = true,  -- :Debug module reload
+    proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
   },
 
   -- Views subsystem (keymaps, auto-refresh autocmds, capture).

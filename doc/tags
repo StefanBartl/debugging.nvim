@@ -7,6 +7,7 @@ debugging-contents	debugging.txt	/*debugging-contents*
 debugging-health	debugging.txt	/*debugging-health*
 debugging-installation	debugging.txt	/*debugging-installation*
 debugging-intro	debugging.txt	/*debugging-intro*
+debugging-proc	debugging.txt	/*debugging-proc*
 debugging-requirements	debugging.txt	/*debugging-requirements*
 debugging.nvim	debugging.txt	/*debugging.nvim*
 debugging.txt	debugging.txt	/*debugging.txt*

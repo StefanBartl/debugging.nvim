@@ -24,7 +24,8 @@ A single `:Debug {category} {action}` command that groups every debugging tool
 in one place: message/Noice views, buffer/tab/window reports, autocmd
 inspection (runtime **and** static source audit), buffer/cursor/variable
 inspection, a terminal keylogger, indent diagnostics, markdown inline-highlight
-debugging, and an opt-in Neo-tree safety bridge.
+debugging, UI-freeze diagnosis (blocking-call tracing + an external
+process-tree watcher), and an opt-in Neo-tree safety bridge.
 
 Built on [lib.nvim](https://github.com/StefanBartl/lib.nvim) as a deliberate
 shared dependency.
@@ -36,6 +37,7 @@ shared dependency.
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Command Reference](#command-reference)
+- [Diagnosing UI Freezes](#diagnosing-ui-freezes)
 - [Tab Completion](#tab-completion)
 - [Health Check](#health-check)
 - [Architecture](#architecture)
@@ -55,6 +57,7 @@ shared dependency.
 | `indent` | `show` · `treesitter [true\|false]` | Print indent options / prefer Tree-sitter indent |
 | `markdown` | `inline` · `log` | Gather markdown inline-highlight debug info / open the log |
 | `module` | `reload` | Reload the Lua module of the current buffer |
+| `proc` | `start [threshold_ms]` · `stop` · `status` · `log` · `watch [seconds]` | Diagnose UI freezes: log slow `system()`/`jobstart` calls with tracebacks, plus an external process-tree watcher (Windows) |
 | `neotree` | `status` · `exit` · `restart` · `backup-*` · `dryrun-*` · `queue-*` | Neo-tree safety bridge (opt-in, config-specific) |
 | `health` | — | Run `:checkhealth debugging` |
 
@@ -64,7 +67,8 @@ shared dependency.
 - [lib.nvim](https://github.com/StefanBartl/lib.nvim)
 - Optional: a clipboard provider (for `messages capture`), `noice.nvim` (for
   `noice` views), Tree-sitter (markdown / indent diagnostics), `which-key.nvim`
-  (groups the views keymap prefix)
+  (groups the views keymap prefix), PowerShell (`pwsh` or `powershell.exe`, for
+  `proc watch` — Windows only)
 
 ## Installation
 
@@ -112,6 +116,7 @@ require("debugging").setup({
     markdown     = true,   -- :Debug markdown
     module_reload = true,  -- :Debug module reload
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
+    proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
   },
   views = {
     keymaps  = { enable = true, prefix = "<lt>" },
@@ -145,6 +150,10 @@ require("debugging").setup({ all = true })
 :Debug indent treesitter false  " restore cindent/smartindent
 :Debug markdown inline          " gather markdown inline-highlight debug
 :Debug module reload            " reload Lua module of the current buffer
+:Debug proc start 200           " start logging system()/jobstart calls ≥200ms
+:Debug proc stop                " stop and restore the wrapped functions
+:Debug proc log                 " open the log
+:Debug proc watch 60            " (Windows) external process-tree watcher, 60s
 :Debug neotree status           " Neo-tree quarantine status (opt-in)
 :Debug health                   " run :checkhealth debugging
 ```
@@ -152,6 +161,52 @@ require("debugging").setup({ all = true })
 The `autocmds sources` audit accepts `event=`, `sort=` (`source`/`event`/`frequency`),
 `impl=`, `summary=`, `freq=`, `root=`, and `refresh=` arguments. Results are
 cached per `root` for a few seconds; pass `refresh=true` to force a rescan.
+
+## Diagnosing UI Freezes
+
+`:Debug proc` answers "what exactly is blocking Neovim right now?" — for the
+class of freeze caused by a slow or hung external process (a Git shell-out
+down an unresponsive network share, an LSP tool waiting on a subprocess, a
+plugin spawning far more processes than expected).
+
+Two complementary layers:
+
+1. **`proc start` / `stop` / `status` / `log`** — wraps `vim.fn.system`,
+   `vim.fn.systemlist`, `vim.system`, and `vim.fn.jobstart` (via
+   [`lib.nvim.system.proc_trace`](https://github.com/StefanBartl/lib.nvim/blob/main/lua/lib/nvim/system/README.md#libnvimsystemproc_trace))
+   to log each call's duration, with a full Lua stack traceback for calls at
+   or above a threshold (default 200ms) — so you see not just *that* something
+   was slow, but *which plugin/config line* triggered it.
+2. **`proc watch [seconds]`** (Windows only) — opens a terminal split running
+   a bundled PowerShell script that polls the Win32 process tree and reports
+   every child process of this Neovim instance with its start time and
+   lifetime. This is the layer that catches what `proc_trace` structurally
+   cannot: LSP-server subprocesses and any other spawn that never goes
+   through `vim.fn.*`/`vim.system`.
+
+Typical session:
+
+```vim
+:Debug proc start 200        " ideally as the very first thing after startup
+" ... reproduce the freeze (open a file, trigger the slow action, ...) ...
+:Debug proc stop
+:Debug proc log              " inspect entries + tracebacks
+```
+
+Or, to see literally every child process regardless of how it was spawned:
+
+```vim
+:Debug proc watch 60
+" ... reproduce the freeze in this same Neovim instance ...
+" Ctrl+C in the terminal split once the freeze is over → sorted-by-lifetime summary
+```
+
+**Honest limits:** `proc_trace` only sees calls through the exact API tables
+it wraps — a plugin that cached `local system = vim.fn.system` before
+`proc start` ran bypasses it (start as early as possible, ideally the first
+line of `init.lua`, to minimize this). `proc watch` has no bundled
+equivalent on Linux/macOS; `pstree -p <nvim_pid>` or a `watch`-looped `ps`
+covers the same ground there.
 
 ## Tab Completion
 
@@ -165,6 +220,7 @@ cached per `root` for a few seconds; pass `refresh=true` to force a rescan.
 :Debug autocmds sources event=Buf<Tab>  → event=BufAdd event=BufEnter …
 :Debug indent treesitter <Tab>     → true false
 :Debug module <Tab>                → reload
+:Debug proc <Tab>                  → start stop status log watch
 ```
 
 ## Health Check
@@ -181,6 +237,7 @@ Neo-tree bridge.
 
 ```
 docs/BINDINGS.md             Cheatsheet: every keymap, :Debug action, autocmd
+scripts/watch-nvim-procs.ps1  Bundled external process-tree watcher (Windows)
 plugin/debugging.lua          Load guard (vim.g.loaded_debugging)
 lua/debugging/
   init.lua                    setup() — feature gating + bindings registration
@@ -210,6 +267,9 @@ lua/debugging/
     buffer_inspector/         buffer option/state inspection
     cursor/state.lua          cursor/window/buffer state
     vardump/                  recursive Lua value dump
+    proc_trace.lua            :Debug proc — freeze diagnosis (delegates to
+                              lib.nvim.system.proc_trace; drives the bundled
+                              watcher script for `proc watch`)
   terminals/keylogger.lua     terminal keylogger
   nvim_options/indent_helpers.lua   indent diagnostics
   markdown/inline_debug.lua   markdown inline-highlight debug
@@ -217,4 +277,4 @@ lua/debugging/
 
 Each leaf module exposes plain action functions; `bindings/usercmds.lua` is
 the only place that registers a user command. lib.nvim provides notify,
-`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, and `normalize`.
+`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, `normalize`, and `system.proc_trace`.
