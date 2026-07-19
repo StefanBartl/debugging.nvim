@@ -16,6 +16,26 @@ local config = require("debugging.config")
 
 local M = {}
 
+---Parse an optional handle argument (buffer/window id).
+---
+--- Returns `nil, true` when the argument was omitted (callers treat that as
+--- "use the current/all handles"), and `nil, false` when it was present but
+--- not a number — which used to fall through to the same `nil` and silently
+--- ignore the typo (`:Debug report win abc` reported *all* windows).
+---@param raw string? Raw argument as typed by the user
+---@return integer? id
+---@return boolean ok
+local function parse_id(raw)
+  if raw == nil or raw == "" then
+    return nil, true
+  end
+  local id = tonumber(raw)
+  if not id or id ~= math.floor(id) then
+    return nil, false
+  end
+  return id, true
+end
+
 -- Category -> { action -> fn }. Built lazily so leaf modules load on demand.
 -- Each entry also carries an `actions` order list for completion.
 
@@ -46,7 +66,11 @@ local function build_registry()
         buf = function() require("debugging.actions.reports").buf() end,
         tab = function() require("debugging.actions.reports").tab() end,
         win = function(args)
-          local id = args[1] and tonumber(args[1]) or nil
+          local id, ok = parse_id(args[1])
+          if not ok then
+            notify.error(("invalid window id %q — expected a number"):format(args[1]))
+            return
+          end
           require("debugging.actions.reports").win(id)
         end,
       },
@@ -68,7 +92,11 @@ local function build_registry()
       actions = { "buffer" },
       run = {
         buffer = function(args)
-          local b = args[1] and tonumber(args[1]) or nil
+          local b, ok = parse_id(args[1])
+          if not ok then
+            notify.error(("invalid buffer id %q — expected a number"):format(args[1]))
+            return
+          end
           require("debugging.tools.buffer_inspector").inspect(b)
         end,
       },
