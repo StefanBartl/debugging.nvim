@@ -16,11 +16,14 @@
 --- that point, which is enough for freezes that happen on a later action
 --- (opening a file, an LSP attach, ...) rather than at startup itself.
 
+require("debugging.tools.@types")
+
 local notify = require("lib.nvim.notify").create("[debugging.tools.proc_trace]")
 
 local M = {}
 
----@return { threshold_ms?: integer }|nil
+---@param args string[]?
+---@return Dbg.Tools.ProcTraceOpts|nil
 local function parse_start_args(args)
   if not args or not args[1] then
     return nil
