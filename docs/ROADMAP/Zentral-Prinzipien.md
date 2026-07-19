@@ -40,15 +40,15 @@ Nicht anwendbar — es gibt keinen Hot-Path (keine
 ([autocmds/sources.lua](../../lua/debugging/autocmds/sources.lua)) nutzt
 lokale Funktions-Aliase und `table.concat` statt Verkettung in Schleifen.
 
-### ➖ Treesitter für den Sources-Parser
+### ✅ Treesitter für den Sources-Parser (umgesetzt)
 
-`autocmds/sources.lua` parst `nvim_create_autocmd`-Callsites weiterhin per
-Text-/Klammer-Matching. Das ist bei ungewöhnlicher Formatierung fragil und
-steht als **geplantes Feature** (nicht als Fund) in
-[../ROADMAP.md](../ROADMAP.md#autocmd-audit). Das Verhalten des aktuellen
-Parsers ist inzwischen durch
-[sources_spec.lua](../TESTS/sources_spec.lua) festgenagelt — die Umstellung
-kann also gegen bestehende Tests erfolgen.
+`autocmds/sources.lua` parst `nvim_create_autocmd`-Callsites jetzt per
+Tree-sitter (Lua-Grammar, `function_call` mit Namen `nvim_create_autocmd`),
+sobald der Lua-Parser verfügbar ist; der alte Text-/Klammer-Parser bleibt als
+Fallback und ist weiter durch
+[sources_spec.lua](../TESTS/sources_spec.lua) abgesichert. Der End-to-End-Test
+(`sources.run`) läuft in CI gegen den Tree-sitter-Pfad, da der Lua-Parser dort
+vorhanden ist.
 
 `markdown/inline_debug.lua` nutzt Treesitter bewusst minimal (nur
 Parser-Präsenz-Check, keine Queries) — angemessen für ein Diagnose-Tool.

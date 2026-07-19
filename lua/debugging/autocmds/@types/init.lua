@@ -18,6 +18,7 @@
 ---@field show_freq boolean      (reserved; frequency info is folded into `sort = "frequency"`)
 ---@field root string            Directory scanned for nvim_create_autocmd call sites
 ---@field refresh boolean        Force a rescan, bypassing the cache
+---@field quickfix boolean       Send path:line to the quickfix list instead of a scratch report
 
 ---@class Dbg.Autocmds.SourceCache
 ---@field root string                                   Root the cached scan was run against

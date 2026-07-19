@@ -77,9 +77,33 @@ return function(H)
     -- Unknown category completes to nothing rather than erroring.
     H.eq_list(commands.complete("", "Debug bogus ", 12), {}, "complete: unknown category yields nothing")
 
+    -- `autocmds` now offers the combined `all` action too.
+    H.eq_list(commands.complete("", "Debug autocmds ", 15), { "runtime", "sources", "all" },
+      "complete: autocmds actions include all")
+
     -- `autocmds sources` hands off to the sources completer.
     local src = commands.complete("sort=", "Debug autocmds sources sort=", 28)
     H.ok(#src > 0, "complete: autocmds sources delegates to the sources completer")
+
+    -- `autocmds all` delegates to the same completer (root=/refresh=/event=).
+    local all = commands.complete("re", "Debug autocmds all re", 21)
+    H.ok(#all > 0, "complete: autocmds all delegates to the sources completer")
+
+    -- `inspect` offers buffer/window/tab.
+    H.eq_list(commands.complete("", "Debug inspect ", 14), { "buffer", "window", "tab" },
+      "complete: inspect actions")
+
+    -- The window/tab inspectors reject non-numeric handles like buffer does.
+    reset()
+    commands.dispatch({ "inspect", "window", "abc" })
+    H.match(last(), "invalid window id", "dispatch: non-numeric window id rejected")
+    reset()
+    commands.dispatch({ "inspect", "tab", "abc" })
+    H.match(last(), "invalid tab number", "dispatch: non-numeric tab number rejected")
+
+    -- `performance` offers the startup action.
+    H.eq_list(commands.complete("", "Debug performance ", 18), { "startup" },
+      "complete: performance actions")
 
     -- `indent treesitter` offers the boolean argument.
     local ts = commands.complete("", "Debug indent treesitter ", 24)

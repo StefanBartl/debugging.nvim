@@ -36,16 +36,20 @@ by `config.features.*`.
 | `:Debug noice all\|errors` | Show all Noice messages / only errors |
 | `:Debug report buf\|tab\|win [id]` | Buffer / tab / window report to `:messages` |
 | `:Debug autocmds runtime [event] [pat]` | Live `nvim_get_autocmds()` view |
-| `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=]` | Static source-code audit of `nvim_create_autocmd` call sites (cached per root for a few seconds; `refresh=true` forces a rescan) |
+| `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=][qf=]` | Static source-code audit of `nvim_create_autocmd` call sites (Tree-sitter parser with text fallback; cached per root; `refresh=true` forces a rescan; `qf=true` sends `path:line` to the quickfix list) |
+| `:Debug autocmds all [root=][refresh=][event=]` | Combined view: where each event is defined (sources) vs currently registered (runtime), plus a runtime-only diff |
 | `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state |
+| `:Debug inspect window [winid]` | Inspect window-scoped options and state |
+| `:Debug inspect tab [tabnr]` | Inspect a tab page's windows and their buffers |
 | `:Debug cursor state` | Print cursor / window / buffer state |
 | `:Debug dump [varname]` | Recursively dump a global Lua var (or word under cursor) |
-| `:Debug keylogger start\|stop` | Log keys pressed in the current terminal buffer |
+| `:Debug keylogger start [file]\|stop` | Log keys pressed in the current terminal buffer (optionally append to a file) |
 | `:Debug indent show` | Print indentation-related buffer options |
 | `:Debug indent treesitter [true\|false]` | Prefer Tree-sitter indent, or restore with false |
 | `:Debug markdown inline` | Gather markdown inline-highlight debug info |
 | `:Debug markdown log` | Open the most recent markdown debug log |
 | `:Debug module reload` | Reload the Lua module of the current buffer |
+| `:Debug performance startup [runs]` | Benchmark startup time and list the slowest sourced scripts |
 | `:Debug neotree status\|exit\|restart\|backup-list\|backup-clean\|dryrun-toggle\|dryrun-report\|queue-status\|queue-clear` | Opt-in Neo-tree safety bridge (needs `features.neotree = true`) |
 | `:Debug health` | Run `:checkhealth debugging` |
 

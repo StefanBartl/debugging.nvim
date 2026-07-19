@@ -18,6 +18,26 @@ local DEFAULTS = {
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
     module_reload = true,  -- :Debug module reload
     proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
+    performance  = true,   -- :Debug performance startup
+  },
+
+  -- Terminals subsystem (:Debug keylogger).
+  terminals = {
+    keylogger = {
+      -- Path to append recorded keys to. nil = notify only (no file).
+      -- `~` and env vars are expanded. `:Debug keylogger start {path}`
+      -- overrides this per-session.
+      logfile = nil,
+    },
+  },
+
+  -- Neo-tree safety bridge (opt-in via features.neotree). Each target is
+  -- either a module name to `require`, or an already-loaded table injected
+  -- directly — so the bridge works without the private `config.neotree.*`
+  -- layout. Defaults keep the original hardcoded module names.
+  neotree = {
+    quarantine = "config.neotree.watcher_quarantine",
+    safety     = "config.neotree.safety",
   },
 
   -- Views subsystem (keymaps, auto-refresh autocmds, capture).
@@ -30,6 +50,11 @@ local DEFAULTS = {
   },
 
   command = "Debug",     -- name of the single unified user command
+
+  -- How `:Debug` with no arguments renders the category overview:
+  --   "float"  -- scrollable floating window (default), q/<Esc> to close
+  --   "notify" -- single lib.nvim notification (previous behaviour)
+  overview = "float",
 }
 
 return DEFAULTS

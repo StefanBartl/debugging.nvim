@@ -22,10 +22,11 @@
 
 A single `:Debug {category} {action}` command that groups every debugging tool
 in one place: message/Noice views, buffer/tab/window reports, autocmd
-inspection (runtime **and** static source audit), buffer/cursor/variable
-inspection, a terminal keylogger, indent diagnostics, markdown inline-highlight
-debugging, UI-freeze diagnosis (blocking-call tracing + an external
-process-tree watcher), and an opt-in Neo-tree safety bridge. Built on
+inspection (runtime, a Tree-sitter static source audit, **and** a combined
+sources-vs-runtime view), buffer/window/tab/cursor/variable inspection, a
+terminal keylogger, indent diagnostics, markdown inline-highlight debugging,
+UI-freeze diagnosis (blocking-call tracing + an external process-tree watcher),
+a startup-time benchmark, and an opt-in Neo-tree safety bridge. Built on
 [lib.nvim](https://github.com/StefanBartl/lib.nvim) as a deliberate shared
 dependency.
 

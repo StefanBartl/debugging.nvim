@@ -1,7 +1,7 @@
 *debugging.txt*  One :Debug command for Neovim debugging          *debugging.nvim*
 
 Author:   Stefan Bartl
-Version:  0.1.0
+Version:  0.2.0
 
 ==============================================================================
 CONTENTS                                                    *debugging-contents*
@@ -22,10 +22,11 @@ CONTENTS                                                    *debugging-contents*
 
 debugging.nvim provides one `:Debug {category} {action}` command that groups
 every debugging tool: message/Noice views, buffer/tab/window reports, autocmd
-inspection (runtime and static source audit), buffer/cursor/variable
-inspection, a terminal keylogger, indent diagnostics, markdown inline-highlight
-debugging, UI-freeze diagnosis (blocking-call tracing + an external
-process-tree watcher), and an opt-in Neo-tree safety bridge.
+inspection (runtime, a Tree-sitter static source audit, and a combined
+sources-vs-runtime view), buffer/window/tab/cursor/variable inspection, a
+terminal keylogger, indent diagnostics, markdown inline-highlight debugging,
+UI-freeze diagnosis (blocking-call tracing + an external process-tree watcher),
+a startup-time benchmark, and an opt-in Neo-tree safety bridge.
 
 Depends on lib.nvim (a deliberate shared dependency).
 
@@ -79,6 +80,14 @@ packer.nvim: >lua
       module_reload = true,  -- :Debug module reload
       neotree       = false,  -- opt-in, config-specific
       proc_trace    = true,   -- :Debug proc start|stop|status|log|watch
+      performance   = true,   -- :Debug performance startup
+    },
+    terminals = {
+      keylogger = { logfile = nil },  -- append recorded keys here; nil = notify only
+    },
+    neotree = {
+      quarantine = "config.neotree.watcher_quarantine",
+      safety     = "config.neotree.safety",
     },
     views = {
       keymaps  = { enable = true, prefix = "<lt>" },
@@ -88,6 +97,7 @@ packer.nvim: >lua
       output_dir = nil,
     },
     command = "Debug",
+    overview = "float",   -- how `:Debug` (no args) renders: "float" or "notify"
   })
 <
 
@@ -97,12 +107,27 @@ features ~
   Per-category enable flags. A disabled category's actions are hidden from
   completion and rejected by the dispatcher.
 
+terminals ~
+  `keylogger.logfile` — path to append recorded keys to (`~`/env vars expand).
+  nil means notify only. `:Debug keylogger start {path}` overrides it per
+  session.
+
+neotree ~
+  Injectable Neo-tree bridge targets (opt-in via features.neotree). Each of
+  `quarantine`/`safety` is a module name to `require`, or a table used directly
+  — so the bridge works without the private `config.neotree.*` layout.
+
 views ~
   Keymaps (default prefix "<lt>"), auto-refresh autocmds, capture timings and
   output directory for the message/Noice views.
 
 command ~
   Name of the unified user command. Default: "Debug".
+
+overview ~
+  How `:Debug` with no arguments renders the category list: "float" (a
+  scrollable floating window, q/<Esc> to close; the default) or "notify" (a
+  single notification). Falls back to a notification when no UI is attached.
 
 ==============================================================================
 5. THE :Debug COMMAND                                                  *:Debug*
@@ -111,8 +136,10 @@ command ~
   :Debug [category] [action] [args]
 <
 
-With no arguments, `:Debug` prints an overview of the enabled categories. An
-unknown or disabled category yields an error/notification.
+With no arguments, `:Debug` shows an overview of the enabled categories — in a
+scrollable floating window by default (q/<Esc> closes it), or as a single
+notification when `overview = "notify"`. An unknown or disabled category yields
+an error/notification.
 
 ------------------------------------------------------------------------------
 5.1 Categories                                            *debugging-categories*
@@ -134,13 +161,27 @@ report ~
 autocmds ~
   `runtime [event] [pattern]`   Live view via nvim_get_autocmds().
   `sources [args]`              Static source-code audit of nvim_create_autocmd
-                                call sites. Args: event=, sort= (source|event|
+                                call sites. Uses a Tree-sitter parser when the
+                                Lua parser is available (robust against
+                                multi-line/nested calls), falling back to a
+                                text parser. Args: event=, sort= (source|event|
                                 frequency), impl=, summary=, freq=, root=,
-                                refresh=. Results are cached per root for a
-                                few seconds; refresh=true forces a rescan.
+                                refresh=, qf=. Results are cached per root for a
+                                few seconds; refresh=true forces a rescan;
+                                qf=true sends path:line to the quickfix list
+                                (for jump-to-definition) instead of the scratch
+                                report.
+  `all [args]`                 Combined view: for each event, where it is
+                                DEFINED (sources) vs currently REGISTERED
+                                (runtime), plus a diff of events registered at
+                                runtime with no source found (typically
+                                plugin-defined). Args: root=, refresh=, event=.
 
 inspect ~
   `buffer [bufnr]`  Inspect buffer-scoped options and state.
+  `window [winid]`  Inspect window-scoped options and state.
+  `tab [tabnr]`     Inspect a tab page (1-based number) — its windows and the
+                    buffers they show.
 
 cursor ~
   `state`    Print cursor / window / buffer state.
@@ -150,7 +191,10 @@ dump ~
                cursor when no name is given.
 
 keylogger ~
-  `start` / `stop`  Log keys pressed in the current terminal buffer.
+  `start [file]`  Log keys pressed in the current terminal buffer. With a file
+                  argument (or `terminals.keylogger.logfile` set) the keys are
+                  also appended to that file for later review.
+  `stop`          Stop logging.
 
 indent ~
   `show`                  Print indentation-related buffer options.
@@ -186,11 +230,22 @@ proc ~
                           Catches spawns proc_trace cannot see (LSP servers,
                           any C-internal spawn).
 
+performance ~
+  `startup [runs]`  Benchmark startup time. Spawns a fresh headless Neovim with
+                    your real config under `--startuptime`, parses the log, and
+                    reports the total startup time plus the slowest sourced
+                    scripts (the practical "what loads at startup / which
+                    lazy-loads fire" overview). A run count averages the total
+                    over several launches (default 1, max 20). Each measurement
+                    runs in its own subprocess and does not affect the current
+                    session.
+
 neotree ~ (opt-in; needs `features.neotree = true`)
   `status` `exit` `restart` `backup-list` `backup-clean` `dryrun-toggle`
   `dryrun-report` `queue-status` `queue-clear`
-  Bridges to a user-specific Neo-tree safety layer; degrades gracefully with a
-  notification when that layer is absent.
+  Bridges to a user-specific Neo-tree safety layer (injectable via the
+  `neotree` config); degrades gracefully with a notification when that layer is
+  absent.
 
 health ~
   Run |:checkhealth| debugging.
@@ -242,12 +297,14 @@ same ground there.
 
   :Debug <Tab>                            categories
   :Debug report <Tab>                     buf tab win
-  :Debug autocmds <Tab>                   runtime sources
-  :Debug autocmds sources <Tab>           event= sort= impl= summary= freq= root= refresh=
+  :Debug inspect <Tab>                    buffer window tab
+  :Debug autocmds <Tab>                   runtime sources all
+  :Debug autocmds sources <Tab>           event= sort= impl= summary= freq= root= refresh= qf=
   :Debug autocmds sources event=Buf<Tab>  matching event names
   :Debug indent treesitter <Tab>          true false
   :Debug module <Tab>                     reload
   :Debug proc <Tab>                       start stop status log watch
+  :Debug performance <Tab>                startup
 <
 
 ==============================================================================
@@ -288,10 +345,12 @@ the bundled watcher script + PowerShell availability on Windows.
     actions/neotree_safety.lua    opt-in Neo-tree bridge (pcall-guarded)
     autocmds/@types/init.lua  Dbg.Autocmds.SourceItem/SourceOpts/SourceCache
     autocmds/runtime.lua      live nvim_get_autocmds view
-    autocmds/sources.lua      static source-code audit (cached per root)
-    tools/buffer_inspector/   buffer option/state inspection
+    autocmds/sources.lua      static source-code audit (Tree-sitter + text
+                              fallback; cached per root; sources-vs-runtime all)
+    tools/buffer_inspector/   buffer / window / tab option/state inspection
     tools/cursor/state.lua    cursor/window/buffer state
     tools/vardump/            recursive Lua value dump
+    tools/startup.lua         :Debug performance startup — --startuptime benchmark
     tools/proc_trace.lua      :Debug proc — freeze diagnosis (delegates to
                               lib.nvim.system.proc_trace; drives the bundled
                               watcher script for `proc watch`)

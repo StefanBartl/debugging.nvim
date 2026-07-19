@@ -48,6 +48,7 @@ end
 local specs = {
   "config_spec.lua",
   "sources_spec.lua",
+  "startup_spec.lua",
   "commands_spec.lua",
 }
 

@@ -93,10 +93,35 @@ function M.check()
   end
 
 
+  -- ── autocmds sources parser ───────────────────────────────────────────────
+  vim.health.start("debugging: autocmds sources")
+  if pcall(vim.treesitter.get_string_parser, "", "lua") then
+    vim.health.ok("Lua Tree-sitter parser available (sources audit uses Tree-sitter)")
+  else
+    vim.health.info("no Lua Tree-sitter parser — sources audit falls back to the text parser")
+  end
+
+  -- ── performance (startup benchmark) ───────────────────────────────────────
+  vim.health.start("debugging: performance")
+  if vim.v.progpath and vim.v.progpath ~= "" then
+    vim.health.ok("Neovim binary located for `:Debug performance startup`: " .. vim.v.progpath)
+  else
+    vim.health.warn("vim.v.progpath is empty — `:Debug performance startup` cannot spawn Neovim")
+  end
+
   -- ── neotree bridge (opt-in, config-specific) ──────────────────────────────
   vim.health.start("debugging: neotree (opt-in)")
-  check_require("config.neotree.safety", "neotree.safety bridge", "info")
-  check_require("config.neotree.watcher_quarantine", "neotree.watcher_quarantine bridge", "info")
+  local neotree = require("debugging.config").get().neotree or {}
+  for _, key in ipairs({ "quarantine", "safety" }) do
+    local target = neotree[key]
+    if type(target) == "table" then
+      vim.health.ok(("neotree.%s bridge injected directly (table)"):format(key))
+    elseif type(target) == "string" then
+      check_require(target, "neotree." .. key .. " bridge", "info")
+    else
+      vim.health.info(("neotree.%s not configured"):format(key))
+    end
+  end
 
   -- ── proc_trace (freeze diagnosis) ─────────────────────────────────────────
   vim.health.start("debugging: proc (freeze diagnosis)")
