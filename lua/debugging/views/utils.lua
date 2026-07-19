@@ -1,4 +1,15 @@
 ---@module 'debugging.views.utils'
+---@brief Window helpers shared by the debug views.
+---@description
+--- Focus and scroll primitives for the log windows owned by
+--- `debugging.views.display`: identifying a debug view by buffer, making a
+--- window focusable, forcing focus, and keeping the cursor pinned to the
+--- last line as new output arrives (with a bounded retry, since the window
+--- may not have settled yet when the first attempt runs).
+---
+--- Every function validates its window/buffer handle before touching the
+--- API and returns false rather than raising — callers run from deferred
+--- callbacks where the handle may have died in the meantime.
 
 local api = vim.api
 local M = {}

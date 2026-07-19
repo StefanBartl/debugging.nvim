@@ -1,4 +1,9 @@
 ---@module 'debugging.actions.reports'
+---@brief `:Debug report buf|tab|win` — snapshot reports of the editor state.
+---@description
+--- Thin formatting layer over `lib.nvim.buf_win_tab.*`: collects the current
+--- buffer / tabpage / window properties and renders them as a notify report.
+--- `win` takes an optional window id and defaults to reporting every window.
 
 local notify = require("lib.nvim.notify").create("[debugging.actions.reports]")
 
