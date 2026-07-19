@@ -3,6 +3,13 @@
 ---@description
 --- Command *logic* (dispatch + completion) lives in `debugging.commands`;
 --- this module only registers the command.
+---
+--- Registration goes through `lib.nvim.usercmd.create`, which pcalls the
+--- callback and reports failures instead of letting a broken dispatch surface
+--- as a raw stack trace — and defaults to `force = true`, so re-running
+--- `setup()` overwrites the command rather than raising E174.
+
+local usercmd = require("lib.nvim.usercmd")
 
 local M = {}
 
@@ -12,7 +19,7 @@ local M = {}
 function M.setup(cfg)
   local commands = require("debugging.commands")
 
-  vim.api.nvim_create_user_command(cfg.command, function(a)
+  usercmd.create(cfg.command, function(a)
     commands.dispatch(a.fargs)
   end, {
     nargs = "*",
