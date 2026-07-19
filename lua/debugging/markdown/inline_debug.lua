@@ -1,11 +1,12 @@
 ---@module 'debugging.markdown.inline_debug'
+---@brief Diagnose inline-code highlighting in Markdown buffers.
+---@description
 --- Robust collector for diagnostic information about inline-code highlighting
 --- in Markdown buffers. Writes a timestamped log to stdpath("data")/debuglog/
 --- markdown_inline and provides a user command. Uses only non-deprecated
 --- LSP/highlight APIs, guarded with pcall throughout, and makes file I/O and
 --- API access robust across Neovim versions.
 
----@return Dbg.MD.InlineDebug
 local notify = require("lib.nvim.notify").create("[debugging.markdown.inline_debug]")
 
 local M = {}

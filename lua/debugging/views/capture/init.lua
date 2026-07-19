@@ -1,5 +1,11 @@
 ---@module 'debugging.views.capture'
----Unified capture system for :messages, Noice, etc.
+---@brief Unified capture system for :messages, Noice, etc.
+---@description
+--- Reads the message history (Noice when available, `:messages` otherwise),
+--- then optionally copies it to the clipboard and writes a timestamped file
+--- under the configured output directory. Clipboard and file writer are
+--- pulled in lazily, so a capture that needs neither costs nothing.
+--- Returns `ok, content_or_error` — it never notifies on behalf of callers.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.capture]")
 

@@ -1,4 +1,11 @@
 ---@module 'debugging.views.display'
+---@brief Open, refresh and close the debug log windows.
+---@description
+--- Owns the lifecycle of the split windows behind `:Debug messages` and
+--- `:Debug noice`. Windows are identified solely by the `custom_tag` window
+--- variable and looked up via find_window_by_tag() rather than tracked in a
+--- module-level registry — a deliberate choice, since a stale registry is
+--- exactly what once made clear_all() miss open windows.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.display]")
 
