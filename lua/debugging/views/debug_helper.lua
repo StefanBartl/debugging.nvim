@@ -1,5 +1,15 @@
 ---@module 'debugging.views.debug_helper'
----Diagnostic helper for debugging message capture issues
+---@brief Diagnostic helper for debugging message-capture issues.
+---@description
+--- Self-diagnosis for `debugging.views` itself: probes Noice availability and
+--- message structure, the two `:messages` read paths (`vim.fn.execute` /
+--- `nvim_exec2`), the capture output directory and the host platform.
+---
+--- Not wired into `:Debug` — it inspects the capture pipeline rather than the
+--- user's config, so it is meant to be called directly while working on this
+--- plugin:
+---   :lua require("debugging.views.debug_helper").report()
+---   :lua require("debugging.views.debug_helper").test_capture()
 
 local notify = require("lib.nvim.notify").create("[debugging.views.debug_helper]")
 
@@ -134,110 +144,129 @@ function M.check_messages()
   return status
 end
 
----Print comprehensive diagnostic report
-function M.report()
-  print("\n" .. string.rep("=", 60))
-  print("DEBUGGING.VIEWS DIAGNOSTIC REPORT")
-  print(string.rep("=", 60))
+---Build the comprehensive diagnostic report as plain lines.
+---@return string[] lines
+function M.report_lines()
+  local out = {}
+  local function add(fmt, ...)
+    out[#out + 1] = select("#", ...) > 0 and string.format(fmt, ...) or fmt
+  end
+  local function mark(v) return v and "✓" or "✗" end
+
+  local rule = string.rep("=", 60)
+  add(rule)
+  add("DEBUGGING.VIEWS DIAGNOSTIC REPORT")
+  add(rule)
 
   -- Check Noice
-  print("\n📦 NOICE STATUS:")
+  add("")
+  add("📦 NOICE STATUS:")
   local noice_status = M.check_noice()
-  print(string.format("  Installed: %s", noice_status.installed and "✓" or "✗"))
+  add("  Installed: %s", mark(noice_status.installed))
   if noice_status.installed then
-    print(string.format("  Manager: %s", noice_status.manager_available and "✓" or "✗"))
-    print(string.format("  History: %s", noice_status.history_available and "✓" or "✗"))
-    print(string.format("  API: %s", noice_status.api_available and "✓" or "✗"))
-    print(string.format("  Buffers: %d", noice_status.buffers_found))
-    print(string.format("  Messages: %d", noice_status.message_count))
+    add("  Manager: %s", mark(noice_status.manager_available))
+    add("  History: %s", mark(noice_status.history_available))
+    add("  API: %s", mark(noice_status.api_available))
+    add("  Buffers: %d", noice_status.buffers_found)
+    add("  Messages: %d", noice_status.message_count)
 
     -- Show sample message structure
     if #noice_status.sample_messages > 0 then
-      print("\n  Sample Message Structure:")
+      add("")
+      add("  Sample Message Structure:")
       for i, sample in ipairs(noice_status.sample_messages) do
-        print(string.format("    Message #%d:", i))
-        print(string.format("      content: %s (type: %s)",
-          tostring(sample.has_content), sample.content_type))
-        print(string.format("      _lines: %s (count: %d)",
-          tostring(sample.has__lines), sample._lines_count))
+        add("    Message #%d:", i)
+        add("      content: %s (type: %s)", tostring(sample.has_content), sample.content_type)
+        add("      _lines: %s (count: %d)", tostring(sample.has__lines), sample._lines_count)
 
         if sample._lines_sample then
-          print("      _lines[1] structure:")
+          add("      _lines[1] structure:")
           if sample._lines_sample.type == "table" then
-            print(string.format("        type: table, length: %d", sample._lines_sample.length))
+            add("        type: table, length: %d", sample._lines_sample.length)
             if sample._lines_sample.first_part then
-              print(string.format("        [1] type: %s", sample._lines_sample.first_part.type))
+              add("        [1] type: %s", sample._lines_sample.first_part.type)
               if sample._lines_sample.first_part.has__text then
-                print(string.format("        [1]._text: %s",
-                  vim.inspect(sample._lines_sample.first_part._text_value):sub(1, 50)))
+                add("        [1]._text: %s",
+                  vim.inspect(sample._lines_sample.first_part._text_value):sub(1, 50))
               end
             end
           else
-            print(string.format("        type: %s", sample._lines_sample.type))
+            add("        type: %s", sample._lines_sample.type)
             if sample._lines_sample.value then
-              print(string.format("        value: %s", sample._lines_sample.value))
+              add("        value: %s", sample._lines_sample.value)
             end
           end
         end
 
         if #sample.keys > 0 then
-          print("      keys: " .. table.concat(sample.keys, ", "))
+          add("      keys: " .. table.concat(sample.keys, ", "))
         end
       end
     end
   end
 
   -- Check Messages
-  print("\n📝 MESSAGES STATUS:")
+  add("")
+  add("📝 MESSAGES STATUS:")
   local msg_status = M.check_messages()
-  print(string.format("  vim.fn.execute: %s", msg_status.execute_works and "✓" or "✗"))
+  add("  vim.fn.execute: %s", mark(msg_status.execute_works))
   if msg_status.execute_works then
     local line_count = select(2, msg_status.execute_content:gsub("\n", "\n"))
-    print(string.format("    Lines: %d", line_count + 1))
-    print(string.format("    Bytes: %d", #msg_status.execute_content))
+    add("    Lines: %d", line_count + 1)
+    add("    Bytes: %d", #msg_status.execute_content)
   end
 
-  print(string.format("  nvim_exec2: %s", msg_status.exec2_works and "✓" or "✗"))
+  add("  nvim_exec2: %s", mark(msg_status.exec2_works))
   if msg_status.exec2_works then
     local line_count = select(2, msg_status.exec2_content:gsub("\n", "\n"))
-    print(string.format("    Lines: %d", line_count + 1))
-    print(string.format("    Bytes: %d", #msg_status.exec2_content))
+    add("    Lines: %d", line_count + 1)
+    add("    Bytes: %d", #msg_status.exec2_content)
   end
 
   -- Check Paths
-  print("\n📁 PATHS:")
+  add("")
+  add("📁 PATHS:")
   local capture = require("debugging.views.capture")
-  print(string.format("  base_dir: %s", capture.base_dir))
-  local dir, _ = capture.base_dir, capture.base_dir .. "/test.log"
-  print(string.format("  dir exists: %s", vim.fn.isdirectory(dir) == 1 and "✓" or "✗"))
+  add("  base_dir: %s", capture.base_dir)
+  add("  dir exists: %s", mark(vim.fn.isdirectory(capture.base_dir) == 1))
 
   -- Platform
-  print("\n💻 PLATFORM:")
+  add("")
+  add("💻 PLATFORM:")
   local uname = (vim.uv or vim.loop).os_uname()
   if uname then
-    print(string.format("  System: %s", uname.sysname))
-    print(string.format("  Release: %s", uname.release or "unknown"))
+    add("  System: %s", uname.sysname)
+    add("  Release: %s", uname.release or "unknown")
   end
   local sep = package.config:sub(1, 1)
-  print(string.format("  Path separator: %s", sep == "\\" and "Windows (\\)" or "Unix (/)"))
+  add("  Path separator: %s", sep == "\\" and "Windows (\\)" or "Unix (/)")
 
-  print("\n" .. string.rep("=", 60))
-  print("Next steps:")
-  print("  1. :lua require('debugging.views.debug_helper').test_capture()")
-  print("  2. :DebugMessagesCapture")
-  print(string.rep("=", 60) .. "\n")
+  add("")
+  add(rule)
+  add("Next steps:")
+  add("  1. :lua require('debugging.views.debug_helper').test_capture()")
+  add("  2. :Debug messages capture")
+  add(rule)
+
+  return out
 end
 
----Test capture with detailed output
+---Report comprehensive diagnostics via `lib.nvim.notify`.
+---@return nil
+function M.report()
+  notify.info(table.concat(M.report_lines(), "\n"))
+end
+
+---Test capture with detailed output.
+---@return boolean ok
 function M.test_capture()
   -- Add some test messages first
   vim.notify("Test message 1", vim.log.levels.INFO)
   notify.warn("Test message 2")
   notify.error("Test message 3")
 
-  print("\n" .. string.rep("=", 60))
-  print("TESTING CAPTURE (added 3 test messages)")
-  print(string.rep("=", 60))
+  local rule = string.rep("=", 60)
+  local out = { rule, "TESTING CAPTURE (added 3 test messages)", rule }
 
   -- Try capture with debug
   local capture = require("debugging.views.capture")
@@ -248,14 +277,20 @@ function M.test_capture()
   })
 
   if ok and content then
-    print(string.format("\n✓ Capture succeeded"))
-    print(string.format("  Content length: %d bytes", #content))
-    print(string.format("  First 200 chars:\n%s", content:sub(1, 200)))
-  else
-    print("\n✗ Capture failed")
+    out[#out + 1] = ""
+    out[#out + 1] = "✓ Capture succeeded"
+    out[#out + 1] = string.format("  Content length: %d bytes", #content)
+    out[#out + 1] = string.format("  First 200 chars:\n%s", content:sub(1, 200))
+    out[#out + 1] = rule
+    notify.info(table.concat(out, "\n"))
+    return true
   end
 
-  print(string.rep("=", 60) .. "\n")
+  out[#out + 1] = ""
+  out[#out + 1] = "✗ Capture failed"
+  out[#out + 1] = rule
+  notify.error(table.concat(out, "\n"))
+  return false
 end
 
 return M
