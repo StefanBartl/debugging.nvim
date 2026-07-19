@@ -29,6 +29,7 @@ lua/debugging/
     runtime.lua               live nvim_get_autocmds view
     sources.lua               static source-code audit (cached per root)
   tools/
+    @types/init.lua           Dbg.Tools.ProcTraceOpts
     buffer_inspector/         buffer option/state inspection
     cursor/state.lua          cursor/window/buffer state
     vardump/                  recursive Lua value dump
@@ -42,4 +43,15 @@ lua/debugging/
 
 Each leaf module exposes plain action functions; `bindings/usercmds.lua` is
 the only place that registers a user command. lib.nvim provides notify,
-`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, `normalize`, and `system.proc_trace`.
+`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, `normalize`, `system.proc_trace`, and
+the `autocmd`/`usercmd` registration wrappers (which pcall their callbacks and
+report failures).
+
+The augroup in `bindings/autocmds.lua` is created directly rather than through
+`lib.nvim.autocmd.group()`: that helper caches groups by name and skips the
+clear on later calls, which would stack duplicate autocmds every time `setup()`
+runs.
+
+Tests live in [docs/TESTS](TESTS/README.md) and cover the parts where a silent
+wrong answer is plausible — the config merge, the `autocmds sources` text
+parsers, and `:Debug` dispatch/completion.

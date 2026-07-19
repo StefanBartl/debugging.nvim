@@ -57,3 +57,5 @@ Requires Neovim 0.9+ and [lib.nvim](https://github.com/StefanBartl/lib.nvim).
 - [Diagnosing UI Freezes](docs/troubleshooting.md) — using `:Debug proc` to trace blocking calls and hung child processes.
 - [Architecture](docs/architecture.md) — module layout and responsibilities.
 - [Bindings Cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
+- [Tests](docs/TESTS/README.md) — headless spec suite and how to run it.
+- [Roadmap](docs/ROADMAP.md) — what is implemented and what is planned.

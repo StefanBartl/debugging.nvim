@@ -13,81 +13,14 @@
 - Built on lib.nvim as a deliberate shared dependency
 - `docs/BINDINGS.md` cheatsheet (keymaps, :Debug actions, autocmds)
 - Optional which-key group label for the views keymap prefix
+- Headless spec suite in [docs/TESTS](./TESTS/README.md) (config merge, the
+  `autocmds sources` parsers, `:Debug` dispatch and completion)
+- stylua/luacheck config, `.luarc.json`, complete `@brief`/`@description`
+  headers across every module
 
----
-
-## Implementierungsplan (aus Architektur-Audit)
-
-Aus dem Abgleich gegen drei persönliche Lua/Neovim-Checklisten
-([docs/ROADMAP/Arch&Coding.md](./ROADMAP/Arch&Coding.md),
-[docs/ROADMAP/Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md),
-[docs/ROADMAP/Checklist.md](./ROADMAP/Checklist.md)). Priorisiert nach
-Schweregrad; jeder Punkt verlinkt auf die Detailbegründung im jeweiligen Audit.
-
-### 🔴 Kritisch
-
-- [x] **`WINDOWS`-Registry in `views/display.lua` korrekt pflegen** — `clear_all()`
-  nutzt jetzt dieselbe `vim.w[win].custom_tag`-Suche wie `find_window_by_tag()`
-  statt der inkonsistent gepflegten `WINDOWS`-Tabelle (entfernt). Verifiziert
-  per Headless-Test: Fenster wird getaggt → gefunden → `clear_all()` schließt
-  es → nicht mehr auffindbar.
-  ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#2-modularisierung--strukturprinzipien))
-
-### 🟡 Empfohlen
-
-- [x] **`print()` durch `lib.nvim.notify` ersetzen** in `tools/buffer_inspector`,
-  `tools/cursor/state.lua`, `tools/vardump`, `autocmds/runtime.lua`,
-  `nvim_options/indent_helpers.lua` — Konsistenz mit dem Rest des Repos.
-  ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#1-sicherheitsprinzipien--fehlerbehandlung))
-- [x] **`tools/vardump`: `M.Vardump` lokal + snake_case machen** (jetzt
-  `local function dump_value`), Tiefenlimit (`MAX_DEPTH = 30`) + `pcall` gegen
-  zyklische Tabellen ergänzt. Verifiziert per Headless-Test mit selbstreferenzierender
-  Tabelle. ([Arch&Coding.md](./ROADMAP/Arch&Coding.md#5-dokumentation--annotationen))
-- [x] **Keylogger: stilles Stoppen sichtbar machen** — `terminals/keylogger.lua`
-  notifiziert jetzt ("Stopped: left the terminal buffer") und setzt `M.logging
-  = false`, wenn die Rekursionskette abbricht, weil der Buffer kein Terminal
-  mehr ist. Verifiziert per Headless-Test (gemockter `getcharstr`).
-  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#9-debugbarkeit-eingeplant))
-- [x] **`views/utils.lua`: redundanten `make_focusable()`-Call entfernen** in
-  `focus_and_bottom()` (wird bereits intern von `force_focus()` aufgerufen).
-  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#3-kontext-statt-mehrfach-api-zugriffe))
-- [x] **`autocmds sources`: optionalen Cache ergänzt** — Ergebnis wird pro
-  `root` für 5s (`CACHE_TTL_SECONDS`) behalten; `refresh=true` erzwingt einen
-  Rescan. Verifiziert per Headless-Test (Scan-Zähler bleibt beim 2. Aufruf
-  unverändert, verdoppelt sich bei `refresh=true`).
-  ([Zentral-Prinzipien.md](./ROADMAP/Zentral-Prinzipien.md#7-cache-vorhanden-und-explizit))
-
-### 🟢 Nice-to-have
-
-- [x] `@brief`/`@description` in `tools/cursor/state.lua` und
-  `nvim_options/indent_helpers.lua` ergänzt (war bereits vorhanden in
-  `tools/vardump` und `terminals/keylogger.lua`).
-- [x] `@types/`-Ordner ergänzt, wo echte strukturierte Daten existieren:
-  `autocmds/@types/init.lua` (`Dbg.Autocmds.SourceItem/SourceOpts/SourceCache`,
-  jetzt auch in `autocmds/sources.lua` verwendet statt anonymer Inline-Shapes)
-  und `bindings/@types/init.lua` (`Dbg.ActionFn`/`Dbg.Bindings.RegistryEntry`,
-  aus `commands.lua` extrahiert). Bewusst **nicht** angelegt für `tools/`,
-  `actions/`, `terminals/`, `nvim_options/` — dort gibt es keine
-  mehrfeldrigen Datenstrukturen, nur Primitive (bufnr, varname, boolesche
-  Flags); ein leerer Platzhalter-Ordner wäre reine Formsache ohne
-  LSP-Mehrwert gewesen.
-- [x] `terminals/keylogger.lua`: deutsche Kommentare ins Englische übersetzt.
-- [x] `markdown/inline_debug.lua`: veralteten Kopfkommentar-Verweis auf `/tmp`
-  korrigiert (tatsächliches Ziel: `stdpath("data")/debuglog/markdown_inline`);
-  dabei auch einen toten `local notify`-Import bemerkt und den bisherigen
-  `vim.notify(...)`-Call darauf umgestellt (Konsistenz mit dem Rest des Repos).
-- [x] `nvim_options/indent_helpers.lua`: Docstring von `prefer_treesitter_indent`
-  präzisiert (schaltet nur `cindent`/`smartindent` ab, aktiviert Treesitter
-  nicht selbst).
-- [x] `tools/cursor/state.lua`: erneute `nvim_win_is_valid()`-Prüfung in der
-  Fenster-Iteration ergänzt.
-- [x] Formatter/Linter eingerichtet — [stylua.toml](../stylua.toml) und
-  [.luacheckrc](../.luacheckrc) (Konvention aus markdown.nvim/cascade.nvim
-  übernommen). `luacheck` läuft sauber über alle 32 Lua-Dateien (0
-  Warnungen/Fehler). `stylua --check` zeigt lokal nur Zeilenende-Rauschen
-  (`core.autocrlf=true` auf diesem Windows-Checkout — Git speichert LF, die
-  Working-Copy hat CRLF), keine echten Stilverstöße.
-  ([Checklist.md](./ROADMAP/Checklist.md#7-tooling))
+The architecture audit that drove much of the above is fully worked off; the
+three checklists under [docs/ROADMAP/](./ROADMAP/) now carry only the items
+that are still open or were deliberately declined.
 
 ---
 
