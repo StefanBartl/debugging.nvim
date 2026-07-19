@@ -284,4 +284,13 @@ function M.complete(arglead)
   return out
 end
 
+--- The pure parsers behind `M.run()`, exposed for `docs/TESTS/sources_spec.lua`.
+--- Not part of the public API — they stay local to this module for callers and
+--- may change shape without notice.
+M._internal = {
+  normalize_events = normalize_events,
+  read_brace_block = read_brace_block,
+  parse_args = parse_args,
+}
+
 return M
