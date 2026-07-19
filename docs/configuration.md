@@ -16,6 +16,22 @@ require("debugging").setup({
     module_reload = true,  -- :Debug module reload
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
     proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
+    performance  = true,   -- :Debug performance startup
+  },
+  -- Terminals subsystem (:Debug keylogger).
+  terminals = {
+    keylogger = {
+      logfile = nil,       -- append recorded keys here; nil = notify only.
+                           -- `~`/env vars expand; `:Debug keylogger start {path}`
+                           -- overrides this per-session.
+    },
+  },
+  -- Neo-tree safety bridge targets (opt-in via features.neotree). Each is a
+  -- module name to `require`, or an already-loaded table injected directly —
+  -- so the bridge works without the private `config.neotree.*` layout.
+  neotree = {
+    quarantine = "config.neotree.watcher_quarantine",
+    safety     = "config.neotree.safety",
   },
   views = {
     keymaps  = { enable = true, prefix = "<lt>" },
@@ -25,6 +41,7 @@ require("debugging").setup({
     output_dir = nil,  -- default: stdpath("config")/docs/debug_views
   },
   command = "Debug",   -- name of the single unified command
+  overview = "float",  -- how `:Debug` (no args) renders: "float" or "notify"
 })
 
 -- Shorthand: enable every category

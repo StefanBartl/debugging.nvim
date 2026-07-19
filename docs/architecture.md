@@ -27,12 +27,14 @@ lua/debugging/
   autocmds/
     @types/init.lua           Dbg.Autocmds.SourceItem/SourceOpts/SourceCache
     runtime.lua               live nvim_get_autocmds view
-    sources.lua               static source-code audit (cached per root)
+    sources.lua               static source-code audit (Tree-sitter + text
+                              fallback; cached per root; sources-vs-runtime `all`)
   tools/
     @types/init.lua           Dbg.Tools.ProcTraceOpts
-    buffer_inspector/         buffer option/state inspection
+    buffer_inspector/         buffer / window / tab option/state inspection
     cursor/state.lua          cursor/window/buffer state
     vardump/                  recursive Lua value dump
+    startup.lua               :Debug performance startup — --startuptime benchmark
     proc_trace.lua            :Debug proc — freeze diagnosis (delegates to
                               lib.nvim.system.proc_trace; drives the bundled
                               watcher script for `proc watch`)

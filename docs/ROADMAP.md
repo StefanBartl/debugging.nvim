@@ -18,61 +18,58 @@
 - stylua/luacheck config, `.luarc.json`, complete `@brief`/`@description`
   headers across every module
 
+## Implemented (v0.2)
+
+- **Tree-sitter parser for `autocmds sources`** — the audit now parses with the
+  Lua Tree-sitter grammar (`function_call` named `nvim_create_autocmd`) when the
+  parser is available, robust against multi-line/nested calls, and falls back to
+  the original text parser otherwise.
+- **Quickfix output for `sources`** — `:Debug autocmds sources qf=true` sends
+  `path:line` to the quickfix list for direct jump-to-definition.
+- **Combined runtime + sources** — `:Debug autocmds all` fuses the static audit
+  with the live view (defined ↔ registered), including a "registered at runtime
+  but no source found" diff (typically plugin-defined).
+- **`inspect window` / `inspect tab`** — window-scoped options/state and a tab
+  page's window/buffer layout, alongside `inspect buffer`.
+- **`keylogger` with logfile** — `:Debug keylogger start [file]` (or
+  `terminals.keylogger.logfile`) appends recorded keys to disk for long sessions.
+- **`:Debug` overview as float** — the no-argument overview renders in a
+  scrollable floating window by default (`overview = "notify"` restores the old
+  behaviour).
+- **Neo-tree bridge injectable** — the quarantine/safety targets come from the
+  `neotree` config (module name *or* a table), so the bridge works without the
+  private `config.neotree.*` layout.
+- **`performance startup`** — `startup_benchmark`: spawns a headless Neovim under
+  `--startuptime`, reports the total (optionally averaged over N runs) and the
+  slowest sourced scripts.
+
 The architecture audit that drove much of the above is fully worked off; the
 three checklists under [docs/ROADMAP/](./ROADMAP/) now carry only the items
-that are still open or were deliberately declined.
+that were deliberately declined.
 
 ---
 
 ## Geplante Features
 
-### Autocmd-Audit
-
-- **Tree-sitter-Parser für `autocmds sources`** — das aktuelle Text-/Klammer-
-  Parsing (`read_brace_block`, Regex auf `nvim_create_autocmd`) ist fragil bei
-  mehrzeiligen/verschachtelten Aufrufen. Auf Treesitter umstellen (Lua-Grammar,
-  `function_call` mit Namen `nvim_create_autocmd`).
-
-- **Quickfix-Ausgabe für `sources`** — `path:line` zusätzlich in die Quickfix-
-  Liste statt nur Scratch-Buffer; ermöglicht direktes Springen zur Definition.
-
-- **Runtime + Sources vereinen** — `:Debug autocmds all` zeigt eine kombinierte
-  Ansicht (wo definiert ↔ aktuell registriert), inkl. „registriert aber keine
-  Quelle gefunden"-Diff (z. B. von Plugins).
-
 ### Shared → lib.nvim
 
+These require changes in the separate [lib.nvim](https://github.com/StefanBartl/lib.nvim)
+repository, so they are tracked here but implemented there.
+
 - **Scratch/Float-UI nach lib.nvim** — der Scratch-Buffer-Aufbau (autocmd-audit,
-  künftige Reports) wird mit project-insight geteilt; gemeinsame Helper nach
-  `lib.nvim` auslagern und von beiden Plugins importieren.
+  Reports, das neue `:Debug` Float-Overview) wird mit project-insight geteilt;
+  gemeinsame Helper nach `lib.nvim` auslagern und von beiden Plugins importieren.
 
-- **rg-Scan-Util nach lib.nvim** — falls `autocmds sources` auf rg/Treesitter
-  umgestellt wird, die Scan-Infrastruktur mit project-insight teilen.
+- **rg-Scan-Util nach lib.nvim** — die Scan-Infrastruktur von `autocmds sources`
+  mit project-insight teilen.
 
-### Neue Kategorien / Aktionen
+### Neue Aktionen
 
-- **`performance`** — `startup_benchmark` (in den Alt-Typen referenziert, nie
-  implementiert): Startup-Zeiten messen (`--startuptime`-Auswertung) und
-  Lazy-Load-Übersicht.
-
-- **`dump` für Locals/Upvalues** — derzeit nur Globals; optional via `debug.*`
-  Locals des aufrufenden Frames inspizieren.
-
-- **`inspect window` / `inspect tab`** — analog zu `inspect buffer` für Fenster-
-  und Tab-Optionen (ergänzt die `report`-Kategorie um interaktive Inspektion).
-
-- **`keylogger` mit Logfile** — Tastendrücke optional in eine Datei schreiben
-  statt nur `notify`, für längere Sessions.
-
-### Neo-tree
-
-- **Bridge injizierbar machen** — statt fixem `require("config.neotree.*")` die
-  Safety-/Quarantine-Module per Config übergeben (`neotree = { safety = …,
-  quarantine = … }`), damit das Modul ohne die private Config nutzbar ist.
-
-### DX
-
-- **`:Debug` Overview als Float** statt `notify` (scrollbar bei vielen Kategorien).
+- **`dump` für Locals/Upvalues** — bewusst zurückgestellt. Zum Zeitpunkt eines
+  `:Debug dump`-Aufrufs besteht der Lua-Stack nur aus dem Command-Callback und
+  dem Dispatcher; es gibt keinen Nutzer-Frame mit interessanten Locals zu
+  inspizieren. Sinnvoll erst mit einem echten Breakpoint-/Hook-Kontext, den
+  dieses Plugin nicht hat.
 
 ---
 

@@ -67,6 +67,20 @@ return function(H)
   -- Unknown keys are ignored rather than poisoning the option table.
   H.eq(P.parse_args("bogus=1").sort, "source", "parse_args: unknown key ignored")
 
+  -- The quickfix flag defaults off and is opt-in via qf=true.
+  H.eq(P.parse_args("").quickfix, false, "parse_args: quickfix off by default")
+  H.eq(P.parse_args("qf=true").quickfix, true, "parse_args: qf=true enables quickfix")
+  H.eq(P.parse_args("qf=false").quickfix, false, "parse_args: qf=false disables quickfix")
+
+  -- ------------------------------------------------------ autocmd fn matching
+
+  -- Both the bare and the vim.api-qualified call names are recognised, and
+  -- unrelated names (or a lookalike prefix) are not.
+  H.ok(P.is_autocmd_name("nvim_create_autocmd"), "is_autocmd_name: bare call")
+  H.ok(P.is_autocmd_name("vim.api.nvim_create_autocmd"), "is_autocmd_name: qualified call")
+  H.ok(not P.is_autocmd_name("nvim_create_augroup"), "is_autocmd_name: rejects augroup")
+  H.ok(not P.is_autocmd_name("my_nvim_create_autocmd_wrapper"), "is_autocmd_name: rejects suffix lookalike")
+
   -- ------------------------------------------------------------ completion
 
   local ev = sources.complete("event=Buf")

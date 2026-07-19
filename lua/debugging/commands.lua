@@ -77,7 +77,7 @@ local function build_registry()
     },
     autocmds = {
       feature = "autocmds",
-      actions = { "runtime", "sources" },
+      actions = { "runtime", "sources", "all" },
       run = {
         runtime = function(args)
           require("debugging.autocmds.runtime").list(args[1], args[2])
@@ -85,11 +85,14 @@ local function build_registry()
         sources = function(args)
           require("debugging.autocmds.sources").run(table.concat(args, " "))
         end,
+        all = function(args)
+          require("debugging.autocmds.sources").all(table.concat(args, " "))
+        end,
       },
     },
     inspect = {
       feature = "tools",
-      actions = { "buffer" },
+      actions = { "buffer", "window", "tab" },
       run = {
         buffer = function(args)
           local b, ok = parse_id(args[1])
@@ -98,6 +101,22 @@ local function build_registry()
             return
           end
           require("debugging.tools.buffer_inspector").inspect(b)
+        end,
+        window = function(args)
+          local w, ok = parse_id(args[1])
+          if not ok then
+            notify.error(("invalid window id %q — expected a number"):format(args[1]))
+            return
+          end
+          require("debugging.tools.buffer_inspector").window(w)
+        end,
+        tab = function(args)
+          local t, ok = parse_id(args[1])
+          if not ok then
+            notify.error(("invalid tab number %q — expected a number"):format(args[1]))
+            return
+          end
+          require("debugging.tools.buffer_inspector").tab(t)
         end,
       },
     },
@@ -119,7 +138,7 @@ local function build_registry()
       feature = "terminals",
       actions = { "start", "stop" },
       run = {
-        start = function() require("debugging.terminals.keylogger").start() end,
+        start = function(args) require("debugging.terminals.keylogger").start(args[1]) end,
         stop  = function() require("debugging.terminals.keylogger").stop() end,
       },
     },
@@ -183,6 +202,13 @@ local function build_registry()
         watch  = function(args) require("debugging.tools.proc_trace").watch(args) end,
       },
     },
+    performance = {
+      feature = "performance",
+      actions = { "startup" },
+      run = {
+        startup = function(args) require("debugging.tools.startup").startup(args) end,
+      },
+    },
     health = {
       feature = "__always",
       actions = {},
@@ -214,7 +240,7 @@ end
 local function enabled_categories()
   local order = {
     "messages", "noice", "report", "autocmds", "inspect", "cursor",
-    "dump", "keylogger", "indent", "markdown", "module", "proc", "neotree", "health",
+    "dump", "keylogger", "indent", "markdown", "module", "proc", "performance", "neotree", "health",
   }
   local out = {}
   local reg = registry()
@@ -228,6 +254,54 @@ end
 
 -- Dispatch --------------------------------------------------------------------
 
+---Render the overview lines in a centered, scrollable floating window.
+--- Returns false if a float could not be opened (headless / no UI), so the
+--- caller can fall back to a notification.
+---@param lines string[]
+---@return boolean opened
+local function overview_float(lines)
+  local width = 0
+  for _, l in ipairs(lines) do
+    width = math.max(width, vim.fn.strdisplaywidth(l))
+  end
+  width = math.min(width + 2, math.max(vim.o.columns - 4, 20))
+  local height = math.min(#lines, math.max(vim.o.lines - 4, 5))
+
+  local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
+  if not ok then return false end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].filetype = "debugging-overview"
+
+  local opened, win = pcall(vim.api.nvim_open_win, buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.max(math.floor((vim.o.lines - height) / 2) - 1, 0),
+    col = math.max(math.floor((vim.o.columns - width) / 2), 0),
+    style = "minimal",
+    border = "rounded",
+    title = " :" .. config.get().command .. " ",
+    title_pos = "center",
+  })
+  if not opened then
+    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+    return false
+  end
+
+  vim.wo[win].wrap = false
+  vim.wo[win].cursorline = true
+  for _, key in ipairs({ "q", "<Esc>" }) do
+    vim.keymap.set("n", key, function()
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+      end
+    end, { buffer = buf, nowait = true, silent = true })
+  end
+  return true
+end
+
 ---Show a compact overview when :Debug is called with no arguments.
 ---@return nil
 local function overview()
@@ -237,6 +311,10 @@ local function overview()
     local acts = reg[cat].actions
     local suffix = (#acts > 0) and ("  [" .. table.concat(acts, "|") .. "]") or ""
     lines[#lines + 1] = string.format("  %-10s%s", cat, suffix)
+  end
+
+  if config.get().overview == "float" and overview_float(lines) then
+    return
   end
   notify.info(table.concat(lines, "\n"))
 end
@@ -314,9 +392,12 @@ function M.complete(arglead, cmdline, _)
   local entry = registry()[category]
   if not entry or not enabled(entry) then return {} end
 
-  -- autocmds sources free-form args (event=/sort=/…)
-  if category == "autocmds" and tokens[3] and tokens[3]:lower() == "sources" and committed >= 2 then
-    return require("debugging.autocmds.sources").complete(arglead)
+  -- autocmds sources|all free-form args (event=/sort=/…)
+  if category == "autocmds" and tokens[3] and committed >= 2 then
+    local sub = tokens[3]:lower()
+    if sub == "sources" or sub == "all" then
+      return require("debugging.autocmds.sources").complete(arglead)
+    end
   end
 
   if committed == 1 then

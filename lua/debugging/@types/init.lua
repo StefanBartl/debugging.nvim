@@ -66,11 +66,27 @@ require("debugging.views.@types")
 ---@field module_reload boolean  # :Debug module reload
 ---@field neotree boolean        # :Debug neotree … (config-specific, opt-in)
 ---@field proc_trace boolean     # :Debug proc start|stop|status|log|watch
+---@field performance boolean    # :Debug performance startup
+
+---@class Dbg.Config.Keylogger
+---@field logfile? string        # append recorded keys here; nil = notify only
+
+---@class Dbg.Config.Terminals
+---@field keylogger Dbg.Config.Keylogger
+
+---@class Dbg.Config.Neotree
+--- Injectable Neo-tree bridge targets. Each is a module name to `require`,
+--- or an already-loaded table used directly.
+---@field quarantine string|table
+---@field safety string|table
 
 ---@class Dbg.Config
 ---@field features Dbg.Config.Features
 ---@field views Dbg.Views.Modules
+---@field terminals Dbg.Config.Terminals
+---@field neotree? Dbg.Config.Neotree
 ---@field command string         # name of the unified user command (default "Debug")
+---@field overview "float"|"notify"  # how `:Debug` (no args) renders the overview
 ---@field all? boolean           # shorthand: enable every feature category
 
 return {}
