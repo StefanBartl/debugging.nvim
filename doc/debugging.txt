@@ -104,8 +104,10 @@ packer.nvim: >lua
 A bare `all = true` enables every feature category.
 
 features ~
-  Per-category enable flags. A disabled category's actions are hidden from
-  completion and rejected by the dispatcher.
+  Per-category enable flags. A disabled category has no route at all — it is
+  hidden from completion and, if typed anyway, rejected with a generic
+  "unknown subcommand" error (rather than a message naming the specific
+  feature flag to enable).
 
 terminals ~
   `keylogger.logfile` — path to append recorded keys to (`~`/env vars expand).

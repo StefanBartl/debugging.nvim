@@ -252,6 +252,13 @@ local function enabled_categories()
   return out
 end
 
+-- Exposed for debugging.bindings.usercmds to build the composer route tree
+-- (enabled-category snapshot, taken at setup() time) without duplicating
+-- the registry/feature-gating logic.
+M.registry = registry
+M.enabled = enabled
+M.enabled_categories = enabled_categories
+
 -- Dispatch --------------------------------------------------------------------
 
 ---Render the overview lines in a centered, scrollable floating window.
