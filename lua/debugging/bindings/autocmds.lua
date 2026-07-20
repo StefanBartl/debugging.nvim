@@ -13,6 +13,7 @@
 --- the config without restarting Neovim work.
 
 local autocmd = require("lib.nvim.autocmd")
+local window = require("lib.nvim.window")
 local display = require("debugging.views.display")
 local utils = require("debugging.views.utils")
 local api = vim.api
@@ -67,26 +68,10 @@ function M.setup(ac, timings)
     if not api.nvim_buf_is_valid(buf) then return end
     if not utils.is_target_view(buf) then return end
 
-    local function close_dbg_window()
-      local win = vim.fn.bufwinid(buf)
-      if win ~= -1 and api.nvim_win_is_valid(win) then
-        api.nvim_win_close(win, true)
-      end
-    end
+    local win = vim.fn.bufwinid(buf)
+    if win == -1 then return end
 
-    vim.keymap.set("n", "q", close_dbg_window, {
-      buffer = buf,
-      nowait = true,
-      silent = true,
-      desc = "Close debug window",
-    })
-
-    vim.keymap.set("n", "<Esc>", close_dbg_window, {
-      buffer = buf,
-      nowait = true,
-      silent = true,
-      desc = "Close debug window",
-    })
+    window.nice_quit(win, { force = true })
   end, {
     group = AUG,
     pattern = { "messages", "noice" },
