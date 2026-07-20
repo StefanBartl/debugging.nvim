@@ -8,7 +8,7 @@
         one :Debug command for every Neovim debugging tool
 </pre>
 
-> 💡 Pairs well with [project-insight.nvim](https://github.com/StefanBartl/project-insight.nvim):
+> 💡 Pairs well with [insights.nvim](https://github.com/StefanBartl/insights.nvim):
 > project-insight analyzes and reports on your codebase (symbols, metrics, file
 > tree), while debugging.nvim inspects live editor state (buffers, autocmds,
 > messages) at runtime.

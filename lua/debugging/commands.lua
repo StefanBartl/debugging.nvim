@@ -12,6 +12,7 @@
 require("debugging.bindings.@types")
 
 local notify = require("lib.nvim.notify").create("[debugging]")
+local window = require("lib.nvim.window")
 local config = require("debugging.config")
 
 local M = {}
@@ -299,13 +300,7 @@ local function overview_float(lines)
 
   vim.wo[win].wrap = false
   vim.wo[win].cursorline = true
-  for _, key in ipairs({ "q", "<Esc>" }) do
-    vim.keymap.set("n", key, function()
-      if vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-      end
-    end, { buffer = buf, nowait = true, silent = true })
-  end
+  window.nice_quit(win, { force = true })
   return true
 end
 

@@ -22,6 +22,7 @@ require("debugging.autocmds.@types")
 local uv = vim.uv or vim.loop
 local bo = vim.bo
 local tbl_insert, tbl_concat, tbl_sort = table.insert, table.concat, table.sort
+local notify = require("lib.nvim.notify").create("[debugging]")
 
 local M = {}
 
@@ -265,7 +266,7 @@ local function get_scan(opts)
   end
 
   if vim.fn.isdirectory(opts.root) ~= 1 then
-    vim.notify("[debugging] autocmd sources: root is not a directory: " .. opts.root, vim.log.levels.ERROR)
+    notify.error("autocmd sources: root is not a directory: " .. opts.root)
     return nil, nil
   end
 
@@ -367,7 +368,7 @@ local function fill_quickfix(opts, items)
   if #qf > 0 then
     vim.cmd("copen")
   else
-    vim.notify("[debugging] autocmd sources: no call sites for the quickfix list", vim.log.levels.INFO)
+    notify.info("autocmd sources: no call sites for the quickfix list")
   end
 end
 
