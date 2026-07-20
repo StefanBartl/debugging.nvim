@@ -65,7 +65,10 @@ available, falling back to a text parser otherwise.
 
 ## Tab Completion
 
-`:Debug` completes context-sensitively at every position:
+`:Debug` is built via [`lib.nvim.usercmd.composer`](https://github.com/StefanBartl/lib.nvim)
+and completes context-sensitively at every position. Only categories enabled
+by the active config appear (e.g. `neotree` is opt-in — see `features.neotree`
+— and won't show up in `:Debug <Tab>` until enabled):
 
 ```
 :Debug <Tab>                       → messages noice report autocmds inspect …
