@@ -6,6 +6,7 @@
 --- via `:Debug cursor state`.
 
 local notify = require("lib.nvim.notify").create("[debugging.tools.cursor.state]")
+local window_tag = require("lib.nvim.window").tag
 
 local M = {}
 
@@ -33,14 +34,13 @@ function M.print()
   lines[#lines + 1] = "Cursor Pos: " .. (ok_cursor and vim.inspect(cursor) or "ERROR")
 
   lines[#lines + 1] = "Mode: " .. api.nvim_get_mode().mode
-  lines[#lines + 1] = "Window Tag: " .. tostring(vim.w[current_win] and vim.w[current_win].custom_tag or "none")
+  lines[#lines + 1] = "Window Tag: " .. tostring(window_tag.get(current_win) or "none")
 
   lines[#lines + 1] = ""
   lines[#lines + 1] = "=== All Windows ==="
   for _, w in ipairs(api.nvim_list_wins()) do
     if api.nvim_win_is_valid(w) then
-      local tag = vim.w[w] and vim.w[w].custom_tag or "none"
-      lines[#lines + 1] = string.format("Win %d: tag=%s", w, tag)
+      lines[#lines + 1] = string.format("Win %d: tag=%s", w, window_tag.get(w) or "none")
     end
   end
 

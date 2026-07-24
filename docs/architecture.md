@@ -25,10 +25,12 @@ lua/debugging/
     module_reload.lua         reload Lua module of the current buffer
     neotree_safety.lua        opt-in Neo-tree bridge (pcall-guarded)
   autocmds/
-    @types/init.lua           Dbg.Autocmds.SourceItem/SourceOpts/SourceCache
+    @types/init.lua           Dbg.Autocmds.SourceItem/SourceOpts
     runtime.lua               live nvim_get_autocmds view
     sources.lua               static source-code audit (Tree-sitter + text
-                              fallback; cached per root; sources-vs-runtime `all`)
+                              fallback; walk via lib.nvim.fs.collect_recursive,
+                              cached per root via lib.nvim.cache.memory;
+                              sources-vs-runtime `all`)
   tools/
     @types/init.lua           Dbg.Tools.ProcTraceOpts
     buffer_inspector/         buffer / window / tab option/state inspection
@@ -45,9 +47,12 @@ lua/debugging/
 
 Each leaf module exposes plain action functions; `bindings/usercmds.lua` is
 the only place that registers a user command. lib.nvim provides notify,
-`buf_win_tab.*`, `fs.*`, `cross`, `lazy`, `normalize`, `system.proc_trace`, and
-the `autocmd`/`usercmd` registration wrappers (which pcall their callbacks and
-report failures).
+`buf_win_tab.*`, `fs.*` (including `collect_recursive`, the directory walker
+behind `autocmds sources`), `cache.memory` (the TTL cache behind the same
+scan), `window.*` (`make_scratch`/`open_scratch_split`/`tag` back the float
+overview, report scratch buffers, and window-tag lookup), `cross`, `lazy`,
+`normalize`, `system.proc_trace`, and the `autocmd`/`usercmd` registration
+wrappers (which pcall their callbacks and report failures).
 
 The augroup in `bindings/autocmds.lua` is created directly rather than through
 `lib.nvim.autocmd.group()`: that helper caches groups by name and skips the

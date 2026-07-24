@@ -20,10 +20,4 @@
 ---@field refresh boolean        Force a rescan, bypassing the cache
 ---@field quickfix boolean       Send path:line to the quickfix list instead of a scratch report
 
----@class Dbg.Autocmds.SourceCache
----@field root string                                   Root the cached scan was run against
----@field scanned_at integer                             os.time() the scan completed
----@field by_event table<string, Dbg.Autocmds.SourceItem[]>
----@field all Dbg.Autocmds.SourceItem[]
-
 return {}

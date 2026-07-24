@@ -13,16 +13,19 @@
 ---
 --- Scan results are cached per root for a few seconds so repeated calls
 --- (e.g. trying different `sort=`/`event=` combinations) don't rescan the
---- whole tree each time; pass `refresh=true` to force a rescan.
+--- whole tree each time; pass `refresh=true` to force a rescan. The
+--- directory walk itself is `lib.nvim.fs.collect_recursive`; the cache is a
+--- `lib.nvim.cache.memory` namespace — both shared with other plugins.
 ---
 --- Ported from the former `usrcmds.list.autocmd_audit`.
 
 require("debugging.autocmds.@types")
 
-local uv = vim.uv or vim.loop
-local bo = vim.bo
 local tbl_insert, tbl_concat, tbl_sort = table.insert, table.concat, table.sort
 local notify = require("lib.nvim.notify").create("[debugging]")
+local collect_recursive = require("lib.nvim.fs.collect_recursive")
+local memory_cache = require("lib.nvim.cache.memory")
+local window = require("lib.nvim.window")
 
 local M = {}
 
@@ -53,8 +56,11 @@ M.ARG_KEYS = { "event=", "sort=", "impl=", "summary=", "freq=", "root=", "refres
 --- rescanning the whole directory tree.
 local CACHE_TTL_SECONDS = 5
 
----@type Dbg.Autocmds.SourceCache|nil
-local _cache = nil
+--- Parsed-result cache namespace, keyed by root — the parse (not just the
+--- directory walk) is what's worth memoizing, so this wraps the whole
+--- walk+scan pipeline rather than only the `lib.nvim.fs.collect_recursive`
+--- step underneath it.
+local scan_cache = memory_cache.namespace("debugging.autocmds.sources", { ttl = CACHE_TTL_SECONDS })
 
 ---@param raw string
 ---@return string[]
@@ -210,22 +216,17 @@ local function scan_file(abs_path, rel_path, by_event, all)
   end
 end
 
----@param dir string
 ---@param root string
 ---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
 ---@param all Dbg.Autocmds.SourceItem[]
-local function scan_dir(dir, root, by_event, all)
-  local fd = uv.fs_scandir(dir)
-  if not fd then return end
-  while true do
-    local name, typ = uv.fs_scandir_next(fd)
-    if not name then break end
-    local full = dir .. "/" .. name
-    if typ == "directory" then
-      scan_dir(full, root, by_event, all)
-    elseif typ == "file" and name:sub(-4) == ".lua" then
-      scan_file(full, full:gsub("^" .. vim.pesc(root) .. "/", ""), by_event, all)
-    end
+local function scan_dir(root, by_event, all)
+  local files = collect_recursive.files(root, {
+    ignore = function(abs_path, is_dir)
+      return not is_dir and abs_path:sub(-4) ~= ".lua"
+    end,
+  })
+  for _, full in ipairs(files) do
+    scan_file(full, full:gsub("^" .. vim.pesc(root) .. "/", ""), by_event, all)
   end
 end
 
@@ -255,14 +256,11 @@ end
 ---@param opts Dbg.Autocmds.SourceOpts
 ---@return table<string, Dbg.Autocmds.SourceItem[]>?, Dbg.Autocmds.SourceItem[]?
 local function get_scan(opts)
-  local now = os.time()
-  local cache_valid = _cache
-    and not opts.refresh
-    and _cache.root == opts.root
-    and (now - _cache.scanned_at) < CACHE_TTL_SECONDS
-
-  if cache_valid then
-    return _cache.by_event, _cache.all
+  if not opts.refresh then
+    local cached = scan_cache.get(opts.root)
+    if cached then
+      return cached.by_event, cached.all
+    end
   end
 
   if vim.fn.isdirectory(opts.root) ~= 1 then
@@ -271,8 +269,8 @@ local function get_scan(opts)
   end
 
   local by_event, all = {}, {}
-  scan_dir(opts.root, opts.root, by_event, all)
-  _cache = { root = opts.root, scanned_at = now, by_event = by_event, all = all }
+  scan_dir(opts.root, by_event, all)
+  scan_cache.set(opts.root, { by_event = by_event, all = all })
   return by_event, all
 end
 
@@ -375,13 +373,7 @@ end
 ---@param output string[]
 ---@param filetype string
 local function show_scratch(output, filetype)
-  vim.cmd("new")
-  bo.buftype = "nofile"
-  bo.bufhidden = "wipe"
-  bo.swapfile = false
-  bo.filetype = filetype
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, output)
-  bo.modifiable = false
+  window.open_scratch_split(output, { filetype = filetype })
 end
 
 ---Run the static source audit and show the report in a scratch buffer.

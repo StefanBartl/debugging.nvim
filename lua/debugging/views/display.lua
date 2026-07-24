@@ -8,6 +8,7 @@
 --- exactly what once made clear_all() miss open windows.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.display]")
+local window_tag = require("lib.nvim.window").tag
 
 local utils = require("debugging.views.utils")
 local api = vim.api
@@ -21,27 +22,13 @@ local KNOWN_TAGS = { "messages", "noice_all", "noice_errors" }
 ---@param tag string
 ---@return integer|nil
 function M.find_window_by_tag(tag)
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if api.nvim_win_is_valid(win) then
-      local win_tag = vim.w[win] and vim.w[win].custom_tag or nil
-      if win_tag == tag then
-        local ok_config, config = pcall(api.nvim_win_get_config, win)
-        if ok_config and config.relative ~= "win" and config.width > 1 and config.height > 1 then
-          return win
-        end
-      end
-    end
-  end
-  return nil
+  return window_tag.find(tag)
 end
 
 ---@param win integer
 ---@return string|nil
 function M.get_window_tag(win)
-  if not api.nvim_win_is_valid(win) then
-    return nil
-  end
-  return vim.w[win] and vim.w[win].custom_tag or nil
+  return window_tag.get(win)
 end
 
 ---@param tag string

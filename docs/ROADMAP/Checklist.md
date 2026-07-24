@@ -47,11 +47,12 @@ unproblematisch; eine Streaming-Umstellung wäre Overengineering.
 
 ### ➖ Async via `vim.loop`/`vim.uv`
 
-`autocmds/sources.lua` nutzt `vim.uv` für den Verzeichnis-Scan
-(`fs_scandir`/`fs_scandir_next`), aber synchron. Durch den 5s-Cache
-(`CACHE_TTL_SECONDS`) fällt der Scan pro Debug-Session i. d. R. nur einmal an.
-Erst relevant, falls `root=` in der Praxis auf sehr große Fremdverzeichnisse
-zeigt.
+`autocmds/sources.lua` delegiert den Verzeichnis-Scan an
+`lib.nvim.fs.collect_recursive` (das intern `vim.uv`/`fs_scandir`/
+`fs_scandir_next` nutzt), synchron. Durch den 5s-Cache
+(`CACHE_TTL_SECONDS`, jetzt eine `lib.nvim.cache.memory`-Namespace) fällt der
+Scan pro Debug-Session i. d. R. nur einmal an. Erst relevant, falls `root=` in
+der Praxis auf sehr große Fremdverzeichnisse zeigt.
 
 ### ➖ Standardisiertes Error-Wrapping / strukturierte Fehlertypen
 

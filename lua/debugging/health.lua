@@ -41,6 +41,9 @@ function M.check()
   check_require("lib.nvim.fs.write.to_file", "views: fs.write.to_file", "warn")
   check_require("lib.nvim.fs.path", "views: fs.path", "warn")
   check_require("lib.nvim.normalize", "views: normalize", "warn")
+  check_require("lib.nvim.fs.collect_recursive", "autocmds sources: directory walk", "warn")
+  check_require("lib.nvim.cache.memory", "autocmds sources: scan cache", "warn")
+  check_require("lib.nvim.window", "views/overview: scratch + float windows", "warn")
   check_require("lib.lua.lazy", "lib.lua.lazy", "warn")
 
   -- ── Externals per feature ─────────────────────────────────────────────────

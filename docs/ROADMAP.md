@@ -47,29 +47,29 @@ The architecture audit that drove much of the above is fully worked off; the
 three checklists under [docs/ROADMAP/](./ROADMAP/) now carry only the items
 that were deliberately declined.
 
----
+## Implemented (v0.3)
 
-## Geplante Features
+- **Scratch/Float-UI moved into lib.nvim** — the scratch-buffer construction
+  used by the autocmd audit, `performance startup`, and the `:Debug` float
+  overview now goes through shared [lib.nvim](https://github.com/StefanBartl/lib.nvim)
+  helpers instead of each hand-rolling `vim.cmd("new")`/`nvim_open_win`:
+  `lib.nvim.window.make_scratch` (the float overview), the new
+  `lib.nvim.window.open_scratch_split` (report-style scratch splits), and the
+  new `lib.nvim.window.tag` (`vim.w[win].custom_tag` lookup, replacing the
+  local `find_window_by_tag`/`get_window_tag` in `views/display.lua`).
+- **`autocmds sources`'s scan moved into lib.nvim** — the recursive directory
+  walk now delegates to `lib.nvim.fs.collect_recursive` (dropping the local
+  `uv.fs_scandir`/`fs_scandir_next` walker), and the per-root result cache is
+  a `lib.nvim.cache.memory` namespace instead of a hand-rolled `_cache` table.
+- Both additions are generic lib.nvim modules (not debugging.nvim-specific),
+  so any other plugin can import the same helpers.
 
-### Shared → lib.nvim
-
-These require changes in the separate [lib.nvim](https://github.com/StefanBartl/lib.nvim)
-repository, so they are tracked here but implemented there.
-
-- **Scratch/Float-UI nach lib.nvim** — der Scratch-Buffer-Aufbau (autocmd-audit,
-  Reports, das neue `:Debug` Float-Overview) wird mit project-insight geteilt;
-  gemeinsame Helper nach `lib.nvim` auslagern und von beiden Plugins importieren.
-
-- **rg-Scan-Util nach lib.nvim** — die Scan-Infrastruktur von `autocmds sources`
-  mit project-insight teilen.
-
-### Neue Aktionen
-
-- **`dump` für Locals/Upvalues** — bewusst zurückgestellt. Zum Zeitpunkt eines
-  `:Debug dump`-Aufrufs besteht der Lua-Stack nur aus dem Command-Callback und
-  dem Dispatcher; es gibt keinen Nutzer-Frame mit interessanten Locals zu
-  inspizieren. Sinnvoll erst mit einem echten Breakpoint-/Hook-Kontext, den
-  dieses Plugin nicht hat.
+`dump` for locals/upvalues remains intentionally unimplemented: at the point
+a `:Debug dump` call runs, the Lua stack only contains the command callback
+and the dispatcher — there is no user frame with interesting locals to
+inspect. That would need a real breakpoint/hook context, which this plugin
+does not provide, and building one would turn a diagnostic tool into a
+debugger — out of scope (see "Nicht geplant" below).
 
 ---
 
@@ -80,3 +80,6 @@ repository, so they are tracked here but implemented there.
   zugunsten des einheitlichen `:Debug` entfernt.
 - **Generischer Profiler** — Performance-Profiling gehört in ein eigenes Plugin;
   `performance` bleibt auf Startup-Diagnose beschränkt.
+- **`dump` für Locals/Upvalues** — siehe Begründung unter "Implemented (v0.3)"
+  oben; ein sinnvoller Locals-Dump bräuchte einen echten Breakpoint-/
+  Hook-Kontext, den dieses Plugin bewusst nicht bereitstellt.
