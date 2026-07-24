@@ -11,6 +11,7 @@
 --- has no effect on the current session.
 
 local notify = require("lib.nvim.notify").create("[debugging.tools.startup]")
+local window = require("lib.nvim.window")
 
 local M = {}
 
@@ -122,13 +123,7 @@ function M.startup(args)
     lines[#lines + 1] = string.format("  %6.1f ms  %s", e.self_ms, e.event)
   end
 
-  vim.cmd("new")
-  vim.bo.buftype = "nofile"
-  vim.bo.bufhidden = "wipe"
-  vim.bo.swapfile = false
-  vim.bo.filetype = "startup-benchmark"
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-  vim.bo.modifiable = false
+  window.open_scratch_split(lines, { filetype = "startup-benchmark" })
 end
 
 return M

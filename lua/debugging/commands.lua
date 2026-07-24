@@ -268,40 +268,15 @@ M.enabled_categories = enabled_categories
 ---@param lines string[]
 ---@return boolean opened
 local function overview_float(lines)
-  local width = 0
-  for _, l in ipairs(lines) do
-    width = math.max(width, vim.fn.strdisplaywidth(l))
-  end
-  width = math.min(width + 2, math.max(vim.o.columns - 4, 20))
-  local height = math.min(#lines, math.max(vim.o.lines - 4, 5))
-
-  local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
-  if not ok then return false end
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].bufhidden = "wipe"
-  vim.bo[buf].filetype = "debugging-overview"
-
-  local opened, win = pcall(vim.api.nvim_open_win, buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    row = math.max(math.floor((vim.o.lines - height) / 2) - 1, 0),
-    col = math.max(math.floor((vim.o.columns - width) / 2), 0),
-    style = "minimal",
-    border = "rounded",
+  local winid = window.make_scratch({
+    lines = lines,
+    filetype = "debugging-overview",
     title = " :" .. config.get().command .. " ",
     title_pos = "center",
+    nice_quit = { force = true },
+    wo = { cursorline = true },
   })
-  if not opened then
-    pcall(vim.api.nvim_buf_delete, buf, { force = true })
-    return false
-  end
-
-  vim.wo[win].wrap = false
-  vim.wo[win].cursorline = true
-  window.nice_quit(win, { force = true })
-  return true
+  return winid ~= nil
 end
 
 ---Show a compact overview when :Debug is called with no arguments.
