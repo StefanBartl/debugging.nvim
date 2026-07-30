@@ -30,7 +30,8 @@ local function resolve_paths()
   local base = require("lib.nvim.normalize").normalize_path(M.base_dir)
   local dir = base
   local timestamp = os.date("%Y%m%d-%H%M%S")
-  local logfile = require("lib.nvim.fs.path").joinpath({ dir, string.format("messages-%s.log", timestamp) })
+  local logfile =
+    require("lib.nvim.fs.path").joinpath({ dir, string.format("messages-%s.log", timestamp) })
   return dir, logfile
 end
 
@@ -40,14 +41,16 @@ end
 ---@return string|nil
 local function extract_noice_text(obj, depth)
   depth = depth or 0
-  if depth > 10 then return nil end
+  if depth > 10 then
+    return nil
+  end
 
   if type(obj) == "string" then
     return obj
   end
 
   if type(obj) ~= "table" then
-    return nil  -- Don't stringify non-string, non-table values
+    return nil -- Don't stringify non-string, non-table values
   end
 
   -- Noice Message objects have _lines field (internal storage)
@@ -105,10 +108,14 @@ local function extract_noice_text(obj, depth)
           table.insert(parts, tostring(item._text))
         elseif item[1] then
           local nested = extract_noice_text(item, depth + 1)
-          if nested then table.insert(parts, nested) end
+          if nested then
+            table.insert(parts, nested)
+          end
         else
           local text = item.text or item.str
-          if text then table.insert(parts, tostring(text)) end
+          if text then
+            table.insert(parts, tostring(text))
+          end
         end
       end
     end
@@ -155,7 +162,7 @@ local function try_noice()
     -- Get ALL messages including history
     local ok_msgs, messages = pcall(manager.get, nil, {
       history = true,
-      reverse = false,  -- Chronological order
+      reverse = false, -- Chronological order
     })
 
     if ok_msgs and messages and type(messages) == "table" then
@@ -178,7 +185,9 @@ local function try_noice()
       end
 
       if #lines > 0 then
-        return true, table.concat(lines, "\n"), string.format("noice.manager (%d messages)", msg_count)
+        return true,
+          table.concat(lines, "\n"),
+          string.format("noice.manager (%d messages)", msg_count)
       end
     end
   end
@@ -195,7 +204,9 @@ local function try_noice()
         end
       end
       if #lines > 0 then
-        return true, table.concat(lines, "\n"), string.format("noice.history (%d entries)", #history)
+        return true,
+          table.concat(lines, "\n"),
+          string.format("noice.history (%d entries)", #history)
       end
     end
   end
@@ -215,7 +226,9 @@ local function try_noice()
             end
           end
           if #filtered > 0 then
-            return true, table.concat(filtered, "\n"), string.format("noice buffer (%d lines)", #filtered)
+            return true,
+              table.concat(filtered, "\n"),
+              string.format("noice buffer (%d lines)", #filtered)
           end
         end
       end
@@ -263,7 +276,9 @@ local function capture_messages_raw(debug)
   local ok, msgs, src = try_noice()
   table.insert(attempts, { method = "noice", success = ok, source = src })
   if ok then
-    if debug then notify.debug("DebugViews: ✓ captured via " .. src) end
+    if debug then
+      notify.debug("DebugViews: ✓ captured via " .. src)
+    end
     return true, msgs, src
   end
 
@@ -271,7 +286,9 @@ local function capture_messages_raw(debug)
   ok, msgs, src = try_execute()
   table.insert(attempts, { method = "execute", success = ok, source = src })
   if ok then
-    if debug then notify.debug("DebugViews: ✓ captured via " .. src) end
+    if debug then
+      notify.debug("DebugViews: ✓ captured via " .. src)
+    end
     return true, msgs, src
   end
 
@@ -279,7 +296,9 @@ local function capture_messages_raw(debug)
   ok, msgs, src = try_exec2()
   table.insert(attempts, { method = "exec2", success = ok, source = src })
   if ok then
-    if debug then notify.debug("DebugViews: ✓ captured via " .. src) end
+    if debug then
+      notify.debug("DebugViews: ✓ captured via " .. src)
+    end
     return true, msgs, src
   end
 
@@ -309,7 +328,15 @@ function M.capture_messages(opts)
   -- Try all capture methods
   local ok_capture, messages, source = capture_messages_raw(debug)
   if not ok_capture or not messages then
-    notify.warn("DebugViews: Failed to capture messages.\n" .. (source or "unknown error") .. "\n\n" .. "Suggestions:\n" .. " 1. Try :Noice all to view messages\n" .. " 2. Try :messages to check if messages exist\n" .. " 3. Enable debug mode: :lua require('debugging.views.capture').capture_messages({debug=true})")
+    notify.warn(
+      "DebugViews: Failed to capture messages.\n"
+        .. (source or "unknown error")
+        .. "\n\n"
+        .. "Suggestions:\n"
+        .. " 1. Try :Noice all to view messages\n"
+        .. " 2. Try :messages to check if messages exist\n"
+        .. " 3. Enable debug mode: :lua require('debugging.views.capture').capture_messages({debug=true})"
+    )
     return false, nil
   end
 
@@ -317,7 +344,9 @@ function M.capture_messages(opts)
   local line_count = require("lib.lua.strings.core").count_lines(messages)
 
   if debug then
-    notify.debug(("DebugViews: captured %d bytes, %d lines via %s"):format(#messages, line_count, source))
+    notify.debug(
+      ("DebugViews: captured %d bytes, %d lines via %s"):format(#messages, line_count, source)
+    )
   end
 
   if messages == "" then
@@ -332,14 +361,19 @@ function M.capture_messages(opts)
     if not ok_write then
       notify.error("DebugViews: write failed: " .. tostring(err))
     else
-      table.insert(success_operations, string.format("%d lines → %s", line_count, vim.fn.fnamemodify(logfile, ":t")))
+      table.insert(
+        success_operations,
+        string.format("%d lines → %s", line_count, vim.fn.fnamemodify(logfile, ":t"))
+      )
     end
   end
 
   if clipboard then
     local ok_clip = copy_to_clipboard(messages, debug)
     if not ok_clip then
-      notify.warn("DebugViews: clipboard not available. Install: pbcopy/wl-copy/xclip/xsel/clip.exe")
+      notify.warn(
+        "DebugViews: clipboard not available. Install: pbcopy/wl-copy/xclip/xsel/clip.exe"
+      )
     else
       table.insert(success_operations, string.format("%d lines → clipboard", line_count))
     end

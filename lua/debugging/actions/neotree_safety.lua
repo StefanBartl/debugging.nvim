@@ -33,7 +33,11 @@ local function need(key)
   end
   local ok, m = pcall(require, target)
   if not ok or type(m) ~= "table" then
-    notify.warn(("'%s' not found — Neo-tree integration is config-specific and not present here"):format(target))
+    notify.warn(
+      ("'%s' not found — Neo-tree integration is config-specific and not present here"):format(
+        target
+      )
+    )
     return nil
   end
   return m
@@ -42,21 +46,27 @@ end
 ---@return nil
 function M.quarantine_status()
   local wq = need("quarantine")
-  if not wq then return end
+  if not wq then
+    return
+  end
   local in_q = wq.is_quarantined()
   local healthy, reason = wq.health_check()
-  notify.info(string.format(
-    "Quarantine Status:\n  Active: %s\n  Watchers Healthy: %s%s",
-    in_q and "YES" or "NO",
-    healthy and "YES" or "NO",
-    reason and ("\n  Reason: " .. reason) or ""
-  ))
+  notify.info(
+    string.format(
+      "Quarantine Status:\n  Active: %s\n  Watchers Healthy: %s%s",
+      in_q and "YES" or "NO",
+      healthy and "YES" or "NO",
+      reason and ("\n  Reason: " .. reason) or ""
+    )
+  )
 end
 
 ---@return nil
 function M.quarantine_exit()
   local wq = need("quarantine")
-  if not wq then return end
+  if not wq then
+    return
+  end
   wq.exit_quarantine()
   notify.info("Quarantine exited manually")
 end
@@ -64,7 +74,9 @@ end
 ---@return nil
 function M.restart_watchers()
   local wq = need("quarantine")
-  if not wq then return end
+  if not wq then
+    return
+  end
   local ok, msg = wq.restart_watchers()
   if ok then
     notify.info("Watchers restarted")
@@ -76,14 +88,18 @@ end
 ---@return nil
 function M.backup_list()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   safety.backup.show_backup_ui()
 end
 
 ---@return nil
 function M.backup_clean()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   local cleaned = safety.backup.clean_old_backups(7)
   notify.info(string.format("Cleaned %d old backups", cleaned))
 end
@@ -91,28 +107,36 @@ end
 ---@return nil
 function M.dryrun_toggle()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   safety.dry_run.toggle()
 end
 
 ---@return nil
 function M.dryrun_report()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   safety.dry_run.show_report()
 end
 
 ---@return nil
 function M.queue_status()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   notify.info(vim.inspect(safety.queue.status()))
 end
 
 ---@return nil
 function M.queue_clear()
   local safety = need("safety")
-  if not safety then return end
+  if not safety then
+    return
+  end
   safety.queue.clear()
   notify.info("Queue cleared")
 end

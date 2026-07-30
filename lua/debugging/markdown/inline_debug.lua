@@ -175,7 +175,11 @@ local function collect_lsp_info(bufnr)
     end
 
     -- If not explicitly attached, check server_capabilities as a loose signal
-    if not considered_relevant and c.server_capabilities and type(c.server_capabilities) == "table" then
+    if
+      not considered_relevant
+      and c.server_capabilities
+      and type(c.server_capabilities) == "table"
+    then
       -- presence of textDocumentSync or completionProvider are normal signs of a document LSP
       if c.server_capabilities.textDocumentSync or c.server_capabilities.completionProvider then
         considered_relevant = true

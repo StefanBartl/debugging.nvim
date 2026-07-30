@@ -182,4 +182,3 @@ function M.focus_and_bottom(win, attempts, retry_delay)
 end
 
 return M
-

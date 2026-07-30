@@ -36,7 +36,9 @@ function M.parse(lines)
       end
       if #vals >= 1 then
         local clock = vals[1]
-        if clock > max_clock then max_clock = clock end
+        if clock > max_clock then
+          max_clock = clock
+        end
         if event:match("NVIM STARTED") then
           total = clock
         end
@@ -50,7 +52,9 @@ function M.parse(lines)
   if total == 0 then
     total = max_clock
   end
-  table.sort(entries, function(a, b) return a.self_ms > b.self_ms end)
+  table.sort(entries, function(a, b)
+    return a.self_ms > b.self_ms
+  end)
   return total, entries
 end
 

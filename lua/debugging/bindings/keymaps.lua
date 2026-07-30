@@ -38,4 +38,3 @@ function M.setup(km, timings)
 end
 
 return M
-

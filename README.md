@@ -13,6 +13,7 @@
 > tree), while debugging.nvim inspects live editor state (buffers, autocmds,
 > messages) at runtime.
 
+[![CI](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml)
 ![Neovim](https://img.shields.io/badge/Neovim-0.9%2B-57A143?logo=neovim&logoColor=white)
 ![Lua](https://img.shields.io/badge/Made%20with-Lua-2C2D72?logo=lua&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)

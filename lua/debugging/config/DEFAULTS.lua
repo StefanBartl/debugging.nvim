@@ -8,17 +8,17 @@
 local DEFAULTS = {
   -- Per-category enable flags. `all = true` activates everything.
   features = {
-    views        = true,   -- :Debug messages / noice / windows
-    reports      = true,   -- :Debug report buf|tab|win
-    autocmds     = true,   -- :Debug autocmds runtime|sources
-    tools        = true,   -- :Debug inspect|cursor|dump
-    terminals    = true,   -- :Debug keylogger
-    nvim_options = true,   -- :Debug indent
-    markdown     = true,   -- :Debug markdown
-    neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
-    module_reload = true,  -- :Debug module reload
-    proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
-    performance  = true,   -- :Debug performance startup
+    views = true, -- :Debug messages / noice / windows
+    reports = true, -- :Debug report buf|tab|win
+    autocmds = true, -- :Debug autocmds runtime|sources
+    tools = true, -- :Debug inspect|cursor|dump
+    terminals = true, -- :Debug keylogger
+    nvim_options = true, -- :Debug indent
+    markdown = true, -- :Debug markdown
+    neotree = false, -- :Debug neotree … (config-specific, opt-in)
+    module_reload = true, -- :Debug module reload
+    proc_trace = true, -- :Debug proc start|stop|status|log|watch
+    performance = true, -- :Debug performance startup
   },
 
   -- Terminals subsystem (:Debug keylogger).
@@ -37,19 +37,19 @@ local DEFAULTS = {
   -- layout. Defaults keep the original hardcoded module names.
   neotree = {
     quarantine = "config.neotree.watcher_quarantine",
-    safety     = "config.neotree.safety",
+    safety = "config.neotree.safety",
   },
 
   -- Views subsystem (keymaps, auto-refresh autocmds, capture).
   views = {
-    keymaps  = { enable = true, prefix = "<lt>" },
+    keymaps = { enable = true, prefix = "<lt>" },
     autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-    timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3 },
-    capture  = true,
-    output_dir = nil,  -- defaults to stdpath("config")/docs/debug_views inside capture
+    timings = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3 },
+    capture = true,
+    output_dir = nil, -- defaults to stdpath("config")/docs/debug_views inside capture
   },
 
-  command = "Debug",     -- name of the single unified user command
+  command = "Debug", -- name of the single unified user command
 
   -- How `:Debug` with no arguments renders the category overview:
   --   "float"  -- scrollable floating window (default), q/<Esc> to close

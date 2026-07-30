@@ -33,7 +33,9 @@ function M.setup(ac, timings)
     autocmd.create("WinEnter", function()
       local win = api.nvim_get_current_win()
       local tag = display.get_window_tag(win)
-      if not tag then return end
+      if not tag then
+        return
+      end
 
       vim.defer_fn(function()
         if api.nvim_win_is_valid(win) and api.nvim_get_current_win() == win then
@@ -47,10 +49,14 @@ function M.setup(ac, timings)
 
     autocmd.create("BufWinEnter", function(ev)
       local win = vim.fn.bufwinid(ev.buf)
-      if win == -1 then return end
+      if win == -1 then
+        return
+      end
 
       local tag = display.get_window_tag(win)
-      if not tag then return end
+      if not tag then
+        return
+      end
 
       vim.defer_fn(function()
         if api.nvim_win_is_valid(win) then
@@ -65,11 +71,17 @@ function M.setup(ac, timings)
 
   autocmd.create("FileType", function(ev)
     local buf = ev.buf
-    if not api.nvim_buf_is_valid(buf) then return end
-    if not utils.is_target_view(buf) then return end
+    if not api.nvim_buf_is_valid(buf) then
+      return
+    end
+    if not utils.is_target_view(buf) then
+      return
+    end
 
     local win = vim.fn.bufwinid(buf)
-    if win == -1 then return end
+    if win == -1 then
+      return
+    end
 
     window.nice_quit(win, { force = true })
   end, {
@@ -80,4 +92,3 @@ function M.setup(ac, timings)
 end
 
 return M
-
