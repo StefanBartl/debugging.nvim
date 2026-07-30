@@ -79,7 +79,10 @@ return function(H)
   H.ok(P.is_autocmd_name("nvim_create_autocmd"), "is_autocmd_name: bare call")
   H.ok(P.is_autocmd_name("vim.api.nvim_create_autocmd"), "is_autocmd_name: qualified call")
   H.ok(not P.is_autocmd_name("nvim_create_augroup"), "is_autocmd_name: rejects augroup")
-  H.ok(not P.is_autocmd_name("my_nvim_create_autocmd_wrapper"), "is_autocmd_name: rejects suffix lookalike")
+  H.ok(
+    not P.is_autocmd_name("my_nvim_create_autocmd_wrapper"),
+    "is_autocmd_name: rejects suffix lookalike"
+  )
 
   -- ------------------------------------------------------------ completion
 
@@ -127,7 +130,9 @@ return function(H)
   local missing = root .. "/does/not/exist"
   local win_before = #vim.api.nvim_list_wins()
   local orig_notify, notified = vim.notify, nil
-  vim.notify = function(msg) notified = tostring(msg) end
+  vim.notify = function(msg)
+    notified = tostring(msg)
+  end
   local ok, err = pcall(sources.run, "root=" .. missing .. " refresh=true")
   vim.notify = orig_notify
   H.ok(ok, "run: missing root does not raise: " .. tostring(err))

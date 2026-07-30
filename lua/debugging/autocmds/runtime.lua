@@ -23,7 +23,9 @@ function M.list(event, pattern)
   end
 
   if #autocmds == 0 then
-    notify.info(string.format("No autocommands found for event '%s' with pattern '%s'", event, pattern))
+    notify.info(
+      string.format("No autocommands found for event '%s' with pattern '%s'", event, pattern)
+    )
     return
   end
 

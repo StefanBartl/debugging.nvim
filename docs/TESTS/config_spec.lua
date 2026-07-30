@@ -26,7 +26,11 @@ return function(H)
   -- Re-running setup starts from the defaults again rather than accumulating
   -- the previous run's overrides.
   config.setup({})
-  H.eq(config.get().features.views, DEFAULTS.features.views, "config: setup() re-merges from defaults")
+  H.eq(
+    config.get().features.views,
+    DEFAULTS.features.views,
+    "config: setup() re-merges from defaults"
+  )
 
   -- Back-compat: `all = true` turns on every category, including the ones
   -- that are opt-in by default (neotree).

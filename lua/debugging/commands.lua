@@ -8,6 +8,10 @@
 --- The actual `nvim_create_user_command` registration lives in
 --- `debugging.bindings.usercmds`; this module only exposes `dispatch()` and
 --- `complete()` for it to wire up.
+---
+---@see debugging.bindings.usercmds  Registration side of the dispatch/
+--- registration split: builds the composer route tree from this module's
+--- category/action registry and calls `dispatch()` from every route.
 
 require("debugging.bindings.@types")
 
@@ -47,25 +51,39 @@ local function build_registry()
       feature = "views",
       actions = { "show", "capture", "clear" },
       run = {
-        show    = function() require("debugging.views").messages_show() end,
-        capture = function() require("debugging.views").messages_capture() end,
-        clear   = function() require("debugging.views").windows_clear() end,
+        show = function()
+          require("debugging.views").messages_show()
+        end,
+        capture = function()
+          require("debugging.views").messages_capture()
+        end,
+        clear = function()
+          require("debugging.views").windows_clear()
+        end,
       },
     },
     noice = {
       feature = "views",
       actions = { "all", "errors" },
       run = {
-        all    = function() require("debugging.views").noice_all() end,
-        errors = function() require("debugging.views").noice_errors() end,
+        all = function()
+          require("debugging.views").noice_all()
+        end,
+        errors = function()
+          require("debugging.views").noice_errors()
+        end,
       },
     },
     report = {
       feature = "reports",
       actions = { "buf", "tab", "win" },
       run = {
-        buf = function() require("debugging.actions.reports").buf() end,
-        tab = function() require("debugging.actions.reports").tab() end,
+        buf = function()
+          require("debugging.actions.reports").buf()
+        end,
+        tab = function()
+          require("debugging.actions.reports").tab()
+        end,
         win = function(args)
           local id, ok = parse_id(args[1])
           if not ok then
@@ -125,29 +143,39 @@ local function build_registry()
       feature = "tools",
       actions = { "state" },
       run = {
-        state = function() require("debugging.tools.cursor.state").print() end,
+        state = function()
+          require("debugging.tools.cursor.state").print()
+        end,
       },
     },
     dump = {
       feature = "tools",
-      actions = {},  -- free-form: :Debug dump [varname]
+      actions = {}, -- free-form: :Debug dump [varname]
       run = {
-        __default = function(args) require("debugging.tools.vardump").dump(args[1]) end,
+        __default = function(args)
+          require("debugging.tools.vardump").dump(args[1])
+        end,
       },
     },
     keylogger = {
       feature = "terminals",
       actions = { "start", "stop" },
       run = {
-        start = function(args) require("debugging.terminals.keylogger").start(args[1]) end,
-        stop  = function() require("debugging.terminals.keylogger").stop() end,
+        start = function(args)
+          require("debugging.terminals.keylogger").start(args[1])
+        end,
+        stop = function()
+          require("debugging.terminals.keylogger").stop()
+        end,
       },
     },
     indent = {
       feature = "nvim_options",
       actions = { "show", "treesitter" },
       run = {
-        show = function() require("debugging.nvim_options.indent_helpers").print_indent_options() end,
+        show = function()
+          require("debugging.nvim_options.indent_helpers").print_indent_options()
+        end,
         treesitter = function(args)
           local enable = not (args[1] == "false" or args[1] == "0")
           require("debugging.nvim_options.indent_helpers").prefer_treesitter_indent(enable)
@@ -160,61 +188,104 @@ local function build_registry()
       run = {
         inline = function()
           local ok, res = require("debugging.markdown.inline_debug").gather()
-          if not ok then notify.error("markdown inline: " .. tostring(res)) end
+          if not ok then
+            notify.error("markdown inline: " .. tostring(res))
+          end
         end,
-        log = function() require("debugging.markdown.inline_debug").open_log() end,
+        log = function()
+          require("debugging.markdown.inline_debug").open_log()
+        end,
       },
     },
     neotree = {
       feature = "neotree",
       actions = {
-        "status", "exit", "restart",
-        "backup-list", "backup-clean",
-        "dryrun-toggle", "dryrun-report",
-        "queue-status", "queue-clear",
+        "status",
+        "exit",
+        "restart",
+        "backup-list",
+        "backup-clean",
+        "dryrun-toggle",
+        "dryrun-report",
+        "queue-status",
+        "queue-clear",
       },
       run = {
-        ["status"]        = function() require("debugging.actions.neotree_safety").quarantine_status() end,
-        ["exit"]          = function() require("debugging.actions.neotree_safety").quarantine_exit() end,
-        ["restart"]       = function() require("debugging.actions.neotree_safety").restart_watchers() end,
-        ["backup-list"]   = function() require("debugging.actions.neotree_safety").backup_list() end,
-        ["backup-clean"]  = function() require("debugging.actions.neotree_safety").backup_clean() end,
-        ["dryrun-toggle"] = function() require("debugging.actions.neotree_safety").dryrun_toggle() end,
-        ["dryrun-report"] = function() require("debugging.actions.neotree_safety").dryrun_report() end,
-        ["queue-status"]  = function() require("debugging.actions.neotree_safety").queue_status() end,
-        ["queue-clear"]   = function() require("debugging.actions.neotree_safety").queue_clear() end,
+        ["status"] = function()
+          require("debugging.actions.neotree_safety").quarantine_status()
+        end,
+        ["exit"] = function()
+          require("debugging.actions.neotree_safety").quarantine_exit()
+        end,
+        ["restart"] = function()
+          require("debugging.actions.neotree_safety").restart_watchers()
+        end,
+        ["backup-list"] = function()
+          require("debugging.actions.neotree_safety").backup_list()
+        end,
+        ["backup-clean"] = function()
+          require("debugging.actions.neotree_safety").backup_clean()
+        end,
+        ["dryrun-toggle"] = function()
+          require("debugging.actions.neotree_safety").dryrun_toggle()
+        end,
+        ["dryrun-report"] = function()
+          require("debugging.actions.neotree_safety").dryrun_report()
+        end,
+        ["queue-status"] = function()
+          require("debugging.actions.neotree_safety").queue_status()
+        end,
+        ["queue-clear"] = function()
+          require("debugging.actions.neotree_safety").queue_clear()
+        end,
       },
     },
     module = {
       feature = "module_reload",
       actions = { "reload" },
       run = {
-        reload = function() require("debugging.actions.module_reload").reload_current() end,
+        reload = function()
+          require("debugging.actions.module_reload").reload_current()
+        end,
       },
     },
     proc = {
       feature = "proc_trace",
       actions = { "start", "stop", "status", "log", "watch" },
       run = {
-        start  = function(args) require("debugging.tools.proc_trace").start(args) end,
-        stop   = function() require("debugging.tools.proc_trace").stop() end,
-        status = function() require("debugging.tools.proc_trace").status() end,
-        log    = function() require("debugging.tools.proc_trace").open_log() end,
-        watch  = function(args) require("debugging.tools.proc_trace").watch(args) end,
+        start = function(args)
+          require("debugging.tools.proc_trace").start(args)
+        end,
+        stop = function()
+          require("debugging.tools.proc_trace").stop()
+        end,
+        status = function()
+          require("debugging.tools.proc_trace").status()
+        end,
+        log = function()
+          require("debugging.tools.proc_trace").open_log()
+        end,
+        watch = function(args)
+          require("debugging.tools.proc_trace").watch(args)
+        end,
       },
     },
     performance = {
       feature = "performance",
       actions = { "startup" },
       run = {
-        startup = function(args) require("debugging.tools.startup").startup(args) end,
+        startup = function(args)
+          require("debugging.tools.startup").startup(args)
+        end,
       },
     },
     health = {
       feature = "__always",
       actions = {},
       run = {
-        __default = function() vim.cmd("checkhealth debugging") end,
+        __default = function()
+          vim.cmd("checkhealth debugging")
+        end,
       },
     },
   }
@@ -225,7 +296,9 @@ local _registry = nil
 
 ---@return table
 local function registry()
-  if not _registry then _registry = build_registry() end
+  if not _registry then
+    _registry = build_registry()
+  end
   return _registry
 end
 
@@ -233,15 +306,30 @@ end
 ---@param entry table
 ---@return boolean
 local function enabled(entry)
-  if entry.feature == "__always" then return true end
+  if entry.feature == "__always" then
+    return true
+  end
   return config.get().features[entry.feature] == true
 end
 
 ---@return string[]  Enabled category names (stable order)
 local function enabled_categories()
   local order = {
-    "messages", "noice", "report", "autocmds", "inspect", "cursor",
-    "dump", "keylogger", "indent", "markdown", "module", "proc", "performance", "neotree", "health",
+    "messages",
+    "noice",
+    "report",
+    "autocmds",
+    "inspect",
+    "cursor",
+    "dump",
+    "keylogger",
+    "indent",
+    "markdown",
+    "module",
+    "proc",
+    "performance",
+    "neotree",
+    "health",
   }
   local out = {}
   local reg = registry()
@@ -307,7 +395,9 @@ function M.dispatch(fargs)
   local category = fargs[1]:lower()
   local entry = registry()[category]
   if not entry then
-    notify.error(("unknown category %q — try: %s"):format(category, table.concat(enabled_categories(), ", ")))
+    notify.error(
+      ("unknown category %q — try: %s"):format(category, table.concat(enabled_categories(), ", "))
+    )
     return
   end
   if not enabled(entry) then
@@ -325,13 +415,25 @@ function M.dispatch(fargs)
 
   local action = rest[1] and rest[1]:lower() or nil
   if not action then
-    notify.error(("usage: :%s %s {%s}"):format(config.get().command, category, table.concat(entry.actions, "|")))
+    notify.error(
+      ("usage: :%s %s {%s}"):format(
+        config.get().command,
+        category,
+        table.concat(entry.actions, "|")
+      )
+    )
     return
   end
 
   local fn = entry.run[action]
   if not fn then
-    notify.error(("unknown action %q for %q — try: %s"):format(action, category, table.concat(entry.actions, "|")))
+    notify.error(
+      ("unknown action %q for %q — try: %s"):format(
+        action,
+        category,
+        table.concat(entry.actions, "|")
+      )
+    )
     return
   end
 
@@ -344,10 +446,14 @@ end
 ---@param lead string
 ---@return string[]
 local function filter(list, lead)
-  if lead == "" then return list end
+  if lead == "" then
+    return list
+  end
   local out = {}
   for i = 1, #list do
-    if list[i]:sub(1, #lead) == lead then out[#out + 1] = list[i] end
+    if list[i]:sub(1, #lead) == lead then
+      out[#out + 1] = list[i]
+    end
   end
   return out
 end
@@ -357,9 +463,11 @@ end
 ---@return string[]
 function M.complete(arglead, cmdline, _)
   local tokens = {}
-  for t in cmdline:gmatch("%S+") do tokens[#tokens + 1] = t end
+  for t in cmdline:gmatch("%S+") do
+    tokens[#tokens + 1] = t
+  end
   local trailing = cmdline:sub(-1) == " "
-  local committed = #tokens - (trailing and 0 or 1) - 1  -- minus command name
+  local committed = #tokens - (trailing and 0 or 1) - 1 -- minus command name
 
   if committed <= 0 then
     return filter(enabled_categories(), arglead)
@@ -367,7 +475,9 @@ function M.complete(arglead, cmdline, _)
 
   local category = tokens[2] and tokens[2]:lower() or ""
   local entry = registry()[category]
-  if not entry or not enabled(entry) then return {} end
+  if not entry or not enabled(entry) then
+    return {}
+  end
 
   -- autocmds sources|all free-form args (event=/sort=/…)
   if category == "autocmds" and tokens[3] and committed >= 2 then
@@ -382,7 +492,12 @@ function M.complete(arglead, cmdline, _)
   end
 
   -- indent treesitter true/false
-  if category == "indent" and tokens[3] and tokens[3]:lower() == "treesitter" and committed == 2 then
+  if
+    category == "indent"
+    and tokens[3]
+    and tokens[3]:lower() == "treesitter"
+    and committed == 2
+  then
     return filter({ "true", "false" }, arglead)
   end
 

@@ -108,8 +108,10 @@ end
 ---@return nil
 function M.watch(args)
   if vim.fn.has("win32") ~= 1 then
-    notify.warn("`:Debug proc watch` bundles a Windows-only script (Win32 CIM process tree). "
-      .. "On this platform, use `pstree -p <nvim_pid>` or `watch -n0.2 'pgrep -P <nvim_pid>'` instead.")
+    notify.warn(
+      "`:Debug proc watch` bundles a Windows-only script (Win32 CIM process tree). "
+        .. "On this platform, use `pstree -p <nvim_pid>` or `watch -n0.2 'pgrep -P <nvim_pid>'` instead."
+    )
     return
   end
 
@@ -124,8 +126,13 @@ function M.watch(args)
 
   vim.cmd("botright split")
   vim.fn.termopen({
-    shell_exe, "-NoLogo", "-NoProfile", "-File", script,
-    "-Seconds", tostring(seconds),
+    shell_exe,
+    "-NoLogo",
+    "-NoProfile",
+    "-File",
+    script,
+    "-Seconds",
+    tostring(seconds),
   })
   vim.cmd("startinsert")
   notify.info(("watching child processes for %ds — reproduce the freeze now"):format(seconds))

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # Gating: stylua + luacheck must pass.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: stylua (check)
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check lua plugin docs/TESTS
+
+      - name: Install luacheck
+        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
+
+      - name: luacheck
+        run: luacheck lua plugin docs/TESTS
+
+  # Real gate: the framework-free headless suite (config merge, the
+  # `autocmds sources` parsers, :Debug dispatch/completion, startup benchmark).
+  # lib.nvim is checked out as a sibling and put on the runtimepath — it is a
+  # deliberate hard dependency (notify, window, usercmd.composer, fs, cache).
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout debugging.nvim
+        uses: actions/checkout@v4
+        with:
+          path: debugging.nvim
+
+      - name: Checkout lib.nvim
+        uses: actions/checkout@v4
+        with:
+          repository: StefanBartl/lib.nvim
+          path: lib.nvim
+
+      - name: Install Neovim (stable)
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Run tests
+        working-directory: debugging.nvim
+        env:
+          REPOS_DIR: ${{ github.workspace }}
+        run: nvim --headless -u NONE -c "set rtp+=." -c "set rtp+=../lib.nvim" -c "luafile docs/TESTS/run.lua" -c "qa!"

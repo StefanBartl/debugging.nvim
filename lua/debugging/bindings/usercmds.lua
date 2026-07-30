@@ -6,6 +6,10 @@
 --- registry) lives in `debugging.commands`; this module only builds a
 --- composer route tree from that registry and wires up registration.
 ---
+---@see debugging.commands  Dispatch side of the same split: owns the
+--- category/action registry, `dispatch()` and `complete()`. Every route
+--- built here ultimately calls its `dispatch()`.
+---
 --- Every route's `run` bypasses composer's own bound ctx.args/ctx.pos and
 --- calls the ORIGINAL, unmodified `commands.dispatch(ctx.raw.fargs)` (composer's
 --- untouched nvim-callback opts table has the exact same `.fargs` shape the
@@ -29,7 +33,9 @@ local M = {}
 -- Dynamic completion for the two free-form autocmds sub-actions -- resolves
 -- fresh each call since discovered autocmd sources can change.
 composer.register_type("DBG_AUTOCMD_EXPR", {
-  validate = function(raw) return true, raw, nil end,
+  validate = function(raw)
+    return true, raw, nil
+  end,
   complete = function(arg_lead)
     return require("debugging.autocmds.sources").complete(arg_lead)
   end,
@@ -40,7 +46,9 @@ composer.register_type("DBG_AUTOCMD_EXPR", {
 ---@param commands table  the `debugging.commands` module
 ---@return table[]
 local function build_routes(commands)
-  local dispatch_route = function(ctx) commands.dispatch(ctx.raw.fargs) end
+  local dispatch_route = function(ctx)
+    commands.dispatch(ctx.raw.fargs)
+  end
   local routes = {}
 
   for category, entry in pairs(commands.registry()) do
@@ -63,7 +71,9 @@ local function build_routes(commands)
           elseif category == "autocmds" and (action == "sources" or action == "all") then
             args = { { name = "expr", type = "DBG_AUTOCMD_EXPR", optional = true } }
           elseif category == "indent" and action == "treesitter" then
-            args = { { name = "enable", type = "STRING", optional = true, values = { "true", "false" } } }
+            args = {
+              { name = "enable", type = "STRING", optional = true, values = { "true", "false" } },
+            }
           else
             -- Covers zero-arg actions (extra token harmlessly falls into
             -- ctx.rest/dispatch re-parses it) and single-handle-id actions
@@ -94,7 +104,9 @@ function M.setup(cfg)
 
   composer.verb(cfg.command, {
     desc = "Unified debugging entry point — :" .. cfg.command .. " {category} {action}",
-    default = function() commands.dispatch({}) end,
+    default = function()
+      commands.dispatch({})
+    end,
     routes = build_routes(commands),
   })
 end

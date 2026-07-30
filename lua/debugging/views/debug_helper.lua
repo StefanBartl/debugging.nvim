@@ -73,12 +73,12 @@ function M.check_noice()
                   type = type(line[1]),
                   has__text = type(line[1]) == "table" and line[1]._text ~= nil,
                   _text_value = type(line[1]) == "table" and line[1]._text,
-                } or nil
+                } or nil,
               }
             elseif type(line) == "string" then
               sample._lines_sample = {
                 type = "string",
-                value = line:sub(1, 50)
+                value = line:sub(1, 50),
               }
             end
           end
@@ -151,7 +151,9 @@ function M.report_lines()
   local function add(fmt, ...)
     out[#out + 1] = select("#", ...) > 0 and string.format(fmt, ...) or fmt
   end
-  local function mark(v) return v and "✓" or "✗" end
+  local function mark(v)
+    return v and "✓" or "✗"
+  end
 
   local rule = string.rep("=", 60)
   add(rule)
@@ -186,8 +188,10 @@ function M.report_lines()
             if sample._lines_sample.first_part then
               add("        [1] type: %s", sample._lines_sample.first_part.type)
               if sample._lines_sample.first_part.has__text then
-                add("        [1]._text: %s",
-                  vim.inspect(sample._lines_sample.first_part._text_value):sub(1, 50))
+                add(
+                  "        [1]._text: %s",
+                  vim.inspect(sample._lines_sample.first_part._text_value):sub(1, 50)
+                )
               end
             end
           else
@@ -272,7 +276,7 @@ function M.test_capture()
   local capture = require("debugging.views.capture")
   local ok, content = capture.capture_messages({
     debug = true,
-    clipboard = false,  -- Don't spam clipboard during test
+    clipboard = false, -- Don't spam clipboard during test
     save_file = true,
   })
 

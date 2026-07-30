@@ -39,10 +39,12 @@ Die Module sind zustandslose Aktionsfunktionen; es gibt kein Objekt, das
 Methoden tragen wollte. `views.get_timings()` & Co. decken den Getter-Bedarf
 ab.
 
-### 🔁 `@see`-Verlinkung ungenutzt
+### ✅ `@see`-Verlinkung ungenutzt — erledigt
 
-Kandidat wäre `commands.lua` ↔ `bindings/usercmds.lua`. Siehe
-[Checklist.md](./Checklist.md#-see-modulverlinkung).
+Umgesetzt für den genannten Kandidaten `commands.lua` ↔
+`bindings/usercmds.lua`: beide Modul-Header tragen jetzt ein `@see` auf die
+jeweils andere Seite des Dispatch-/Registrierungs-Splits. Siehe
+[Checklist.md](./Checklist.md#-see-modulverlinkung--erledigt).
 
 ### 🔁 `#`-Präfix-Konvention in `@alias`
 

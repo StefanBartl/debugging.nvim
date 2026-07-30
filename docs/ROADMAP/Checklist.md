@@ -24,19 +24,24 @@ rendern direkt in einen Notify-String. Ein leerer Platzhalter-Ordner brächte
 keinen LSP-Mehrwert. Vermerkt im Kopf von
 [tools/@types/init.lua](../../lua/debugging/tools/@types/init.lua).
 
-### 🔁 Gruppierungs-Stil in den `@types`-Dateien
+### ✅ Gruppierungs-Stil in den `@types`-Dateien — erledigt
 
 Die Quell-Checkliste schlägt `--- #####…` + `-- Xy.lua`-Kommentar pro
-Quelldatei vor. `autocmds/@types` und `tools/@types` folgen dem bereits; die
-älteren (`views/`, `markdown/`) sind flach nach `@class` sortiert. Bei der
-aktuellen Klassenzahl noch übersichtlich — nachziehen, wenn eine der Dateien
-über ~3 Quelldatei-Gruppen wächst.
+Quelldatei vor. `autocmds/@types` und `tools/@types` folgten dem bereits;
+`views/` und `markdown/` sind jetzt nachgezogen. `views/@types` erreichte mit
+sechs Klassen ohnehin die im ursprünglichen Vermerk genannte Schwelle von
+~3 Quelldatei-Gruppen: die Klassen sind nun nach `capture/init.lua`,
+`display.lua` und `init.lua` gruppiert (`Timings` ist bewusst als von
+`display.lua` *und* `init.lua` geteilt ausgewiesen, statt willkürlich einer
+der beiden zugeschlagen zu werden). Bei der Gelegenheit haben die bis dahin
+undokumentierten Felder Beschreibungen bekommen.
 
-### 🔁 `@see`-Modulverlinkung
+### ✅ `@see`-Modulverlinkung — erledigt
 
-Nirgends verwendet. Guter Kandidat wäre `commands.lua` ↔
-`bindings/usercmds.lua` (Dispatch-/Registrierungs-Split). Bei der
-überschaubaren Modulzahl aktuell kein Schmerzpunkt.
+Umgesetzt für den in dieser Datei selbst vorgeschlagenen Kandidaten:
+`commands.lua` ↔ `bindings/usercmds.lua` (Dispatch-/Registrierungs-Split).
+Beide Header verwiesen bereits prosaisch aufeinander; daraus sind jetzt
+echte `@see`-Tags geworden, die LuaLS auflösen kann.
 
 ### ➖ Funktionales Programmieren (Filter/Sinks/Pumps)
 

@@ -34,15 +34,50 @@ local DEFAULT_ROOT = vim.fn.stdpath("config") .. "/lua"
 
 ---@type string[]
 M.KNOWN_EVENTS = {
-  "BufAdd", "BufDelete", "BufEnter", "BufLeave", "BufNew", "BufNewFile",
-  "BufRead", "BufReadPost", "BufReadPre", "BufUnload", "BufWinEnter",
-  "BufWinLeave", "BufWipeout", "BufWrite", "BufWritePost", "BufWritePre",
-  "CmdlineEnter", "CmdlineLeave", "ColorScheme", "CursorHold", "CursorHoldI",
-  "CursorMoved", "CursorMovedI", "DiagnosticChanged", "DirChanged",
-  "FileType", "FocusGained", "FocusLost", "InsertEnter", "InsertLeave",
-  "LspAttach", "LspDetach", "ModeChanged", "OptionSet", "QuitPre",
-  "TextChanged", "TextChangedI", "TextYankPost", "UIEnter", "VimEnter",
-  "VimLeave", "VimResized", "WinEnter", "WinLeave",
+  "BufAdd",
+  "BufDelete",
+  "BufEnter",
+  "BufLeave",
+  "BufNew",
+  "BufNewFile",
+  "BufRead",
+  "BufReadPost",
+  "BufReadPre",
+  "BufUnload",
+  "BufWinEnter",
+  "BufWinLeave",
+  "BufWipeout",
+  "BufWrite",
+  "BufWritePost",
+  "BufWritePre",
+  "CmdlineEnter",
+  "CmdlineLeave",
+  "ColorScheme",
+  "CursorHold",
+  "CursorHoldI",
+  "CursorMoved",
+  "CursorMovedI",
+  "DiagnosticChanged",
+  "DirChanged",
+  "FileType",
+  "FocusGained",
+  "FocusLost",
+  "InsertEnter",
+  "InsertLeave",
+  "LspAttach",
+  "LspDetach",
+  "ModeChanged",
+  "OptionSet",
+  "QuitPre",
+  "TextChanged",
+  "TextChangedI",
+  "TextYankPost",
+  "UIEnter",
+  "VimEnter",
+  "VimLeave",
+  "VimResized",
+  "WinEnter",
+  "WinLeave",
 }
 
 ---@type string[]
@@ -71,7 +106,9 @@ local function normalize_events(raw)
   end
   if #events == 0 then
     local single = raw:match([["([^"]+)"]])
-    if single then events[1] = single end
+    if single then
+      events[1] = single
+    end
   end
   tbl_sort(events)
   return events
@@ -89,8 +126,12 @@ local function read_brace_block(lines, start_line, start_col)
     local from = (l == start_line) and start_col or 1
     for i = from, #line do
       local ch = line:sub(i, i)
-      if ch == "{" then depth = depth + 1 end
-      if ch == "}" then depth = depth - 1 end
+      if ch == "{" then
+        depth = depth + 1
+      end
+      if ch == "}" then
+        depth = depth - 1
+      end
     end
     tbl_insert(out, line)
     if depth == 0 then
@@ -140,17 +181,25 @@ end
 ---@param all Dbg.Autocmds.SourceItem[]
 local function scan_file_ts(abs_path, rel_path, by_event, all)
   local ok, lines = pcall(vim.fn.readfile, abs_path)
-  if not ok or type(lines) ~= "table" then return end
+  if not ok or type(lines) ~= "table" then
+    return
+  end
   local content = tbl_concat(lines, "\n")
 
   local parsed, parser = pcall(vim.treesitter.get_string_parser, content, "lua")
-  if not parsed or not parser then return end
+  if not parsed or not parser then
+    return
+  end
   local tree = parser:parse()[1]
-  if not tree then return end
+  if not tree then
+    return
+  end
   local root = tree:root()
 
   local q_ok, query = pcall(vim.treesitter.query.parse, "lua", "(function_call) @call")
-  if not q_ok or not query then return end
+  if not q_ok or not query then
+    return
+  end
 
   local get_text = vim.treesitter.get_node_text
   for _, node in query:iter_captures(root, content, 0, -1) do
@@ -182,7 +231,9 @@ end
 ---@param all Dbg.Autocmds.SourceItem[]
 local function scan_file_text(abs_path, rel_path, by_event, all)
   local ok, lines = pcall(vim.fn.readfile, abs_path)
-  if not ok or type(lines) ~= "table" then return end
+  if not ok or type(lines) ~= "table" then
+    return
+  end
   for i, line in ipairs(lines) do
     local api_call = line:find("nvim_create_autocmd", 1, true)
     if api_call then
@@ -234,19 +285,33 @@ end
 ---@return Dbg.Autocmds.SourceOpts
 local function parse_args(args)
   local opts = {
-    event = nil, sort = "source",
-    show_impl = true, show_summary = true, show_freq = true,
-    root = DEFAULT_ROOT, refresh = false, quickfix = false,
+    event = nil,
+    sort = "source",
+    show_impl = true,
+    show_summary = true,
+    show_freq = true,
+    root = DEFAULT_ROOT,
+    refresh = false,
+    quickfix = false,
   }
   for key, val in (args or ""):gmatch("(%w+)=([^%s]+)") do
-    if key == "event" then opts.event = val
-    elseif key == "sort" then opts.sort = val
-    elseif key == "impl" then opts.show_impl = val ~= "false"
-    elseif key == "summary" then opts.show_summary = val ~= "false"
-    elseif key == "freq" then opts.show_freq = val ~= "false"
-    elseif key == "root" then opts.root = vim.fn.expand(val)
-    elseif key == "refresh" then opts.refresh = val ~= "false"
-    elseif key == "qf" then opts.quickfix = val ~= "false" end
+    if key == "event" then
+      opts.event = val
+    elseif key == "sort" then
+      opts.sort = val
+    elseif key == "impl" then
+      opts.show_impl = val ~= "false"
+    elseif key == "summary" then
+      opts.show_summary = val ~= "false"
+    elseif key == "freq" then
+      opts.show_freq = val ~= "false"
+    elseif key == "root" then
+      opts.root = vim.fn.expand(val)
+    elseif key == "refresh" then
+      opts.refresh = val ~= "false"
+    elseif key == "qf" then
+      opts.quickfix = val ~= "false"
+    end
   end
   return opts
 end
@@ -386,7 +451,9 @@ function M.run(args)
   local opts = parse_args(args or "")
 
   local by_event, all = get_scan(opts)
-  if not by_event then return end
+  if not by_event then
+    return
+  end
 
   local items = select_items(opts, by_event, all)
 
@@ -406,7 +473,9 @@ end
 local function runtime_by_event()
   local out = {}
   local ok, list = pcall(vim.api.nvim_get_autocmds, {})
-  if not ok or type(list) ~= "table" then return out end
+  if not ok or type(list) ~= "table" then
+    return out
+  end
   for _, au in ipairs(list) do
     local ev = au.event or "?"
     out[ev] = out[ev] or {}
@@ -425,7 +494,9 @@ function M.all(args)
   local opts = parse_args(args or "")
 
   local by_event, all = get_scan(opts)
-  if not by_event then return end
+  if not by_event then
+    return
+  end
   local by_event_rt = runtime_by_event()
 
   local lines = {}
@@ -433,14 +504,36 @@ function M.all(args)
   tbl_insert(lines, "")
   tbl_insert(lines, "Root: " .. opts.root)
   tbl_insert(lines, "Parser: " .. (has_ts_lua() and "tree-sitter" or "text"))
-  tbl_insert(lines, string.format("Source call sites: %d   Runtime registrations: %d",
-    #all, (function() local n = 0 for _, v in pairs(by_event_rt) do n = n + #v end return n end)()))
+  tbl_insert(
+    lines,
+    string.format(
+      "Source call sites: %d   Runtime registrations: %d",
+      #all,
+      (function()
+        local n = 0
+        for _, v in pairs(by_event_rt) do
+          n = n + #v
+        end
+        return n
+      end)()
+    )
+  )
   tbl_insert(lines, "")
 
   -- Union of event names from both views, so nothing is silently dropped.
   local seen, events = {}, {}
-  for ev in pairs(by_event) do if not seen[ev] then seen[ev] = true; events[#events + 1] = ev end end
-  for ev in pairs(by_event_rt) do if not seen[ev] then seen[ev] = true; events[#events + 1] = ev end end
+  for ev in pairs(by_event) do
+    if not seen[ev] then
+      seen[ev] = true
+      events[#events + 1] = ev
+    end
+  end
+  for ev in pairs(by_event_rt) do
+    if not seen[ev] then
+      seen[ev] = true
+      events[#events + 1] = ev
+    end
+  end
   tbl_sort(events)
 
   if opts.event then
@@ -467,8 +560,14 @@ function M.all(args)
       tbl_insert(lines, "    (not registered)")
     else
       for _, au in ipairs(rt) do
-        tbl_insert(lines, string.format("    group=%-24s pattern=%s",
-          au.group_name or "default", tostring(au.pattern or "*")))
+        tbl_insert(
+          lines,
+          string.format(
+            "    group=%-24s pattern=%s",
+            au.group_name or "default",
+            tostring(au.pattern or "*")
+          )
+        )
       end
     end
 
@@ -507,7 +606,9 @@ function M.complete(arglead)
   if key == "sort" then
     local out = {}
     for _, mode in ipairs(M.SORT_MODES) do
-      if mode:find(partial, 1, true) == 1 then out[#out + 1] = "sort=" .. mode end
+      if mode:find(partial, 1, true) == 1 then
+        out[#out + 1] = "sort=" .. mode
+      end
     end
     return out
   end
@@ -516,7 +617,9 @@ function M.complete(arglead)
   end
   local out = {}
   for _, k in ipairs(M.ARG_KEYS) do
-    if k:find(arglead, 1, true) == 1 then out[#out + 1] = k end
+    if k:find(arglead, 1, true) == 1 then
+      out[#out + 1] = k
+    end
   end
   return out
 end

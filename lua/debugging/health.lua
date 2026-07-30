@@ -25,7 +25,9 @@ function M.check()
     vim.health.warn("Neovim 0.9+ recommended")
   end
   if vim.g.loaded_debugging then
-    vim.health.ok("plugin loaded (vim.g.loaded_debugging = " .. tostring(vim.g.loaded_debugging) .. ")")
+    vim.health.ok(
+      "plugin loaded (vim.g.loaded_debugging = " .. tostring(vim.g.loaded_debugging) .. ")"
+    )
   else
     vim.health.warn("plugin guard not set — call require('debugging').setup()")
   end
@@ -96,7 +98,6 @@ function M.check()
     vim.health.info("vim.loader not available — only package.loaded cache will be cleared")
   end
 
-
   -- ── autocmds sources parser ───────────────────────────────────────────────
   vim.health.start("debugging: autocmds sources")
   if pcall(vim.treesitter.get_string_parser, "", "lua") then
@@ -143,8 +144,10 @@ function M.check()
       vim.health.warn("neither pwsh nor powershell.exe on PATH — `:Debug proc watch` will fail")
     end
   else
-    vim.health.info("`:Debug proc watch` is Windows-only (Win32 CIM process tree); "
-      .. "`:Debug proc start/stop/status/log` work on every platform")
+    vim.health.info(
+      "`:Debug proc watch` is Windows-only (Win32 CIM process tree); "
+        .. "`:Debug proc start/stop/status/log` work on every platform"
+    )
   end
 end
 

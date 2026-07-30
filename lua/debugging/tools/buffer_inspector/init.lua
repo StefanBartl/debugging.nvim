@@ -14,8 +14,17 @@ local BUF_OPTIONS = { "modifiable", "readonly", "buftype", "filetype", "bufliste
 
 ---@type string[]  Window-scoped options to report
 local WIN_OPTIONS = {
-  "number", "relativenumber", "wrap", "cursorline", "cursorcolumn",
-  "list", "spell", "foldmethod", "foldenable", "signcolumn", "winfixwidth",
+  "number",
+  "relativenumber",
+  "wrap",
+  "cursorline",
+  "cursorcolumn",
+  "list",
+  "spell",
+  "foldmethod",
+  "foldenable",
+  "signcolumn",
+  "winfixwidth",
   "winfixheight",
 }
 
@@ -116,10 +125,15 @@ function M.tab(tabnr)
   for _, win in ipairs(wins) do
     local bufnr = api.nvim_win_get_buf(win)
     local name = api.nvim_buf_get_name(bufnr)
-    if name == "" then name = "[No Name]" end
+    if name == "" then
+      name = "[No Name]"
+    end
     lines[#lines + 1] = string.format(
       "    win %-6d buf %-4d %s%s",
-      win, bufnr, name, win == cur_win and "  <-- current" or ""
+      win,
+      bufnr,
+      name,
+      win == cur_win and "  <-- current" or ""
     )
   end
 

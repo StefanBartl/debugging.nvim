@@ -1,6 +1,9 @@
 ---@meta
 ---@module 'debugging.markdown.@types'
 
+-- #####################################################################
+-- inline_debug.lua
+
 ---@class Dbg.MD.InlineDebug
 ---@field out_path string path to written log
 ---@field bufnr number current buffer number

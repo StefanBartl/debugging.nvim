@@ -116,8 +116,11 @@ function M.start(logfile)
 
   M.logging = true
   M.bufnr = vim.api.nvim_get_current_buf()
-  notify.info(("Started logging keys in this terminal buffer%s. Press keys now.")
-    :format(M.logfile and (" (→ " .. M.logfile .. ")") or ""))
+  notify.info(
+    ("Started logging keys in this terminal buffer%s. Press keys now."):format(
+      M.logfile and (" (→ " .. M.logfile .. ")") or ""
+    )
+  )
   log_key()
 end
 
@@ -131,7 +134,9 @@ function M.stop(reason)
   end
   M.logging = false
   if _fh then
-    pcall(function() _fh:close() end)
+    pcall(function()
+      _fh:close()
+    end)
     _fh = nil
   end
   if reason then
