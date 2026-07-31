@@ -149,6 +149,9 @@ function M.check()
         .. "`:Debug proc start/stop/status/log` work on every platform"
     )
   end
+
+  -- ── composer route pre-flight ─────────────────────────────────────────────
+  require("lib.nvim.usercmd.composer").checkhealth("Debug")
 end
 
 return M
