@@ -1,6 +1,6 @@
 ---@module 'debugging.autocmds.sources'
----@brief Static source-code audit of nvim_create_autocmd call sites.
----@description
+--- Static source-code audit of nvim_create_autocmd call sites.
+---
 --- Scans Lua files under a root directory (default: your nvim config `lua/`),
 --- finds every `nvim_create_autocmd` definition, and reports where each autocmd
 --- is DEFINED (path:line + implementation), grouped by event. Complements
@@ -97,6 +97,7 @@ local CACHE_TTL_SECONDS = 5
 --- step underneath it.
 local scan_cache = memory_cache.namespace("debugging.autocmds.sources", { ttl = CACHE_TTL_SECONDS })
 
+---@internal
 ---@param raw string
 ---@return string[]
 local function normalize_events(raw)
@@ -114,6 +115,7 @@ local function normalize_events(raw)
   return events
 end
 
+---@internal
 ---@param lines string[]
 ---@param start_line integer
 ---@param start_col integer
@@ -146,6 +148,7 @@ end
 ---@type boolean|nil  Cached result of the Lua-parser availability probe.
 local _has_ts_lua = nil
 
+---@internal
 ---Whether a Tree-sitter Lua parser is available in this session.
 ---@return boolean
 local function has_ts_lua()
@@ -165,6 +168,7 @@ local AUTOCMD_FN = "nvim_create_autocmd"
 ---Does a call's function-name text refer to nvim_create_autocmd?
 --- Matches both the bare `nvim_create_autocmd(...)` and the qualified
 --- `vim.api.nvim_create_autocmd(...)` forms.
+---@internal
 ---@param name string
 ---@return boolean
 local function is_autocmd_name(name)
@@ -174,6 +178,7 @@ local function is_autocmd_name(name)
   return name:sub(-#AUTOCMD_FN - 1) == "." .. AUTOCMD_FN
 end
 
+---@internal
 ---Tree-sitter scan of one Lua file's `nvim_create_autocmd` call sites.
 ---@param abs_path string
 ---@param rel_path string
@@ -225,6 +230,7 @@ end
 
 -- Text scanner (fallback) -----------------------------------------------------
 
+---@internal
 ---@param abs_path string
 ---@param rel_path string
 ---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
@@ -254,6 +260,7 @@ local function scan_file_text(abs_path, rel_path, by_event, all)
   end
 end
 
+---@internal
 ---Scan one file with whichever parser is available.
 ---@param abs_path string
 ---@param rel_path string
@@ -267,6 +274,7 @@ local function scan_file(abs_path, rel_path, by_event, all)
   end
 end
 
+---@internal
 ---@param root string
 ---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
 ---@param all Dbg.Autocmds.SourceItem[]
@@ -281,6 +289,7 @@ local function scan_dir(root, by_event, all)
   end
 end
 
+---@internal
 ---@param args string
 ---@return Dbg.Autocmds.SourceOpts
 local function parse_args(args)
@@ -316,6 +325,7 @@ local function parse_args(args)
   return opts
 end
 
+---@internal
 ---Run the scan for `opts`, honouring the per-root cache. Returns nil when the
 --- root is not a directory (after notifying).
 ---@param opts Dbg.Autocmds.SourceOpts
@@ -339,6 +349,7 @@ local function get_scan(opts)
   return by_event, all
 end
 
+---@internal
 ---Select the report items for `opts` (event filter) and apply the sort mode.
 ---@param opts Dbg.Autocmds.SourceOpts
 ---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
@@ -365,6 +376,7 @@ local function select_items(opts, by_event, all)
   return items
 end
 
+---@internal
 ---@param opts Dbg.Autocmds.SourceOpts
 ---@param by_event table<string, Dbg.Autocmds.SourceItem[]>
 ---@param all Dbg.Autocmds.SourceItem[]
@@ -410,6 +422,7 @@ local function generate_output(opts, by_event, all, items)
   return lines
 end
 
+---@internal
 ---Populate the quickfix list with one entry per source item and open it.
 ---@param opts Dbg.Autocmds.SourceOpts
 ---@param items Dbg.Autocmds.SourceItem[]
@@ -435,6 +448,7 @@ local function fill_quickfix(opts, items)
   end
 end
 
+---@internal
 ---@param output string[]
 ---@param filetype string
 local function show_scratch(output, filetype)
@@ -468,6 +482,7 @@ end
 
 -- Combined runtime + sources view --------------------------------------------
 
+---@internal
 ---Group the currently-registered autocmds by event name.
 ---@return table<string, table[]>
 local function runtime_by_event()

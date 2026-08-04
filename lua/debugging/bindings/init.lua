@@ -1,6 +1,6 @@
 ---@module 'debugging.bindings'
----@brief Orchestrates debugging.nvim's bindings: usercmds, keymaps, autocmds, which-key.
----@description
+--- Orchestrates debugging.nvim's bindings: usercmds, keymaps, autocmds, which-key.
+---
 --- Single entry point for every user-facing trigger. The `:Debug` user
 --- command is always registered; the views keymaps/autocmds/which-key label
 --- are only wired when `features.views` is active, using the config already

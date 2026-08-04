@@ -1,7 +1,6 @@
 ---@module 'debugging.bindings.usercmds'
----@brief Registers the single `:Debug` user command, built via
---- lib.nvim.usercmd.composer.
----@description
+--- Registers the single `:Debug` user command, built via lib.nvim.usercmd.composer.
+---
 --- Command *logic* (dispatch + the feature-flag-gated category/action
 --- registry) lives in `debugging.commands`; this module only builds a
 --- composer route tree from that registry and wires up registration.
@@ -41,6 +40,7 @@ composer.register_type("DBG_AUTOCMD_EXPR", {
   end,
 })
 
+---@internal
 ---Build one composer route per enabled category/action, all dispatching
 --- through the unchanged commands.dispatch(ctx.raw.fargs).
 ---@param commands table  the `debugging.commands` module

@@ -1,6 +1,6 @@
 ---@module 'debugging.commands'
----@brief The single unified :Debug command — dispatch + two-level completion.
----@description
+--- The single unified :Debug command — dispatch + two-level completion.
+---
 --- `:Debug {category} {action} [args]`. Categories/actions are gated by the
 --- active feature flags. Leaf logic lives in the submodules; this file only
 --- routes to their exposed functions.
@@ -27,6 +27,7 @@ local M = {}
 --- "use the current/all handles"), and `nil, false` when it was present but
 --- not a number — which used to fall through to the same `nil` and silently
 --- ignore the typo (`:Debug report win abc` reported *all* windows).
+---@internal
 ---@param raw string? Raw argument as typed by the user
 ---@return integer? id
 ---@return boolean ok
@@ -44,6 +45,7 @@ end
 -- Category -> { action -> fn }. Built lazily so leaf modules load on demand.
 -- Each entry also carries an `actions` order list for completion.
 
+---@internal
 ---@return table<string, Dbg.Bindings.RegistryEntry>
 local function build_registry()
   return {
@@ -353,6 +355,7 @@ M.enabled_categories = enabled_categories
 ---Render the overview lines in a centered, scrollable floating window.
 --- Returns false if a float could not be opened (headless / no UI), so the
 --- caller can fall back to a notification.
+---@internal
 ---@param lines string[]
 ---@return boolean opened
 local function overview_float(lines)
@@ -367,6 +370,7 @@ local function overview_float(lines)
   return winid ~= nil
 end
 
+---@internal
 ---Show a compact overview when :Debug is called with no arguments.
 ---@return nil
 local function overview()
@@ -442,6 +446,7 @@ end
 
 -- Completion ------------------------------------------------------------------
 
+---@internal
 ---@param list string[]
 ---@param lead string
 ---@return string[]

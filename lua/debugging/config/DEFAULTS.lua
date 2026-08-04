@@ -1,6 +1,6 @@
 ---@module 'debugging.config.DEFAULTS'
----@brief Immutable default configuration for debugging.nvim.
----@description
+--- Immutable default configuration for debugging.nvim.
+---
 --- Single source of truth. `config/init.lua` deep-merges user options over a copy
 --- of this table; it is never mutated at runtime.
 

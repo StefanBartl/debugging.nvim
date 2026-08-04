@@ -1,6 +1,6 @@
 ---@module 'debugging.views.display'
----@brief Open, refresh and close the debug log windows.
----@description
+--- Open, refresh and close the debug log windows.
+---
 --- Owns the lifecycle of the split windows behind `:Debug messages` and
 --- `:Debug noice`. Windows are identified solely by the `custom_tag` window
 --- variable and looked up via find_window_by_tag() rather than tracked in a
@@ -19,21 +19,26 @@ local M = {}
 --- execute_and_refresh()/refresh_log_view() by debugging.views.
 local KNOWN_TAGS = { "messages", "noice_all", "noice_errors" }
 
+---Find the window currently showing the view tagged `tag`.
 ---@param tag string
 ---@return integer|nil
 function M.find_window_by_tag(tag)
   return window_tag.find(tag)
 end
 
+---Get the view tag attached to a window, if any.
 ---@param win integer
 ---@return string|nil
 function M.get_window_tag(win)
   return window_tag.get(win)
 end
 
+---Run `cmd` and show its output in the window tagged `tag`, reusing an
+---existing one when present instead of opening a duplicate.
 ---@param tag string
 ---@param cmd string
 ---@param timings Dbg.Views.Timings
+---@return nil
 function M.execute_and_refresh(tag, cmd, timings)
   local existing_win = M.find_window_by_tag(tag)
 
@@ -84,9 +89,11 @@ function M.execute_and_refresh(tag, cmd, timings)
   end
 end
 
+---Re-run the command backing an already-open tagged view window.
 ---@param win integer
 ---@param tag string
 ---@param timings Dbg.Views.Timings
+---@return nil
 function M.refresh_log_view(win, tag, timings)
   if not (win and api.nvim_win_is_valid(win)) then
     return
@@ -118,7 +125,8 @@ function M.refresh_log_view(win, tag, timings)
   end, 50)
 end
 
----Clear all debug windows
+---Clear all debug windows.
+---@return nil
 function M.clear_all()
   for _, tag in ipairs(KNOWN_TAGS) do
     local win = M.find_window_by_tag(tag)

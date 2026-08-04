@@ -1,6 +1,6 @@
 ---@module 'debugging.bindings.autocmds'
----@brief Auto-refresh + close-window autocmds for the views subsystem.
----@description
+--- Auto-refresh + close-window autocmds for the views subsystem.
+---
 --- Registers every autocmd this plugin owns in one configurable augroup.
 ---
 --- The callbacks go through `lib.nvim.autocmd.create`, which pcalls them and
@@ -20,8 +20,10 @@ local api = vim.api
 
 local M = {}
 
+---Register the views subsystem's owned autocmds in a fresh augroup.
 ---@param ac Dbg.Views.Autocmds
 ---@param timings Dbg.Views.Timings
+---@return nil
 function M.setup(ac, timings)
   if not ac.enable then
     return

@@ -1,6 +1,6 @@
 ---@module 'debugging.views.capture'
----@brief Unified capture system for :messages, Noice, etc.
----@description
+--- Unified capture system for :messages, Noice, etc.
+---
 --- Reads the message history (Noice when available, `:messages` otherwise),
 --- then optionally copies it to the clipboard and writes a timestamped file
 --- under the configured output directory. Clipboard and file writer are
@@ -19,12 +19,14 @@ local M = {}
 ---@type string
 M.base_dir = vim.fn.stdpath("config") .. "/docs/debug_views"
 
+---@internal
 ---@param s string
 ---@return string
 local function rstrip(s)
   return (s:gsub("%s*$", ""))
 end
 
+---@internal
 ---@return string dir, string logfile
 local function resolve_paths()
   local base = require("lib.nvim.normalize").normalize_path(M.base_dir)
@@ -35,6 +37,7 @@ local function resolve_paths()
   return dir, logfile
 end
 
+---@internal
 ---Extract text content from Noice message object (handles functions and _lines)
 ---@param obj any Noice message object or content part
 ---@param depth? integer Recursion depth limit
@@ -148,6 +151,7 @@ local function extract_noice_text(obj, depth)
   return nil
 end
 
+---@internal
 ---Try to get messages from Noice if available
 ---@return boolean success, string|nil messages, string|nil source
 local function try_noice()
@@ -246,6 +250,7 @@ local function try_noice()
   return false, nil, "noice available but empty"
 end
 
+---@internal
 ---Try to get messages via vim.fn.execute
 ---@return boolean success, string|nil messages, string|nil source
 local function try_execute()
@@ -256,6 +261,7 @@ local function try_execute()
   return false, nil, "vim.fn.execute returned empty"
 end
 
+---@internal
 ---Try to get messages via nvim_exec2
 ---@return boolean success, string|nil messages, string|nil source
 local function try_exec2()
@@ -266,6 +272,7 @@ local function try_exec2()
   return false, nil, "nvim_exec2 returned empty"
 end
 
+---@internal
 ---Capture messages with multiple fallback strategies
 ---@param debug boolean
 ---@return boolean success, string|nil messages, string|nil source

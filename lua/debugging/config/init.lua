@@ -1,6 +1,6 @@
 ---@module 'debugging.config'
----@brief Runtime configuration store for debugging.nvim.
----@description
+--- Runtime configuration store for debugging.nvim.
+---
 --- Merges user options over the immutable DEFAULTS and exposes the active config
 --- via `get()`. No global state — the active table is module-local.
 
@@ -32,6 +32,7 @@ function M.setup(user_opts)
   return _active
 end
 
+---Return the active config, initializing it from DEFAULTS if setup() hasn't run yet.
 ---@return Dbg.Config
 function M.get()
   if _active == nil then

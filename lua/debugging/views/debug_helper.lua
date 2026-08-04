@@ -1,6 +1,6 @@
 ---@module 'debugging.views.debug_helper'
----@brief Diagnostic helper for debugging message-capture issues.
----@description
+--- Diagnostic helper for debugging message-capture issues.
+---
 --- Self-diagnosis for `debugging.views` itself: probes Noice availability and
 --- message structure, the two `:messages` read paths (`vim.fn.execute` /
 --- `nvim_exec2`), the capture output directory and the host platform.

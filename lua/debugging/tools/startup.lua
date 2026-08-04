@@ -1,6 +1,6 @@
 ---@module 'debugging.tools.startup'
----@brief `:Debug performance startup [runs]` — startup-time benchmark.
----@description
+--- `:Debug performance startup [runs]` — startup-time benchmark.
+---
 --- Spawns a fresh headless Neovim with your real config under `--startuptime`,
 --- parses the resulting log, and reports the total startup time plus the
 --- slowest sourced scripts (the practical "what is loading at startup / which
@@ -58,6 +58,7 @@ function M.parse(lines)
   return total, entries
 end
 
+---@internal
 ---Run one headless launch under --startuptime and return its parsed result.
 ---@return number? total_ms
 ---@return Dbg.Tools.StartupEntry[]? entries

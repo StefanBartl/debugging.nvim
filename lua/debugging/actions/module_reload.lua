@@ -1,11 +1,12 @@
 ---@module 'debugging.actions.module_reload'
----@brief Reload the Lua module of the current buffer via :Debug module reload.
+--- Reload the Lua module of the current buffer via :Debug module reload.
 
 local notify = require("lib.nvim.notify").create("[debugging.module_reload]")
 local get_module_path = require("lib.nvim.lua_ls.get_module_path")
 
 local M = {}
 
+---@internal
 ---Convert a buffer file path to its Lua module name.
 ---@param filepath string  Absolute path to a .lua file
 ---@return string|nil module_name
@@ -19,6 +20,7 @@ local function path_to_module(filepath)
   return module_name
 end
 
+---@internal
 ---Clear caches and re-require a module by name.
 ---@param module_name string
 ---@return boolean ok

@@ -1,6 +1,6 @@
 ---@module 'debugging'
----@brief Public entry point for debugging.nvim.
----@description
+--- Public entry point for debugging.nvim.
+---
 --- A single `:Debug {category} {action}` command groups every debugging tool:
 --- message/Noice views, buffer/tab/window reports, autocmd inspection (runtime +
 --- static source audit), buffer/cursor/var inspection, a terminal keylogger,

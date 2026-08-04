@@ -1,6 +1,6 @@
----@module 'debugging.capture.clipboard'
----@brief Clipboard helper, delegating to lib.nvim.cross.copy_to_clipboard.
----@description
+---@module 'debugging.views.capture.clipboard'
+--- Clipboard helper, delegating to lib.nvim.cross.copy_to_clipboard.
+---
 --- This module's own per-OS fallback chain (pbcopy/clip.exe/wl-copy/xclip/
 --- xsel with has_exec pre-checks, plus a WSL absolute-path clip.exe
 --- fallback) was more complete than lib.nvim's version at the time this was

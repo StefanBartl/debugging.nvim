@@ -1,6 +1,6 @@
 ---@module 'debugging.autocmds.runtime'
----@brief Runtime autocmd inspection via nvim_get_autocmds().
----@description
+--- Runtime autocmd inspection via nvim_get_autocmds().
+---
 --- The "live" view: which autocmds are currently registered for an event /
 --- pattern. Complements `debugging.autocmds.sources` (static source scan).
 

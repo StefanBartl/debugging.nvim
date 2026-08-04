@@ -1,5 +1,5 @@
 ---@module 'debugging.bindings.keymaps'
----@brief Normal-mode keymaps for the views subsystem (messages/Noice/capture).
+--- Normal-mode keymaps for the views subsystem (messages/Noice/capture).
 
 local notify = require("lib.nvim.notify").create("[debugging.bindings.keymaps]")
 
@@ -8,8 +8,10 @@ local capture = require("debugging.views.capture")
 
 local M = {}
 
+---Wire up the views subsystem's normal-mode keymaps under `km.prefix`.
 ---@param km Dbg.Views.Keymaps
 ---@param timings Dbg.Views.Timings
+---@return nil
 function M.setup(km, timings)
   if not km.enable then
     return

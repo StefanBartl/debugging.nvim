@@ -1,6 +1,6 @@
 ---@module 'debugging.tools.buffer_inspector'
----@brief Inspect buffer / window / tab scoped options and state for debugging.
----@description
+--- Inspect buffer / window / tab scoped options and state for debugging.
+---
 --- Backs `:Debug inspect buffer|window|tab`. Each inspector renders the
 --- scope-relevant options plus a little basic state as a notify report.
 

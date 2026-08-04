@@ -1,6 +1,6 @@
 ---@module 'debugging.nvim_options.indent_helpers'
----@brief Inspect and toggle indentation providers in Neovim.
----@description
+--- Inspect and toggle indentation providers in Neovim.
+---
 --- `:Debug indent show` reports the buffer's indent-related options;
 --- `:Debug indent treesitter [true|false]` disables/restores
 --- `cindent`/`smartindent` so an existing Tree-sitter indentexpr can take over.
@@ -11,8 +11,9 @@ local M = {}
 
 local api = vim.api
 
--- Report current indentation-related buffer options
+---Report current indentation-related buffer options.
 ---@param bufnr integer? Buffer number, defaults to current buffer
+---@return nil
 function M.print_indent_options(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
   local opts = {
@@ -27,10 +28,11 @@ function M.print_indent_options(bufnr)
   notify.info(vim.inspect(opts))
 end
 
--- Disables cindent/smartindent so an existing Tree-sitter `indentexpr` (if
--- any is registered for this filetype) can take over; does not itself
--- verify a Tree-sitter parser or indentexpr is configured.
+---Disables cindent/smartindent so an existing Tree-sitter `indentexpr` (if
+---any is registered for this filetype) can take over; does not itself
+---verify a Tree-sitter parser or indentexpr is configured.
 ---@param enable boolean? Enable or disable tree-sitter preference, default true
+---@return nil
 function M.prefer_treesitter_indent(enable)
   enable = enable == nil and true or enable
   local ft = vim.bo.filetype

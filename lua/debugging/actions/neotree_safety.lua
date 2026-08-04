@@ -1,6 +1,6 @@
 ---@module 'debugging.actions.neotree_safety'
----@brief Neo-tree watcher-quarantine / backup / dry-run / queue helpers.
----@description
+--- Neo-tree watcher-quarantine / backup / dry-run / queue helpers.
+---
 --- This module bridges to a user-specific Neo-tree safety layer. The two
 --- targets — the watcher-quarantine module and the safety module — are
 --- injectable via `config.neotree` (see `config/DEFAULTS.lua`): each may be a
@@ -17,6 +17,7 @@ local config = require("debugging.config")
 
 local M = {}
 
+---@internal
 ---Resolve one of the injectable neotree targets.
 --- The config value is either a table (used as-is) or a module name to
 --- `require`. Notifies and returns nil when the target cannot be resolved.

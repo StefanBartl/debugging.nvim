@@ -1,6 +1,6 @@
 ---@module 'debugging.views'
----@brief Unified debug views: :messages / Noice with capture, display, windows.
----@description
+--- Unified debug views: :messages / Noice with capture, display, windows.
+---
 --- setup() resolves timings + keymap/autocmd config for the views subsystem.
 --- The actual keymaps/autocmds/which-key labels are wired by
 --- `debugging.bindings` (see lua/debugging/bindings/); this module exposes
@@ -28,7 +28,9 @@ local _keymaps_cfg = { enable = true, prefix = "<lt>" }
 ---@type Dbg.Views.Autocmds
 local _autocmds_cfg = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true }
 
+---Resolve timings + keymap/autocmd config for the views subsystem.
 ---@param opts Dbg.Views.Modules|nil
+---@return nil
 function M.setup(opts)
   opts = opts or {}
 
@@ -51,16 +53,19 @@ function M.setup(opts)
   end
 end
 
+---Get the resolved timings config.
 ---@return Dbg.Views.Timings
 function M.get_timings()
   return _timings
 end
 
+---Get the resolved keymaps config.
 ---@return Dbg.Views.Keymaps
 function M.get_keymaps_config()
   return _keymaps_cfg
 end
 
+---Get the resolved autocmds config.
 ---@return Dbg.Views.Autocmds
 function M.get_autocmds_config()
   return _autocmds_cfg
