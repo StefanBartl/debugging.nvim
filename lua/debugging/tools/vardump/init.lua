@@ -1,6 +1,6 @@
 ---@module 'debugging.tools.vardump'
----@brief Recursively dump a global Lua variable to a report.
----@description
+--- Recursively dump a global Lua variable to a report.
+---
 --- Usage: :Debug dump [varname]  -- dumps `varname`, or the word under the
 --- cursor when no name is given.
 
@@ -10,7 +10,9 @@ local api = vim.api
 
 local M = {}
 
--- Helper to get word under cursor
+---@internal
+---Get the word under the cursor, used as the variable name when none is given.
+---@return string|nil
 local function get_word_under_cursor()
   ---@diagnostic disable-next-line: deprecated
   local _, col = unpack(api.nvim_win_get_cursor(0))

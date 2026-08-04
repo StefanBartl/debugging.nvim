@@ -1,6 +1,6 @@
 ---@module 'debugging.tools.proc_trace'
----@brief `:Debug proc {start|stop|status|log|watch}` — diagnose UI freezes.
----@description
+--- `:Debug proc {start|stop|status|log|watch}` — diagnose UI freezes.
+---
 --- Thin command-surface layer over `lib.nvim.system.proc_trace` (which does
 --- the actual instrumentation of vim.fn.system/systemlist, vim.system, and
 --- vim.fn.jobstart). This module adds the pieces that are genuinely
@@ -22,6 +22,7 @@ local notify = require("lib.nvim.notify").create("[debugging.tools.proc_trace]")
 
 local M = {}
 
+---@internal
 ---@param args string[]?
 ---@return Dbg.Tools.ProcTraceOpts|nil
 local function parse_start_args(args)
@@ -92,6 +93,7 @@ function M.open_log()
   vim.bo.bufhidden = "wipe"
 end
 
+---@internal
 --- Locate the bundled PowerShell process-watcher script on the runtimepath.
 ---@return string|nil
 local function find_watch_script()

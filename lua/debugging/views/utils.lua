@@ -1,6 +1,6 @@
 ---@module 'debugging.views.utils'
----@brief Window helpers shared by the debug views.
----@description
+--- Window helpers shared by the debug views.
+---
 --- Focus and scroll primitives for the log windows owned by
 --- `debugging.views.display`: identifying a debug view by buffer, making a
 --- window focusable, forcing focus, and keeping the cursor pinned to the
@@ -14,6 +14,8 @@
 local api = vim.api
 local M = {}
 
+---@internal
+---Whether the window's cursor is already on the buffer's last line.
 ---@param win integer
 ---@return boolean
 local function at_bottom(win)
@@ -29,6 +31,8 @@ local function at_bottom(win)
   return row >= last
 end
 
+---@internal
+---Move the cursor to `row` in `win`, guarding against dead window/buffer handles.
 ---@param win integer
 ---@param row integer
 ---@return boolean
@@ -72,6 +76,7 @@ end
 ---@param win integer
 ---@param attempts integer
 ---@param retry_delay integer
+---@return nil
 function M.ensure_bottom(win, attempts, retry_delay)
   if not (win and api.nvim_win_is_valid(win)) then
     return
@@ -150,6 +155,7 @@ end
 ---@param win integer
 ---@param attempts integer
 ---@param retry_delay integer
+---@return nil
 function M.focus_and_bottom(win, attempts, retry_delay)
   if not (win and api.nvim_win_is_valid(win)) then
     return

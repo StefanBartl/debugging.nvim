@@ -1,6 +1,6 @@
 ---@module 'debugging.terminals.keylogger'
----@brief Terminal keylogger for Neovim.
----@description
+--- Terminal keylogger for Neovim.
+---
 --- Starts/stops via `:Debug keylogger start|stop`. Every key pressed while the
 --- terminal buffer active at start() remains current is echoed via
 --- `lib.nvim.notify`, and — when a logfile is configured — appended to disk so
@@ -23,6 +23,7 @@ M.logfile = nil
 ---@type file*|nil  Open append handle for the active logfile
 local _fh = nil
 
+---@internal
 ---Resolve the logfile path from an explicit arg or the config default.
 ---@param explicit string|nil
 ---@return string|nil  Expanded absolute path, or nil for notify-only mode
@@ -41,8 +42,10 @@ local function resolve_logfile(explicit)
   return vim.fn.expand(path)
 end
 
+---@internal
 ---Append one recorded key to the open logfile, if any.
 ---@param key string
+---@return nil
 local function write_key(key)
   if not _fh then
     return
@@ -57,7 +60,9 @@ local function write_key(key)
   end
 end
 
--- Buffers all keys pressed while the terminal buffer is current
+---@internal
+---Buffers all keys pressed while the terminal buffer is current.
+---@return nil
 local function log_key()
   if not M.logging then
     return

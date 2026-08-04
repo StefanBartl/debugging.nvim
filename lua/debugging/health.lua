@@ -1,8 +1,9 @@
 ---@module 'debugging.health'
----@brief :checkhealth debugging — environment, lib.nvim deps, and per-feature externals.
+--- :checkhealth debugging — environment, lib.nvim deps, and per-feature externals.
 
 local M = {}
 
+---@internal
 ---@param mod string
 ---@param label string
 ---@param level "ok"|"warn"|"info"
@@ -16,6 +17,8 @@ local function check_require(mod, label, level)
   end
 end
 
+---Run every :checkhealth debugging section.
+---@return nil
 function M.check()
   -- ── Core ────────────────────────────────────────────────────────────────
   vim.health.start("debugging: core")

@@ -1,6 +1,6 @@
 ---@module 'debugging.markdown.inline_debug'
----@brief Diagnose inline-code highlighting in Markdown buffers.
----@description
+--- Diagnose inline-code highlighting in Markdown buffers.
+---
 --- Robust collector for diagnostic information about inline-code highlighting
 --- in Markdown buffers. Writes a timestamped log to stdpath("data")/debuglog/
 --- markdown_inline and provides a user command. Uses only non-deprecated
@@ -18,6 +18,7 @@ local debugfolder = vim.fn.stdpath("data") .. "/debuglog/markdown_inline"
 --------------------------------------------------------------------------------
 --- Return a timestamp suitable for filenames (seconds precision).
 --- Always returns a string (explicit tostring) so static analyzers see a consistent type.
+---@internal
 ---@return string timestamp_string
 local function get_timestamp()
   local now_sec = math.floor(os.time())
@@ -27,6 +28,7 @@ local function get_timestamp()
 end
 
 --- Safe pcall wrapper that returns (ok:boolean, result_or_err:string)
+---@internal
 ---@param fn function
 ---@return boolean, any|string
 local function safe_call(fn)
@@ -38,6 +40,7 @@ local function safe_call(fn)
 end
 
 --- Simple serializer for logging; prefers vim.inspect when available.
+---@internal
 ---@param v any
 ---@return string
 local function dump(v)
@@ -57,6 +60,7 @@ end
 
 --- Get highlight definition by name with compatibility and safe pcall.
 --- Uses only the modern `nvim_get_hl` when available to avoid deprecated APIs.
+---@internal
 ---@param name string
 ---@return table|string hl_or_err  -- returns a table on success or an error string on failure
 local function get_highlight(name)
@@ -79,6 +83,7 @@ local function get_highlight(name)
 end
 
 --- Return a list of interesting highlight groups.
+---@internal
 ---@return string[]
 local function interesting_hl_groups()
   return {
@@ -105,6 +110,7 @@ local function interesting_hl_groups()
 end
 
 --- Collect Treesitter info for buffer (best-effort).
+---@internal
 ---@param bufnr number
 ---@return table
 local function collect_treesitter_info(bufnr)
@@ -137,6 +143,7 @@ end
 --- enumerates them and does a best-effort filter for clients likely relevant to the
 --- given buffer. If the modern API is not present, returns an empty table rather
 --- than calling deprecated functions.
+---@internal
 ---@param bufnr number
 ---@return table info  -- table with `.clients` array or `.error` on failure
 local function collect_lsp_info(bufnr)
@@ -202,6 +209,7 @@ local function collect_lsp_info(bufnr)
   result.clients = filtered
   return result
 end
+---@internal
 --- Collect buffer-local settings that may influence highlighting.
 ---@param bufnr number
 ---@return table
@@ -233,6 +241,7 @@ end
 --- The function may return either a table (autocmd list) or a string (fallback message)
 --- depending on runtime API availability; the annotation reflects that.
 --- This prevents diagnostics complaining about mismatched return types.
+---@internal
 ---@return table|string autocmds_or_msg
 local function collect_autocmds()
   if type(vim.api.nvim_get_autocmds) ~= "function" then
@@ -252,6 +261,7 @@ local function collect_autocmds()
 
   return res
 end
+---@internal
 --- Collect loaded modules that match keywords (best-effort).
 ---@return table
 local function collect_loaded_modules()

@@ -1,6 +1,6 @@
 ---@module 'debugging.tools.cursor.state'
----@brief Print the current cursor / window / buffer state for debugging.
----@description
+--- Print the current cursor / window / buffer state for debugging.
+---
 --- A one-shot snapshot of the active window/buffer/cursor plus a list of all
 --- windows and their `custom_tag` (see `debugging.views.display`), invoked
 --- via `:Debug cursor state`.
