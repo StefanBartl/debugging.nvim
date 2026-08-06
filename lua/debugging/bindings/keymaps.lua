@@ -30,7 +30,12 @@ function M.setup(km, timings)
   end, { desc = "[Debug] Noice errors", silent = true })
 
   km.map("n", km.prefix .. "c", function()
-    capture.capture_messages({ debug = false })
+    local ok, _, detail = capture.capture_messages({ debug = false })
+    if ok then
+      notify.info(detail)
+    else
+      notify.warn(detail)
+    end
   end, { desc = "[Debug] Capture to file+clipboard", silent = true })
 
   km.map("n", km.prefix .. "x", function()
