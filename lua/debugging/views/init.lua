@@ -9,6 +9,7 @@
 
 require("debugging.views.@types")
 
+local notify = require("lib.nvim.notify").create("[debugging.views]")
 local capture = require("debugging.views.capture")
 local display = require("debugging.views.display")
 
@@ -80,9 +81,16 @@ function M.messages_show()
 end
 
 ---Capture :messages to file + clipboard.
+--- Notifies here — the top-level boundary for this dispatch path — from the
+--- status `debugging.views.capture` returns.
 ---@return nil
 function M.messages_capture()
-  capture.capture_messages({ debug = false })
+  local ok, _, detail = capture.capture_messages({ debug = false })
+  if ok then
+    notify.info(detail)
+  else
+    notify.warn(detail)
+  end
 end
 
 ---Show all Noice messages.

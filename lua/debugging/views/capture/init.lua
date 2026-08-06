@@ -318,9 +318,18 @@ local function capture_messages_raw(debug)
   return false, nil, "all methods failed:\n" .. table.concat(details, "\n")
 end
 
----Capture :messages with optional file save and clipboard
+---Capture :messages with optional file save and clipboard.
+---
+--- Reports only status, never notifies the user — the two call sites
+--- (`debugging.views.messages_capture` and the `<lt>c` keymap in
+--- `debugging.bindings.keymaps`) decide whether/how to surface the result.
+--- `debug=true` diagnostics are the one exception: they are an explicit,
+--- opt-in instrumentation request from the caller, not user-facing error
+--- reporting, so they still notify directly.
 ---@param opts Dbg.Views.CaptureOpts|nil
----@return boolean success, string|nil content
+---@return boolean success
+---@return string|nil content
+---@return string detail  Human-readable summary (success) or failure reason
 function M.capture_messages(opts)
   opts = opts or {}
   local debug = opts.debug == true
@@ -335,16 +344,15 @@ function M.capture_messages(opts)
   -- Try all capture methods
   local ok_capture, messages, source = capture_messages_raw(debug)
   if not ok_capture or not messages then
-    notify.warn(
-      "DebugViews: Failed to capture messages.\n"
+    return false,
+      nil,
+      "Failed to capture messages.\n"
         .. (source or "unknown error")
         .. "\n\n"
         .. "Suggestions:\n"
         .. " 1. Try :Noice all to view messages\n"
         .. " 2. Try :messages to check if messages exist\n"
         .. " 3. Enable debug mode: :lua require('debugging.views.capture').capture_messages({debug=true})"
-    )
-    return false, nil
   end
 
   messages = rstrip(messages)
@@ -357,16 +365,16 @@ function M.capture_messages(opts)
   end
 
   if messages == "" then
-    notify.warn("DebugViews: no messages to capture (empty content)")
-    return false, ""
+    return false, "", "no messages to capture (empty content)"
   end
 
   local success_operations = {}
+  local errors = {}
 
   if save_file then
     local ok_write, err = write_file(logfile, messages)
     if not ok_write then
-      notify.error("DebugViews: write failed: " .. tostring(err))
+      errors[#errors + 1] = "write failed: " .. tostring(err)
     else
       table.insert(
         success_operations,
@@ -378,24 +386,24 @@ function M.capture_messages(opts)
   if clipboard then
     local ok_clip = copy_to_clipboard(messages, debug)
     if not ok_clip then
-      notify.warn(
-        "DebugViews: clipboard not available. Install: pbcopy/wl-copy/xclip/xsel/clip.exe"
-      )
+      errors[#errors + 1] = "clipboard not available. Install: pbcopy/wl-copy/xclip/xsel/clip.exe"
     else
       table.insert(success_operations, string.format("%d lines → clipboard", line_count))
     end
   end
 
-  -- Show combined success notification
+  local detail_parts = {}
   if #success_operations > 0 then
-    local msg = "✓ " .. table.concat(success_operations, " | ")
-    if debug then
-      msg = msg .. "\n  (via " .. source .. ")"
-    end
-    notify.info(msg)
+    detail_parts[#detail_parts + 1] = "✓ " .. table.concat(success_operations, " | ")
+  end
+  for _, err in ipairs(errors) do
+    detail_parts[#detail_parts + 1] = "✗ " .. err
+  end
+  if debug and source then
+    detail_parts[#detail_parts + 1] = "(via " .. source .. ")"
   end
 
-  return true, messages
+  return #success_operations > 0, messages, table.concat(detail_parts, "\n")
 end
 
 return M

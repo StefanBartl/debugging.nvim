@@ -274,7 +274,7 @@ function M.test_capture()
 
   -- Try capture with debug
   local capture = require("debugging.views.capture")
-  local ok, content = capture.capture_messages({
+  local ok, content, detail = capture.capture_messages({
     debug = true,
     clipboard = false, -- Don't spam clipboard during test
     save_file = true,
@@ -285,6 +285,7 @@ function M.test_capture()
     out[#out + 1] = "✓ Capture succeeded"
     out[#out + 1] = string.format("  Content length: %d bytes", #content)
     out[#out + 1] = string.format("  First 200 chars:\n%s", content:sub(1, 200))
+    out[#out + 1] = "  " .. detail
     out[#out + 1] = rule
     notify.info(table.concat(out, "\n"))
     return true
@@ -292,6 +293,7 @@ function M.test_capture()
 
   out[#out + 1] = ""
   out[#out + 1] = "✗ Capture failed"
+  out[#out + 1] = "  " .. tostring(detail)
   out[#out + 1] = rule
   notify.error(table.concat(out, "\n"))
   return false
