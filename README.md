@@ -21,6 +21,13 @@
 
 ---
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+
+---
+
 A single `:Debug {category} {action}` command that groups every debugging tool
 in one place: message/Noice views, buffer/tab/window reports, autocmd
 inspection (runtime, a Tree-sitter static source audit, **and** a combined
