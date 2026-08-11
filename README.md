@@ -63,6 +63,8 @@ Requires Neovim 0.9+ and [lib.nvim](https://github.com/StefanBartl/lib.nvim).
 - [Installation](docs/installation.md) — requirements and setup for lazy.nvim / packer.nvim.
 - [Configuration](docs/configuration.md) — full `setup()` defaults and options.
 - [Commands](docs/commands.md) — feature overview, full command reference, tab completion, and health check.
+- [Features](docs/FEATURES.md) — per-feature reference: module, config keys, keymaps, usercmds.
+- [Workflow](docs/WORKFLOW.md) — how the pieces combine in daily use, with gotchas.
 - [Diagnosing UI Freezes](docs/troubleshooting.md) — using `:Debug proc` to trace blocking calls and hung child processes.
 - [Architecture](docs/architecture.md) — module layout and responsibilities.
 - [Bindings Cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
