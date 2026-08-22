@@ -63,23 +63,46 @@ end
 ---@return number? total_ms
 ---@return Dbg.Tools.StartupEntry[]? entries
 ---@return string? err
-local function measure_once()
+---@param cb fun(total: number|nil, entries: Dbg.Tools.StartupEntry[]|nil, err: string|nil)
+local function measure_once(cb)
   local prog = vim.v.progpath
   if not prog or prog == "" then
-    return nil, nil, "cannot locate the Neovim binary (vim.v.progpath is empty)"
+    cb(nil, nil, "cannot locate the Neovim binary (vim.v.progpath is empty)")
+    return
   end
   local log = vim.fn.tempname()
-  local out = vim.fn.system({ prog, "--headless", "--startuptime", log, "-c", "qa!" })
-  if vim.v.shell_error ~= 0 and vim.fn.filereadable(log) == 0 then
-    return nil, nil, ("nvim exited %d: %s"):format(vim.v.shell_error, tostring(out))
+
+  -- This spawns a full second Neovim. Under vim.fn.system() that froze the
+  -- editor for the entire startup of that instance -- times `runs`, i.e. up to
+  -- 20 sequential freezes. vim.system() reports back via callback instead.
+  local function finish(code, out)
+    -- Reading/deleting the log and parsing touches vim.fn: main loop only.
+    vim.schedule(function()
+      if code ~= 0 and vim.fn.filereadable(log) == 0 then
+        cb(nil, nil, ("nvim exited %d: %s"):format(code, tostring(out)))
+        return
+      end
+      if vim.fn.filereadable(log) == 0 then
+        cb(nil, nil, "no startuptime log was produced")
+        return
+      end
+      local lines = vim.fn.readfile(log)
+      vim.fn.delete(log)
+      local total, entries = M.parse(lines)
+      cb(total, entries, nil)
+    end)
   end
-  if vim.fn.filereadable(log) == 0 then
-    return nil, nil, "no startuptime log was produced"
+
+  if not vim.system then
+    local out = vim.fn.system({ prog, "--headless", "--startuptime", log, "-c", "qa!" })
+    finish(vim.v.shell_error, out)
+    return
   end
-  local lines = vim.fn.readfile(log)
-  vim.fn.delete(log)
-  local total, entries = M.parse(lines)
-  return total, entries
+
+  vim.system({ prog, "--headless", "--startuptime", log, "-c", "qa!" }, { text = true },
+    function(res)
+      finish(res.code, (res.stderr or "") .. (res.stdout or ""))
+    end)
 end
 
 ---`:Debug performance startup [runs]`. Benchmark startup time and show a report.
@@ -91,44 +114,60 @@ function M.startup(args)
 
   local totals = {}
   local last_entries
-  for _ = 1, runs do
-    local total, entries, err = measure_once()
-    if not total then
-      notify.error(err or "startup benchmark failed")
+
+  -- The runs are chained instead of looped: each measure_once() callback
+  -- starts the next one, and the report is built once the last one returns.
+  -- Sequential execution is kept on purpose -- running the benchmark spawns
+  -- in parallel would distort the very numbers it measures.
+  local function report()
+    local sum, min, max = 0, math.huge, 0
+    for _, t in ipairs(totals) do
+      sum = sum + t
+      min = math.min(min, t)
+      max = math.max(max, t)
+    end
+    local avg = sum / #totals
+
+    local lines = {
+      "=== Startup Benchmark ===",
+      "",
+      "Neovim: " .. vim.v.progpath,
+      string.format("Runs: %d", runs),
+      string.format("Total startup: avg %.1f ms (min %.1f, max %.1f)", avg, min, max),
+      "",
+      "--- Slowest sourced scripts (self time, last run) ---",
+      "",
+    }
+    local shown = math.min(#(last_entries or {}), 15)
+    if shown == 0 then
+      lines[#lines + 1] = "(no per-script timings in the log)"
+    end
+    for i = 1, shown do
+      local e = last_entries[i]
+      lines[#lines + 1] = string.format("  %6.1f ms  %s", e.self_ms, e.event)
+    end
+
+    window.open_scratch_split(lines, { filetype = "startup-benchmark" })
+  end
+
+  local function run_next(i)
+    if i > runs then
+      report()
       return
     end
-    totals[#totals + 1] = total
-    last_entries = entries
+    measure_once(function(total, entries, err)
+      if not total then
+        notify.error(err or "startup benchmark failed")
+        return
+      end
+      totals[#totals + 1] = total
+      last_entries = entries
+      run_next(i + 1)
+    end)
   end
 
-  local sum, min, max = 0, math.huge, 0
-  for _, t in ipairs(totals) do
-    sum = sum + t
-    min = math.min(min, t)
-    max = math.max(max, t)
-  end
-  local avg = sum / #totals
-
-  local lines = {
-    "=== Startup Benchmark ===",
-    "",
-    "Neovim: " .. vim.v.progpath,
-    string.format("Runs: %d", runs),
-    string.format("Total startup: avg %.1f ms (min %.1f, max %.1f)", avg, min, max),
-    "",
-    "--- Slowest sourced scripts (self time, last run) ---",
-    "",
-  }
-  local shown = math.min(#(last_entries or {}), 15)
-  if shown == 0 then
-    lines[#lines + 1] = "(no per-script timings in the log)"
-  end
-  for i = 1, shown do
-    local e = last_entries[i]
-    lines[#lines + 1] = string.format("  %6.1f ms  %s", e.self_ms, e.event)
-  end
-
-  window.open_scratch_split(lines, { filetype = "startup-benchmark" })
+  notify.info(("running %d startup benchmark run(s) in the background..."):format(runs))
+  run_next(1)
 end
 
 return M
