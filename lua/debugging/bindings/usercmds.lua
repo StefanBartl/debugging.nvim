@@ -41,6 +41,23 @@ composer.register_type("DBG_AUTOCMD_EXPR", {
 })
 
 ---@internal
+---Actions whose single argument is a concrete handle or path, and the
+---composer argtype that knows how to complete it.
+---
+--- Everything else keeps the generic `STRING` slot: `proc` ids and
+--- `performance startup` take values this plugin does not enumerate, so a
+--- completer would have nothing true to offer.
+---@type table<string, table<string, string>>
+local HANDLE_ARG = {
+  report = { win = "WINDOW" },
+  inspect = { buffer = "BUFFER", window = "WINDOW" },
+  -- `:Debug keylogger start [path]` writes a file, so file completion is the
+  -- right one even though the file does not exist yet -- it completes the
+  -- directory part on the way there.
+  keylogger = { start = "PATH" },
+}
+
+---@internal
 ---Build one composer route per enabled category/action, all dispatching
 --- through the unchanged commands.dispatch(ctx.raw.fargs).
 ---@param commands table  the `debugging.commands` module
@@ -74,13 +91,22 @@ local function build_routes(commands)
             args = {
               { name = "enable", type = "STRING", optional = true, values = { "true", "false" } },
             }
+          elseif HANDLE_ARG[category] and HANDLE_ARG[category][action] then
+            -- Handle-taking actions. These used to share the generic STRING
+            -- slot below, which completed nothing -- and a window or buffer id
+            -- is unguessable, so the only way to supply one was to run
+            -- `:echo win_getid()` first. That is exactly the friction
+            -- completion exists to remove.
+            args = {
+              { name = "arg", type = HANDLE_ARG[category][action], optional = true },
+            }
           else
             -- Covers zero-arg actions (extra token harmlessly falls into
-            -- ctx.rest/dispatch re-parses it) and single-handle-id actions
-            -- (report win, inspect buffer/window/tab, keylogger start,
-            -- proc start/stop/status/log/watch, performance startup) --
-            -- <Tab> completion beyond this one slot matches the original,
-            -- which also offered nothing past the first arg for these.
+            -- ctx.rest/dispatch re-parses it) and the remaining
+            -- single-handle-id actions (proc start/stop/status/log/watch,
+            -- performance startup) -- <Tab> completion beyond this one slot
+            -- matches the original, which also offered nothing past the first
+            -- arg for these.
             args = { { name = "arg", type = "STRING", optional = true } }
           end
           routes[#routes + 1] = {

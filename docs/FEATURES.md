@@ -14,7 +14,18 @@ for pasting into an issue or a chat.
 
 - **Module:** `lua/debugging/views/` (`display`, `capture`)
 - **Config:** `opts.features.views`, `opts.views.keymaps`, `opts.views.autocmds`, `opts.views.timings`, `opts.views.capture`, `opts.views.output_dir`
-- **Keymaps:** `<lt>m`/`<lt>n`/`<lt>e`/`<lt>c`/`<lt>x` — see [BINDINGS.md#default-keymaps](BINDINGS.md#default-keymaps)
+- **Keymaps:** `<lt>m`/`<lt>n`/`<lt>e`/`<lt>c`/`<lt>f`/`<lt>y`/`<lt>x` — see [BINDINGS.md#default-keymaps](BINDINGS.md#default-keymaps)
+
+### Picking a capture sink (2026-08-24)
+
+`capture_messages` has always taken `save_file`/`clipboard`, but only the
+both-at-once default was bound, so choosing one sink meant calling the Lua
+API by hand. Closes the flag/option audit's entry.
+
+Three distinct keys rather than a prefix tree: `<lt>c` both (unchanged),
+`<lt>f` file only, `<lt>y` clipboard only. A `<lt>c`-then-maybe-`f` tree
+would delay the common case waiting to see whether a second key follows, for
+the sake of the two rare ones.
 - **Usercmds:** `:Debug messages show|capture|clear`, `:Debug noice all|errors` — see [BINDINGS.md#user-commands](BINDINGS.md#user-commands)
 - **Autocmds:** `WinEnter`/`BufWinEnter` auto-refresh, `FileType` close-window binding — see [BINDINGS.md#autocommands](BINDINGS.md#autocommands)
 

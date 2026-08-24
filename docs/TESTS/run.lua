@@ -50,6 +50,7 @@ local specs = {
   "sources_spec.lua",
   "startup_spec.lua",
   "commands_spec.lua",
+  "handle_args_spec.lua",
 }
 
 local failed = 0

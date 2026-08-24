@@ -28,7 +28,7 @@
 :Debug messages capture         " capture :messages to file + clipboard
 :Debug noice errors             " show Noice errors
 :Debug report buf               " buffer report
-:Debug report win 1000          " window report for window 1000
+:Debug report win 1000          " window report for window 1000 (<Tab> lists open window ids)
 :Debug autocmds runtime BufEnter *   " live autocmds for an event/pattern
 :Debug autocmds sources event=BufWritePre sort=event   " static source audit
 :Debug autocmds sources qf=true       " send call sites to the quickfix list

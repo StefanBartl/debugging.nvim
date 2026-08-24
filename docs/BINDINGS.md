@@ -22,6 +22,8 @@ literal `<` key.
 | `<lt>n` | n | Show Noice all view (auto-refreshing) |
 | `<lt>e` | n | Show Noice errors (`:Noice errors`) |
 | `<lt>c` | n | Capture `:messages` to file + clipboard |
+| `<lt>f` | n | Capture `:messages` to file only |
+| `<lt>y` | n | Capture `:messages` to clipboard only |
 | `<lt>x` | n | Close all debug view windows |
 
 ## User Commands
@@ -38,12 +40,12 @@ by `config.features.*`.
 | `:Debug autocmds runtime [event] [pat]` | Live `nvim_get_autocmds()` view |
 | `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=][qf=]` | Static source-code audit of `nvim_create_autocmd` call sites (Tree-sitter parser with text fallback; cached per root; `refresh=true` forces a rescan; `qf=true` sends `path:line` to the quickfix list) |
 | `:Debug autocmds all [root=][refresh=][event=]` | Combined view: where each event is defined (sources) vs currently registered (runtime), plus a runtime-only diff |
-| `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state |
+| `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state. `[bufnr]` completes against the loaded buffers. |
 | `:Debug inspect window [winid]` | Inspect window-scoped options and state |
 | `:Debug inspect tab [tabnr]` | Inspect a tab page's windows and their buffers |
 | `:Debug cursor state` | Print cursor / window / buffer state |
 | `:Debug dump [varname]` | Recursively dump a global Lua var (or word under cursor) |
-| `:Debug keylogger start [file]\|stop` | Log keys pressed in the current terminal buffer (optionally append to a file) |
+| `:Debug keylogger start [file]\|stop` | Log keys pressed in the current terminal buffer (optionally append to a file). `[file]` gets path completion — the file need not exist yet; the directory part completes on the way there. |
 | `:Debug indent show` | Print indentation-related buffer options |
 | `:Debug indent treesitter [true\|false]` | Prefer Tree-sitter indent, or restore with false |
 | `:Debug markdown inline` | Gather markdown inline-highlight debug info |

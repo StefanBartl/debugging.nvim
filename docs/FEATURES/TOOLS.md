@@ -30,6 +30,28 @@ the pre-existing `inspect buffer`.
 - **Usercmds:** `:Debug inspect window [winid]`, `:Debug inspect tab
   [tabnr]` (see [BINDINGS.md](../BINDINGS.md#user-commands))
 
+### Handle completion (2026-08-24)
+
+`report win`, `inspect buffer` and `inspect window` complete their handle
+argument (composer's `WINDOW`/`BUFFER` argtypes), and
+`keylogger start [file]` gets path completion. Closes the autocompletion
+audit's entry for this plugin.
+
+They previously shared the generic `STRING` slot, which offered nothing. That
+matters more here than for a typo-able name: a window or buffer id is
+*unguessable*, so the only way to supply one was to run `:echo win_getid()`
+first — exactly the friction completion exists to remove. The keylogger path
+completes even though the file does not exist yet, since the directory part
+is what needs typing out.
+
+`proc` ids and `performance startup` deliberately keep the generic slot: this
+plugin does not enumerate those values, so a completer would have nothing
+true to offer. Pinned in `handle_args_spec.lua` so a later change has to be
+deliberate.
+
+- **Module:** `bindings/usercmds.lua` (`HANDLE_ARG`)
+- **Tests:** `docs/TESTS/handle_args_spec.lua`
+
 ## Keylogger with logfile
 
 `:Debug keylogger start [file]` (or `config.terminals.keylogger.logfile`)
