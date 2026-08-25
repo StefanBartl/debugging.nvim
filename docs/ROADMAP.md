@@ -83,3 +83,20 @@ debugger — out of scope (see "Nicht geplant" below).
 - **`dump` für Locals/Upvalues** — siehe Begründung unter "Implemented (v0.3)"
   oben; ein sinnvoller Locals-Dump bräuchte einen echten Breakpoint-/
   Hook-Kontext, den dieses Plugin bewusst nicht bereitstellt.
+
+## `docs/ROADMAP/` — design notes, audits, concepts
+
+Everything below lives in [`docs/ROADMAP/`](ROADMAP/) and is **not** open work
+unless it says so. Indexed here because a folder next to a file is easy to
+miss, and these are the documents that explain *why* the plugin is shaped the
+way it is.
+
+| Document | What it is |
+| --- | --- |
+| [`Arch&Coding.md`](ROADMAP/Arch&Coding.md) | Architecture and coding rules, applied to this plugin. |
+| [`Checklist.md`](ROADMAP/Checklist.md) | Architecture, performance and coding checklists, applied to this plugin. |
+| [`Zentral-Prinzipien.md`](ROADMAP/Zentral-Prinzipien.md) | The central principles for nvim modules, applied to this plugin. |
+
+The audits share a convention: **✅ good · 🟡 partial · ❌ gap**.
+Findings that were acted on are removed rather than ticked, so what is left
+standing is either an open gap or a deliberate deviation with its reasoning.
