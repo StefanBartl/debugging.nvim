@@ -1,7 +1,13 @@
 # Audit: Zentrale Prinzipien für nvim-Module
 
 Prüft `debugging.nvim` gegen die 10 mentalen Check-Fragen aus
-[Zentrale-Prinzipien.md](E:/repos/Notes/MyNotes/Checklists/Lua/Zentrale-Prinzipien.md).
+[`regeln/PRINCIPLES.md`](../../../WKDBooks/Development/wkdbook-Lua/Checklists/regeln/PRINCIPLES.md).
+
+> The source checklists (`Arch&Coding-Regeln.md`, `Checklist.md`,
+> `Zentrale-Prinzipien.md`) were retired: they were absorbed into the rule
+> collection under `WKDBooks/Development/wkdbook-Lua/Checklists/`, which is
+> now the canonical one. The links above point there.
+
 
 **Stand: alle Findings abgearbeitet.** Was bleibt, ist die Kurzfassung der
 Antworten (als Referenz für künftige Änderungen) plus die zwei Punkte, die

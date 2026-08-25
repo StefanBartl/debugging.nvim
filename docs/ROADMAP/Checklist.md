@@ -1,7 +1,13 @@
 # Audit: Checklisten für Lua/Neovim-Architektur, Performance und Codierungsregeln
 
 Prüft `debugging.nvim` gegen
-[Checklist.md](E:/repos/Notes/MyNotes/Checklists/Lua/Checklist.md).
+[`regeln/`](../../../WKDBooks/Development/wkdbook-Lua/Checklists/regeln/).
+
+> The source checklists (`Arch&Coding-Regeln.md`, `Checklist.md`,
+> `Zentrale-Prinzipien.md`) were retired: they were absorbed into the rule
+> collection under `WKDBooks/Development/wkdbook-Lua/Checklists/`, which is
+> now the canonical one. The links above point there.
+
 
 **Stand: alle Findings abgearbeitet.** Diese Datei führt nur noch die Punkte,
 die *bewusst* nicht umgesetzt wurden (mit Begründung) — damit ein späterer

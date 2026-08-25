@@ -1,7 +1,13 @@
 # Audit: Architektur- und Codierungsrichtlinien
 
 Prüft `debugging.nvim` gegen die persönliche Checkliste
-[Arch&Coding-Regeln.md](E:/repos/Notes/MyNotes/Checklists/Lua/Arch&Coding-Regeln.md).
+[`regeln/PRINCIPLES.md`](../../../WKDBooks/Development/wkdbook-Lua/Checklists/regeln/PRINCIPLES.md).
+
+> The source checklists (`Arch&Coding-Regeln.md`, `Checklist.md`,
+> `Zentrale-Prinzipien.md`) were retired: they were absorbed into the rule
+> collection under `WKDBooks/Development/wkdbook-Lua/Checklists/`, which is
+> now the canonical one. The links above point there.
+
 
 **Stand: alle priorisierten Findings abgearbeitet.** Was hier bleibt, sind die
 bewusst getroffenen Entscheidungen — Punkte, an denen dieses Repo von der
