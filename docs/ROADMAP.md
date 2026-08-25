@@ -77,12 +77,12 @@ debugger — out of scope (see "Nicht geplant" below).
 
 - **Eigene Notify-/Buf-Win-Tab-Utilities** — kommen bewusst aus lib.nvim.
 - **Legacy-Einzelbefehle** (`:BufReport`, `:DebugMessagesShow`, …) — bewusst
-  zugunsten des einheitlichen `:Debug` entfernt.
-- **Generischer Profiler** — Performance-Profiling gehört in ein eigenes Plugin;
+  removed in favour of the unified `:Debug`.
+- **A generic profiler** — performance profiling belongs in a plugin of its own;
   `performance` bleibt auf Startup-Diagnose beschränkt.
-- **`dump` für Locals/Upvalues** — siehe Begründung unter "Implemented (v0.3)"
-  oben; ein sinnvoller Locals-Dump bräuchte einen echten Breakpoint-/
-  Hook-Kontext, den dieses Plugin bewusst nicht bereitstellt.
+- **`dump` for locals/upvalues** — see the rationale under "Implemented (v0.3)"
+  above; a useful locals dump would need a real breakpoint/hook context, which
+  this plugin deliberately does not provide.
 
 ## `docs/ROADMAP/` — design notes, audits, concepts
 
