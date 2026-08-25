@@ -50,7 +50,7 @@ true to offer. Pinned in `handle_args_spec.lua` so a later change has to be
 deliberate.
 
 - **Module:** `bindings/usercmds.lua` (`HANDLE_ARG`)
-- **Tests:** `docs/TESTS/handle_args_spec.lua`
+- **Tests:** `TESTS/handle_args_spec.lua`
 
 ## Keylogger with logfile
 

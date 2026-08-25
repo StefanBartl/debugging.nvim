@@ -64,7 +64,7 @@ walker, and the in-memory scan cache all come from
 hand-rolled per feature — the same modules `:checkhealth debugging`'s
 "lib.nvim" section verifies are present.
 
-- **Docs:** [`docs/TESTS/README.md`](../TESTS/README.md)
+- **Docs:** [`TESTS/README.md`](../../TESTS/README.md)
 
 ## `docs/BINDINGS.md` cheatsheet
 
@@ -91,10 +91,10 @@ Config merge behaviour, the `autocmds sources` parsers, and `:Debug`
 dispatch/completion are covered by a headless Neovim spec suite, runnable
 without a UI.
 
-- **Module:** `docs/TESTS/commands_spec.lua`, `docs/TESTS/config_spec.lua`,
-  `docs/TESTS/sources_spec.lua`, `docs/TESTS/startup_spec.lua`,
-  `docs/TESTS/harness.lua`, `docs/TESTS/run.lua`
-- **Docs:** [`docs/TESTS/README.md`](../TESTS/README.md)
+- **Module:** `TESTS/commands_spec.lua`, `TESTS/config_spec.lua`,
+  `TESTS/sources_spec.lua`, `TESTS/startup_spec.lua`,
+  `TESTS/harness.lua`, `TESTS/run.lua`
+- **Docs:** [`TESTS/README.md`](../../TESTS/README.md)
 
 ## Lint/format tooling and complete module headers
 

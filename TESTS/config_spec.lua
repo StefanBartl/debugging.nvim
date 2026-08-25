@@ -1,4 +1,4 @@
--- docs/TESTS/config_spec.lua
+-- TESTS/config_spec.lua
 -- Covers debugging.config: DEFAULTS merging, user overrides and the
 -- feature flags the dispatch layer gates on.
 

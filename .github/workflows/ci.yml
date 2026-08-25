@@ -17,13 +17,13 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
-          args: --check lua plugin docs/TESTS
+          args: --check lua plugin TESTS
 
       - name: Install luacheck
         run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
 
       - name: luacheck
-        run: luacheck lua plugin docs/TESTS
+        run: luacheck lua plugin TESTS
 
   # Real gate: the framework-free headless suite (config merge, the
   # `autocmds sources` parsers, :Debug dispatch/completion, startup benchmark).
@@ -53,4 +53,4 @@ jobs:
         working-directory: debugging.nvim
         env:
           REPOS_DIR: ${{ github.workspace }}
-        run: nvim --headless -u NONE -c "set rtp+=." -c "set rtp+=../lib.nvim" -c "luafile docs/TESTS/run.lua" -c "qa!"
+        run: nvim --headless -u NONE -c "set rtp+=." -c "set rtp+=../lib.nvim" -c "luafile TESTS/run.lua" -c "qa!"

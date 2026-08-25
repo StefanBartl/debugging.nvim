@@ -108,4 +108,4 @@ auf Repo-Ebene, was für ein publizierbares Plugin korrekt ist.
 - [Arch&Coding.md](./Arch&Coding.md) — Architektur-/Coding-Audit
 - [Zentral-Prinzipien.md](./Zentral-Prinzipien.md) — Event/Lazy/Cache/Debugbarkeit-Audit
 - [../ROADMAP.md](../ROADMAP.md) — Feature-Roadmap des Plugins
-- [../TESTS/README.md](../TESTS/README.md) — Spec-Suite (schließt den ehemaligen "keine Tests"-Fund)
+- [../TESTS/README.md](../../TESTS/README.md) — Spec-Suite (schließt den ehemaligen "keine Tests"-Fund)

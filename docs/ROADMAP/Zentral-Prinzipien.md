@@ -52,7 +52,7 @@ lokale Funktions-Aliase und `table.concat` statt Verkettung in Schleifen.
 Tree-sitter (Lua-Grammar, `function_call` mit Namen `nvim_create_autocmd`),
 sobald der Lua-Parser verfügbar ist; der alte Text-/Klammer-Parser bleibt als
 Fallback und ist weiter durch
-[sources_spec.lua](../TESTS/sources_spec.lua) abgesichert. Der End-to-End-Test
+[sources_spec.lua](../../TESTS/sources_spec.lua) abgesichert. Der End-to-End-Test
 (`sources.run`) läuft in CI gegen den Tree-sitter-Pfad, da der Lua-Parser dort
 vorhanden ist.
 
@@ -63,4 +63,4 @@ Parser-Präsenz-Check, keine Queries) — angemessen für ein Diagnose-Tool.
 
 - [Arch&Coding.md](./Arch&Coding.md) — Architektur-/Coding-Audit
 - [Checklist.md](./Checklist.md) — Architektur-/Performance-/Coding-Checklisten
-- [../TESTS/README.md](../TESTS/README.md) — Spec-Suite
+- [../TESTS/README.md](../../TESTS/README.md) — Spec-Suite

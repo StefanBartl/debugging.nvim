@@ -1,4 +1,4 @@
--- docs/TESTS/startup_spec.lua
+-- TESTS/startup_spec.lua
 -- Covers the pure --startuptime log parser behind `:Debug performance startup`
 -- (debugging.tools.startup.parse).
 

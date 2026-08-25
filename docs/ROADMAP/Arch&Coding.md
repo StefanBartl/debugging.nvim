@@ -96,4 +96,4 @@ Config-Reload ohne Neovim-Neustart funktionieren lässt.
 
 - [Checklist.md](./Checklist.md) — Architektur-/Performance-/Coding-Checklisten
 - [Zentral-Prinzipien.md](./Zentral-Prinzipien.md) — Event/Lazy/Cache/Debugbarkeit-Audit
-- [../TESTS/README.md](../TESTS/README.md) — Spec-Suite
+- [../TESTS/README.md](../../TESTS/README.md) — Spec-Suite

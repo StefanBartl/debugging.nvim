@@ -1,4 +1,4 @@
--- docs/TESTS/commands_spec.lua
+-- TESTS/commands_spec.lua
 -- Covers the :Debug dispatch layer (debugging.commands): feature gating,
 -- unknown category/action handling, argument validation and completion.
 

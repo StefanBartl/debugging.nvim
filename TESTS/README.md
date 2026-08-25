@@ -13,7 +13,7 @@ all places where a silent wrong answer is plausible.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile docs/TESTS/run.lua" -c "qa!"
+nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
 ```
 
 The runner prints one line per spec and exits non-zero if any spec failed

@@ -13,7 +13,7 @@
 - Built on lib.nvim as a deliberate shared dependency
 - `docs/BINDINGS.md` cheatsheet (keymaps, :Debug actions, autocmds)
 - Optional which-key group label for the views keymap prefix
-- Headless spec suite in [docs/TESTS](./TESTS/README.md) (config merge, the
+- Headless spec suite in [TESTS](../TESTS/README.md) (config merge, the
   `autocmds sources` parsers, `:Debug` dispatch and completion)
 - stylua/luacheck config, `.luarc.json`, complete `@brief`/`@description`
   headers across every module

@@ -59,6 +59,6 @@ The augroup in `bindings/autocmds.lua` is created directly rather than through
 clear on later calls, which would stack duplicate autocmds every time `setup()`
 runs.
 
-Tests live in [docs/TESTS](TESTS/README.md) and cover the parts where a silent
+Tests live in [TESTS](../TESTS/README.md) and cover the parts where a silent
 wrong answer is plausible — the config merge, the `autocmds sources` text
 parsers, and `:Debug` dispatch/completion.

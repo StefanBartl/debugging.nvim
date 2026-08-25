@@ -1,4 +1,4 @@
--- docs/TESTS/sources_spec.lua
+-- TESTS/sources_spec.lua
 -- Covers the pure parsers behind `:Debug autocmds sources`
 -- (debugging.autocmds.sources) plus the argument completion.
 

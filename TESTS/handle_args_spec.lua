@@ -1,4 +1,4 @@
--- docs/TESTS/handle_args_spec.lua
+-- TESTS/handle_args_spec.lua
 -- Covers the argtypes on the handle-taking :Debug actions.
 --
 -- These used to share the generic STRING slot, which completed nothing — and
