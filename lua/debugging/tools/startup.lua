@@ -99,10 +99,13 @@ local function measure_once(cb)
     return
   end
 
-  vim.system({ prog, "--headless", "--startuptime", log, "-c", "qa!" }, { text = true },
+  vim.system(
+    { prog, "--headless", "--startuptime", log, "-c", "qa!" },
+    { text = true },
     function(res)
       finish(res.code, (res.stderr or "") .. (res.stdout or ""))
-    end)
+    end
+  )
 end
 
 ---`:Debug performance startup [runs]`. Benchmark startup time and show a report.
