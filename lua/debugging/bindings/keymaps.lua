@@ -8,26 +8,18 @@ local capture = require("debugging.views.capture")
 
 local M = {}
 
----Wire up the views subsystem's normal-mode keymaps under `km.prefix`.
+---Declare and bind the views subsystem's normal-mode keymaps.
+---
+---Declared through `lib.nvim.bindings.keymap`'s registry, which is what makes
+---each one individually overridable: `prefix` used to be the only lever, so a
+---user who wanted a different key for one view had to move all seven.
+---`keymaps = { messages = "<leader>dm" }` now moves exactly one, `= false`
+---drops one, and `prefix` still supplies the default for the rest.
 ---@param km Dbg.Views.Keymaps
 ---@param timings Dbg.Views.Timings
----@return nil
+---@return Lib.Keymap.Registered[]
 function M.setup(km, timings)
-  if not km.enable then
-    return
-  end
-
-  km.map("n", km.prefix .. "m", function()
-    display.execute_and_refresh("messages", "messages", timings)
-  end, { desc = "[Debug] Messages view", silent = true })
-
-  km.map("n", km.prefix .. "n", function()
-    display.execute_and_refresh("noice_all", "Noice all", timings)
-  end, { desc = "[Debug] Noice all", silent = true })
-
-  km.map("n", km.prefix .. "e", function()
-    vim.cmd("Noice errors")
-  end, { desc = "[Debug] Noice errors", silent = true })
+  local prefix = km.prefix
 
   ---`capture_messages` has always taken `save_file`/`clipboard`, but the only
   --- key bound the both-at-once default -- picking one sink meant calling the
@@ -48,31 +40,73 @@ function M.setup(km, timings)
     end
   end
 
-  km.map(
-    "n",
-    km.prefix .. "c",
-    capture_to({}),
-    { desc = "[Debug] Capture to file+clipboard", silent = true }
-  )
+  ---@param view string
+  ---@param label string
+  ---@return fun(): nil
+  local function show(view, label)
+    return function()
+      display.execute_and_refresh(view, label, timings)
+    end
+  end
 
-  km.map(
-    "n",
-    km.prefix .. "f",
-    capture_to({ clipboard = false }),
-    { desc = "[Debug] Capture to file only", silent = true }
-  )
+  ---@type Lib.Keymap.Spec
+  local spec = {
+    prefix = prefix,
+    which_key = { group = "Debug" },
+    order = {
+      "messages",
+      "noice_all",
+      "noice_errors",
+      "capture",
+      "capture_file",
+      "capture_clipboard",
+      "clear",
+    },
+    actions = {
+      messages = {
+        default = prefix .. "m",
+        rhs = show("messages", "messages"),
+        desc = "Messages view",
+      },
+      noice_all = {
+        default = prefix .. "n",
+        rhs = show("noice_all", "Noice all"),
+        desc = "Noice all",
+      },
+      noice_errors = {
+        default = prefix .. "e",
+        rhs = "<Cmd>Noice errors<CR>",
+        desc = "Noice errors",
+      },
 
-  km.map(
-    "n",
-    km.prefix .. "y",
-    capture_to({ save_file = false }),
-    { desc = "[Debug] Capture to clipboard only", silent = true }
-  )
+      capture = {
+        default = prefix .. "c",
+        rhs = capture_to({}),
+        desc = "Capture to file+clipboard",
+      },
+      capture_file = {
+        default = prefix .. "f",
+        rhs = capture_to({ clipboard = false }),
+        desc = "Capture to file only",
+      },
+      capture_clipboard = {
+        default = prefix .. "y",
+        rhs = capture_to({ save_file = false }),
+        desc = "Capture to clipboard only",
+      },
 
-  km.map("n", km.prefix .. "x", function()
-    display.clear_all()
-    notify.info("All debug windows closed")
-  end, { desc = "[Debug] Clear all windows", silent = true })
+      clear = {
+        default = prefix .. "x",
+        rhs = function()
+          display.clear_all()
+          notify.info("All debug windows closed")
+        end,
+        desc = "Clear all windows",
+      },
+    },
+  }
+
+  return require("lib.nvim.bindings.keymap").register("Debug", spec, km)
 end
 
 return M

@@ -30,8 +30,8 @@
 
 ---@class Dbg.Views.Keymaps
 ---@field enable? boolean
----@field map? fun(mode:string,lhs:string,rhs:fun(),opts:table)
----@field prefix? string  # z.B. "<leader>d"
+---@field prefix? string  # default lhs prefix for every key below, e.g. "<leader>d"
+---@field [string] string|string[]|false  # per-action override: an lhs, several, or false to drop it
 
 ---@class Dbg.Views.Autocmds
 ---@field enable? boolean

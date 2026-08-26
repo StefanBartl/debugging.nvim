@@ -25,7 +25,6 @@ function M.setup(cfg)
 
   if km.enable then
     require("debugging.bindings.keymaps").setup(km, timings)
-    require("debugging.bindings.which_key").setup(km.prefix)
   end
 
   if ac.enable then

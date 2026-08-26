@@ -39,7 +39,6 @@ function M.setup(opts)
 
   _keymaps_cfg = vim.tbl_extend("force", {
     enable = true,
-    map = (vim.keymap and vim.keymap.set) or function() end,
     prefix = "<lt>",
   }, opts.keymaps or {})
 
