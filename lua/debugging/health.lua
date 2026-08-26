@@ -79,7 +79,7 @@ function M.check()
     vim.health.info("noice not installed — Noice views fall back to :messages")
   end
 
-  if require("debugging.bindings.which_key").available() then
+  if pcall(require, "which-key") then
     vim.health.ok("which-key present (views keymap group label)")
   else
     vim.health.info("which-key not installed (optional)")
