@@ -55,7 +55,7 @@ overview, report scratch buffers, and window-tag lookup), `cross`, `lazy`,
 wrappers (which pcall their callbacks and report failures).
 
 The augroup in `bindings/autocmds.lua` is created directly rather than through
-`lib.nvim.autocmd.group()`: that helper caches groups by name and skips the
+`lib.nvim.bindings.autocmd.group()`: that helper caches groups by name and skips the
 clear on later calls, which would stack duplicate autocmds every time `setup()`
 runs.
 

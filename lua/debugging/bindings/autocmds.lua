@@ -3,16 +3,16 @@
 ---
 --- Registers every autocmd this plugin owns in one configurable augroup.
 ---
---- The callbacks go through `lib.nvim.autocmd.create`, which pcalls them and
+--- The callbacks go through `lib.nvim.bindings.autocmd.create`, which pcalls them and
 --- notifies on error — an autocmd that throws would otherwise fail silently
 --- on every WinEnter. The augroup itself is still created directly via
 --- `nvim_create_augroup(..., { clear = true })` rather than via
---- `lib.nvim.autocmd.group()`: that helper caches groups by name and skips
+--- `lib.nvim.bindings.autocmd.group()`: that helper caches groups by name and skips
 --- the clear on subsequent calls, which would stack duplicate autocmds every
 --- time `setup()` re-runs. Clearing on each setup is what makes reloading
 --- the config without restarting Neovim work.
 
-local autocmd = require("lib.nvim.autocmd")
+local autocmd = require("lib.nvim.bindings.autocmd")
 local window = require("lib.nvim.window")
 local display = require("debugging.views.display")
 local utils = require("debugging.views.utils")

@@ -29,7 +29,7 @@ zurückkehren, notifizieren, `ok, err` zurückgeben).
 
 Die beiden Stellen, an denen ein durchgereichter Fehler wirklich unsichtbar
 bliebe, sind inzwischen abgedeckt: Autocmd- und Usercommand-Callbacks laufen
-über `lib.nvim.autocmd.create` / `lib.nvim.usercmd.create`, die pcallen und
+über `lib.nvim.bindings.autocmd.create` / `lib.nvim.bindings.usercmd.create`, die pcallen und
 den Fehler notifizieren.
 
 ### ➖ Keine strukturierten Fehlertypen, kein `@error`/`@raises`
@@ -87,7 +87,7 @@ zusätzlich `force = true` (idempotente Registrierung).
 Eine Ausnahme bleibt bewusst bestehen: die Augroup in
 [bindings/autocmds.lua](../../lua/debugging/bindings/autocmds.lua) wird weiter
 direkt per `nvim_create_augroup(..., { clear = true })` erzeugt, **nicht** über
-`lib.nvim.autocmd.group()`. Letzteres cached Gruppen nach Namen und überspringt
+`lib.nvim.bindings.autocmd.group()`. Letzteres cached Gruppen nach Namen und überspringt
 das Clear bei Folgeaufrufen — bei einem erneuten `setup()` würden sich die
 Autocmds damit verdoppeln. Das Clear-pro-Setup ist genau die Eigenschaft, die
 Config-Reload ohne Neovim-Neustart funktionieren lässt.

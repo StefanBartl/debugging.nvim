@@ -1,5 +1,5 @@
 ---@module 'debugging.bindings.usercmds'
---- Registers the single `:Debug` user command, built via lib.nvim.usercmd.composer.
+--- Registers the single `:Debug` user command, built via lib.nvim.bindings.usercmd.composer.
 ---
 --- Command *logic* (dispatch + the feature-flag-gated category/action
 --- registry) lives in `debugging.commands`; this module only builds a
@@ -25,7 +25,7 @@
 --- (enable features.%s)" hint, since an unregistered category has no route
 --- to carry that message through composer's own error path.
 
-local composer = require("lib.nvim.usercmd.composer")
+local composer = require("lib.nvim.bindings.usercmd.composer")
 
 local M = {}
 

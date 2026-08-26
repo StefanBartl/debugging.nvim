@@ -166,7 +166,7 @@ plugin.
 
 Every feature above is reached through one user command,
 `:Debug {category} {action} [args]`, built via
-[`lib.nvim.usercmd.composer`](https://github.com/StefanBartl/lib.nvim) with
+[`lib.nvim.bindings.usercmd.composer`](https://github.com/StefanBartl/lib.nvim) with
 two-level, context-sensitive tab completion. Only categories enabled by the
 active config appear in completion — `neotree`, for instance, stays out of
 `:Debug <Tab>` until `features.neotree = true` is set, so the command surface
