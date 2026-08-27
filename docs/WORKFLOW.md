@@ -146,8 +146,9 @@ check than assuming a typo in the command name.
 
 ## Keymaps are opt-in and share one prefix
 
-The five default keymaps (`<lt>m/n/e/c/x` — messages, Noice all, Noice
-errors, capture, close-all) live under `config.views.keymaps.enable` and a
+The seven default keymaps (`<lt>m/n/e/c/f/y/x` — messages, Noice all, Noice
+errors, capture to file+clipboard, capture to file only, capture to
+clipboard only, close-all) live under `config.views.keymaps.enable` and a
 single configurable prefix (default `<lt>`, the literal `<` key). Disabling
 `features.views` disables the keymaps along with the usercmds — there's no
 way to keep the keymaps without the underlying views subsystem, since the
