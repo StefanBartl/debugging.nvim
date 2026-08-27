@@ -21,6 +21,11 @@ local _timings = {
   delay_noice_ms = 50,
   retry_delay_ms = 60,
   attempts = 3,
+  -- How long to wait for the window a command opens (:messages, Noice) to
+  -- actually appear. Too short on a slow machine and the view reports "no
+  -- output" for a command that was merely still rendering -- which is why it
+  -- belongs here with the other timings rather than in display.lua.
+  capture_timeout_ms = 500,
 }
 
 ---@type Dbg.Views.Keymaps

@@ -58,7 +58,7 @@ function M.execute_and_refresh(tag, cmd, timings)
   local ok_capture, capture_lib = pcall(require, "lib.nvim.buf_win_tab.capture")
   if ok_capture and capture_lib.capture then
     capture_lib.capture(cmd, {
-      timeout = 500,
+      timeout = timings.capture_timeout_ms or 500,
       tag = { buf = tag, win = tag },
     }, function(result)
       if not result.wins or #result.wins == 0 then

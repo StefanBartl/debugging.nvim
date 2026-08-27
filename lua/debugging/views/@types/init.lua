@@ -46,5 +46,6 @@
 ---@field delay_noice_ms? integer     Wait before reading Noice output
 ---@field retry_delay_ms? integer     Delay between retries
 ---@field attempts? integer           Retry count
+---@field capture_timeout_ms? integer Wait for the window a command opens to appear (default 500)
 
 return {}
