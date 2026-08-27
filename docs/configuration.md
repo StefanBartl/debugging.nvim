@@ -36,7 +36,16 @@ require("debugging").setup({
   views = {
     keymaps  = { enable = true, prefix = "<lt>" },
     autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-    timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3 },
+    -- `capture_timeout_ms`: how long to wait for the window a command opens
+    -- (:messages, Noice) to appear. Too short on a slow machine and the view
+    -- reports "no output" for a command that was merely still rendering.
+    timings  = {
+      delay_messages_ms  = 30,
+      delay_noice_ms     = 50,
+      retry_delay_ms     = 60,
+      attempts           = 3,
+      capture_timeout_ms = 500,
+    },
     capture  = true,
     output_dir = nil,  -- default: stdpath("config")/docs/debug_views
   },
