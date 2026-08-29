@@ -1,14 +1,15 @@
 > **Active development.** This repository is in its development phase — breaking changes are to be expected at any time. Pin a commit or tag if you depend on it.
 
-<!-- ASCII art banner -->
-<pre>
+# debugging.nvim
+
+```
     ___      __                   _                       _
    / _ \___ / /  __ _____ ____ _(_)__  ___ _  ___ _   __(_)_ _
   / // / -_) _ \/ // / _ `/ _ `/ / _ \/ _ `/ / _ \ |/ / /  ' \
  /____/\__/_.__/\_,_/\_, /\_, /_/_//_/\_, (_)_//_/___/_/_/_/_/
                     /___//___/        /___/
         one :Debug command for every Neovim debugging tool
-</pre>
+```
 
 > 💡 Pairs well with [insights.nvim](https://github.com/StefanBartl/insights.nvim):
 > project-insight analyzes and reports on your codebase (symbols, metrics, file
