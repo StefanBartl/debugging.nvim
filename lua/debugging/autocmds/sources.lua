@@ -26,6 +26,7 @@ local notify = require("lib.nvim.notify").create("[debugging]")
 local collect_recursive = require("lib.nvim.fs.collect_recursive")
 local memory_cache = require("lib.nvim.cache.memory")
 local window = require("lib.nvim.window")
+local list = require("lib.nvim.ui.list")
 
 local M = {}
 
@@ -437,13 +438,8 @@ local function fill_quickfix(opts, items)
       text = tbl_concat(item.events or {}, ", "),
     }
   end
-  vim.fn.setqflist({}, " ", {
-    title = "Autocmd sources" .. (opts.event and (" (" .. opts.event .. ")") or ""),
-    items = qf,
-  })
-  if #qf > 0 then
-    vim.cmd("copen")
-  else
+  local title = "Autocmd sources" .. (opts.event and (" (" .. opts.event .. ")") or "")
+  if list.qf(qf, title, { open = "auto" }) == 0 then
     notify.info("autocmd sources: no call sites for the quickfix list")
   end
 end
