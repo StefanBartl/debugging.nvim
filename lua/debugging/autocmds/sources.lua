@@ -483,11 +483,11 @@ end
 ---@return table<string, table[]>
 local function runtime_by_event()
   local out = {}
-  local ok, list = pcall(vim.api.nvim_get_autocmds, {})
-  if not ok or type(list) ~= "table" then
+  local ok, autocmds = pcall(vim.api.nvim_get_autocmds, {})
+  if not ok or type(autocmds) ~= "table" then
     return out
   end
-  for _, au in ipairs(list) do
+  for _, au in ipairs(autocmds) do
     local ev = au.event or "?"
     out[ev] = out[ev] or {}
     tbl_insert(out[ev], au)
