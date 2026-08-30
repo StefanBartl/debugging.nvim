@@ -73,3 +73,7 @@ Requires Neovim 0.9+ and [lib.nvim](https://github.com/StefanBartl/lib.nvim).
 - [Architecture](docs/architecture.md) — module layout and responsibilities.
 - [Bindings Cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
 - [Tests](TESTS/README.md) — headless spec suite and how to run it.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
