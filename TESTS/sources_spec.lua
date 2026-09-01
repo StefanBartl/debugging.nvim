@@ -36,7 +36,8 @@ return function(H)
     "})",
     "local after = true",
   }
-  local impl, last = P.read_brace_block(lines, 1, lines[1]:find("{"))
+  local brace = assert(lines[1]:find("{"), "the fixture's first line opens a block")
+  local impl, last = P.read_brace_block(lines, 1, brace)
   H.eq(last, 6, "brace block: ends on the matching closing brace")
   H.match(impl, "local opts = { a = 1 }", "brace block: keeps nested table")
   H.ok(not impl:match("local after"), "brace block: stops before following code")
@@ -130,6 +131,9 @@ return function(H)
   local missing = root .. "/does/not/exist"
   local win_before = #vim.api.nvim_list_wins()
   local orig_notify, notified = vim.notify, nil
+  -- A test double over typed `vim.*` surface: replacing the field is the
+  -- point of the case, not a second definition of it.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function(msg)
     notified = tostring(msg)
   end

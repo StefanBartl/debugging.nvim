@@ -461,7 +461,9 @@ function M.run(args)
   local opts = parse_args(args or "")
 
   local by_event, all = get_scan(opts)
-  if not by_event then
+  -- Both or neither: the scan returns the two together, and checking one of
+  -- them leaves the other optional for everything below.
+  if not by_event or not all then
     return
   end
 
@@ -505,7 +507,9 @@ function M.all(args)
   local opts = parse_args(args or "")
 
   local by_event, all = get_scan(opts)
-  if not by_event then
+  -- Both or neither: the scan returns the two together, and checking one of
+  -- them leaves the other optional for everything below.
+  if not by_event or not all then
     return
   end
   local by_event_rt = runtime_by_event()

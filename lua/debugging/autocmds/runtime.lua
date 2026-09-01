@@ -35,7 +35,9 @@ function M.list(event, pattern)
     lines[#lines + 1] = string.format("[%d] Group: %s", i, cmd.group_name or "default")
     lines[#lines + 1] = string.format("    Event: %s", cmd.event)
     lines[#lines + 1] = string.format("    Pattern: %s", cmd.pattern or "N/A")
-    lines[#lines + 1] = string.format("    Buffer: %s", cmd.buffer or "N/A")
+    -- `nvim_get_autocmds` answers with both `buf` and `buffer`; only `buf` is
+    -- in Neovim's own meta, so that is the one to read.
+    lines[#lines + 1] = string.format("    Buffer: %s", cmd.buf or "N/A")
     if cmd.command then
       lines[#lines + 1] = string.format("    Command: %s", cmd.command)
     end

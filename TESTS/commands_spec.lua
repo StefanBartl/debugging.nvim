@@ -10,6 +10,9 @@ return function(H)
   -- refused instead of only on "nothing happened".
   local seen = {}
   local orig_notify = vim.notify
+  -- A test double over typed `vim.*` surface: replacing the field is the
+  -- point of the case, not a second definition of it.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function(msg, level)
     seen[#seen + 1] = { msg = tostring(msg), level = level }
   end

@@ -4,8 +4,11 @@
 -- #####################################################################
 -- proc_trace.lua
 
----@class Dbg.Tools.ProcTraceOpts
----@field threshold_ms? integer Only log spawns that blocked at least this long
+---What `:Debug proc start` parses out of its arguments, and hands straight to
+---`lib.nvim.system.proc_trace.start`. An alias rather than a second class:
+---LuaLS decides assignability by name, so a parallel class with the same
+---fields could never be passed to the function it was written for.
+---@alias Dbg.Tools.ProcTraceOpts Lib.System.ProcTrace.StartOptions
 
 -- #####################################################################
 --

@@ -127,6 +127,11 @@ function M.watch(args)
   local shell_exe = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
 
   vim.cmd("botright split")
+  -- `termopen` is deprecated in favour of `jobstart({ term = true })`, which
+  -- exists from 0.11. This plugin states Neovim 0.9+, so the deprecated call
+  -- is the one that works across the supported range -- a deliberate fallback,
+  -- not an oversight.
+  ---@diagnostic disable-next-line: deprecated
   vim.fn.termopen({
     shell_exe,
     "-NoLogo",
