@@ -34,8 +34,14 @@ generic warning.
 | Page | What it answers |
 |---|---|
 | [architecture.md](architecture.md) | How are the modules laid out, and which parts come from lib.nvim? |
-| [map/](map/overview.md) | Generated module map — regenerate with `:DocMap`, don't edit by hand. |
 | [../TESTS/README.md](../TESTS/README.md) | The headless spec suite, and how to run it. |
+
+`:DocMap` generates a browsable module map under `docs/map/` — an interactive
+`index.html` alongside the same data as JSON and Markdown, `:DocMap full` for
+LuaLS-enriched detail. It is deliberately **not** committed: a checked-in copy
+is stale the moment anything it describes changes, and nothing here gates that.
+Open any file in this repo and run it, rather than looking for it in the
+repository.
 
 ## Conventions
 
