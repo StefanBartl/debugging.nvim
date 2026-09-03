@@ -1,6 +1,10 @@
 # Commands
 
-## Features
+Every category and action of the single `:Debug` dispatcher. This is the
+reference; [FEATURES/](FEATURES/README.md) is the same surface written up as
+prose, with the reasoning behind each part.
+
+## Categories at a glance
 
 | Category | Actions | What it does |
 |---|---|---|

@@ -37,3 +37,27 @@ use({
   end,
 })
 ```
+
+## Lazy-loading and the view keymaps
+
+`cmd = "Debug"` is the cheapest setup, and it is the right one if you reach for
+`:Debug` by name. It has one consequence worth knowing: the seven view keymaps
+(`<lt>m`, `<lt>n`, …) are registered by `setup()`, which does not run until the
+plugin loads — so they do nothing until you have run `:Debug` once in that
+session.
+
+If you want the keymaps live from the start, declare them as the lazy-load
+trigger as well, or load the plugin on `VeryLazy`:
+
+```lua
+{
+  "StefanBartl/debugging.nvim",
+  dependencies = { "StefanBartl/lib.nvim" },
+  cmd = "Debug",
+  keys = { "<lt>m", "<lt>n", "<lt>e", "<lt>c", "<lt>f", "<lt>y", "<lt>x" },
+  opts = {},
+}
+```
+
+Set `views.keymaps.enable = false` if you would rather not have them at all —
+see [configuration.md](configuration.md#views-keymaps).

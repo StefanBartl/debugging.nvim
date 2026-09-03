@@ -16,15 +16,19 @@ Normal-mode keymaps installed by `bindings.setup()`, gated by
 `config.views.keymaps.enable`. The prefix defaults to `<lt>`, i.e. the
 literal `<` key.
 
-| lhs | mode | desc |
-| --- | --- | --- |
-| `<lt>m` | n | Show `:messages` view (auto-refreshing) |
-| `<lt>n` | n | Show Noice all view (auto-refreshing) |
-| `<lt>e` | n | Show Noice errors (`:Noice errors`) |
-| `<lt>c` | n | Capture `:messages` to file + clipboard |
-| `<lt>f` | n | Capture `:messages` to file only |
-| `<lt>y` | n | Capture `:messages` to clipboard only |
-| `<lt>x` | n | Close all debug view windows |
+Each key is individually overridable by its action name — the names in the
+table below — so moving one does not mean moving all seven. See
+[configuration.md](configuration.md#views-keymaps).
+
+| lhs | mode | action | desc |
+| --- | --- | --- | --- |
+| `<lt>m` | n | `messages` | Show `:messages` view (auto-refreshing) |
+| `<lt>n` | n | `noice_all` | Show Noice all view (auto-refreshing) |
+| `<lt>e` | n | `noice_errors` | Show Noice errors (`:Noice errors`) |
+| `<lt>c` | n | `capture` | Capture `:messages` to file + clipboard |
+| `<lt>f` | n | `capture_file` | Capture `:messages` to file only |
+| `<lt>y` | n | `capture_clipboard` | Capture `:messages` to clipboard only |
+| `<lt>x` | n | `clear` | Close all debug view windows |
 
 ## User Commands
 
@@ -51,6 +55,8 @@ by `config.features.*`.
 | `:Debug markdown inline` | Gather markdown inline-highlight debug info |
 | `:Debug markdown log` | Open the most recent markdown debug log |
 | `:Debug module reload` | Reload the Lua module of the current buffer |
+| `:Debug proc start [threshold_ms]\|stop\|status\|log` | In-process tracer for `system()`/`jobstart` calls: log durations, plus a full Lua traceback for calls at or above the threshold (default 200ms) |
+| `:Debug proc watch [seconds]` | (Windows) external process-tree watcher — every child process of this Neovim instance, however it was spawned |
 | `:Debug performance startup [runs]` | Benchmark startup time and list the slowest sourced scripts |
 | `:Debug neotree status\|exit\|restart\|backup-list\|backup-clean\|dryrun-toggle\|dryrun-report\|queue-status\|queue-clear` | Opt-in Neo-tree safety bridge (needs `features.neotree = true`) |
 | `:Debug health` | Run `:checkhealth debugging` |

@@ -56,3 +56,33 @@ require("debugging").setup({
 -- Shorthand: enable every category
 require("debugging").setup({ all = true })
 ```
+
+## Views keymaps
+
+`views.keymaps` takes more than `enable` and `prefix`. Every key is declared
+through `lib.nvim`'s keymap registry under an action name, and any of those
+names can be given a different `lhs` — one string, a list of them, or `false`
+to drop the key entirely. `prefix` still supplies the default for every action
+left unnamed, so overriding one key no longer means moving all seven.
+
+```lua
+require("debugging").setup({
+  views = {
+    keymaps = {
+      enable = true,
+      prefix = "<leader>d",  -- supplies the default lhs for every action
+
+      messages          = "<F12>",                -- one explicit lhs
+      capture           = { "<leader>dc", "<F9>" },  -- or several
+      capture_clipboard = false,                  -- or none at all
+      -- noice_all, noice_errors, capture_file and clear keep the
+      -- prefix-derived defaults: <leader>dn, <leader>de, <leader>df,
+      -- <leader>dx
+    },
+  },
+})
+```
+
+The action names are `messages`, `noice_all`, `noice_errors`, `capture`,
+`capture_file`, `capture_clipboard` and `clear` — the same names listed in the
+[bindings cheatsheet](BINDINGS.md#default-keymaps).

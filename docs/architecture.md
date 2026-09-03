@@ -6,7 +6,7 @@ scripts/watch-nvim-procs.ps1  Bundled external process-tree watcher (Windows)
 plugin/debugging.lua          Load guard (vim.g.loaded_debugging)
 lua/debugging/
   init.lua                    setup() — feature gating + bindings registration
-  @types.lua                  LuaLS type definitions
+  @types/init.lua             LuaLS type definitions
   config/
     DEFAULTS.lua              Immutable defaults
     init.lua                  Merge + access to active config
@@ -14,11 +14,12 @@ lua/debugging/
   health.lua                  :checkhealth debugging
   bindings/                   Every user-facing trigger — registration only
     @types/init.lua             Dbg.ActionFn, Dbg.Bindings.RegistryEntry
-    init.lua                   orchestrates usercmds/keymaps/autocmds/which_key
+    init.lua                    orchestrates usercmds/keymaps/autocmds
     usercmds.lua                registers the single :Debug user command
-    keymaps.lua                 views subsystem normal-mode keymaps
+    keymaps.lua                 views subsystem normal-mode keymaps (declared
+                                through lib.nvim's keymap registry, which also
+                                supplies the optional which-key group label)
     autocmds.lua                views subsystem auto-refresh + close-window autocmds
-    which_key.lua                optional which-key group label for the prefix
   views/                      messages/Noice capture, display; timings/keymap/autocmd config
   actions/                    action logic invoked by the :Debug dispatcher
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)

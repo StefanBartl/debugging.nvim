@@ -1,105 +1,116 @@
 # Tools
 
-The individual `:Debug` categories beyond the dispatcher and the autocmd
-audit: state inspection, the terminal keylogger, indent/markdown
-diagnostics, the opt-in Neo-tree safety bridge, and the startup-time
-benchmark.
+The individual `:Debug` categories beyond the dispatcher, the views and the
+autocmd audit: state reports and inspectors, the terminal keylogger, indent
+and markdown diagnostics, module reloading, the startup benchmark, and the
+opt-in Neo-tree bridge.
 
-## Debug category catalogue
+## Reports — a printed snapshot
 
-Alongside `messages`/`noice`/`report`/`autocmds`, the dispatcher ships
-`inspect`, `cursor`, `dump`, `keylogger`, `indent`, `markdown`, `neotree`
-(opt-in), and `health` as first-class categories — each with its own
-feature flag and its own leaf module, routed through the same registry as
-everything else.
+`:Debug report buf|tab|win [id]` prints a snapshot of a buffer, a window, or
+the current tab's window/buffer layout straight to `:messages`. It is the
+fastest way to see scoped options and state when all you want is to paste them
+somewhere or glance and move on — no window opens.
 
-- **Module:** `tools/buffer_inspector/init.lua`, `tools/cursor/state.lua`
-  (`M.print`), `tools/vardump/init.lua` (`M.dump`), `terminals/keylogger.lua`,
-  `nvim_options/indent_helpers.lua`, `markdown/inline_debug.lua`,
-  `actions/neotree_safety.lua`, `health.lua`
-- **Usercmds:** `:Debug inspect|cursor|dump|keylogger|indent|markdown|neotree|health`
-  (see [BINDINGS.md](../BINDINGS.md#user-commands))
+- **Module:** `actions/reports.lua` (built on `lib.nvim.buf_win_tab.*`)
+- **Config:** `opts.features.reports`
+- **Usercmds:** `:Debug report buf|tab|win [id]` — `win` completes against the
+  open window ids
 
-## `inspect window` / `inspect tab`
+## Inspect, cursor, dump — scoped browsing
 
-Window-scoped options/state and a tab page's window/buffer layout, alongside
-the pre-existing `inspect buffer`.
+The everyday "what does Neovim think is going on here" trio: buffer, window
+and tab page inspection of options and state; a cursor/window/buffer state
+printer; and a recursive dumper for any global Lua value, or the word under the
+cursor when no name is given.
 
-- **Module:** `tools/buffer_inspector/init.lua` (`M.window`, `M.tab`,
-  `M.inspect`)
-- **Usercmds:** `:Debug inspect window [winid]`, `:Debug inspect tab
-  [tabnr]` (see [BINDINGS.md](../BINDINGS.md#user-commands))
+Where `report` prints once, `inspect` opens a proper scoped view — reach for it
+when you are comparing values across buffers or windows rather than capturing
+one.
 
-### Handle completion (2026-08-24)
+- **Module:** `tools/buffer_inspector/init.lua` (`M.inspect`, `M.window`,
+  `M.tab`), `tools/cursor/state.lua` (`M.print`), `tools/vardump/init.lua`
+  (`M.dump`)
+- **Config:** `opts.features.tools`
+- **Usercmds:** `:Debug inspect buffer|window|tab [id]`, `:Debug cursor state`,
+  `:Debug dump [varname]` — `inspect buffer` and `inspect window` complete
+  their id
 
-`report win`, `inspect buffer` and `inspect window` complete their handle
-argument (composer's `WINDOW`/`BUFFER` argtypes), and
-`keylogger start [file]` gets path completion. Closes the autocompletion
-audit's entry for this plugin.
+## Terminal keylogger
 
-They previously shared the generic `STRING` slot, which offered nothing. That
-matters more here than for a typo-able name: a window or buffer id is
-*unguessable*, so the only way to supply one was to run `:echo win_getid()`
-first — exactly the friction completion exists to remove. The keylogger path
-completes even though the file does not exist yet, since the directory part
-is what needs typing out.
-
-`proc` ids and `performance startup` deliberately keep the generic slot: this
-plugin does not enumerate those values, so a completer would have nothing
-true to offer. Pinned in `handle_args_spec.lua` so a later change has to be
-deliberate.
-
-- **Module:** `bindings/usercmds.lua` (`HANDLE_ARG`)
-- **Tests:** `TESTS/handle_args_spec.lua`
-
-## Keylogger with logfile
-
-`:Debug keylogger start [file]` (or `config.terminals.keylogger.logfile`)
-appends every key pressed in the current terminal buffer to disk, in
-addition to the existing notify-only echo — for reviewing long sessions
-after the fact. `~` and env vars are expanded.
+Logs the keys pressed inside the current terminal buffer. With no logfile
+configured it only notifies as they are pressed; give it a path — in `setup()`
+or as an argument — and it appends to disk instead, for a record that outlives
+the session. `~` and environment variables are expanded, and the command
+argument overrides the configured default for that run only.
 
 - **Module:** `terminals/keylogger.lua` (`M.start`, `M.stop`,
   `resolve_logfile`)
-- **Config:** `opts.terminals.keylogger.logfile` (default `nil` = notify
-  only)
-- **Usercmds:** `:Debug keylogger start [file]|stop` (see
-  [BINDINGS.md](../BINDINGS.md#user-commands))
+- **Config:** `opts.features.terminals`,
+  `opts.terminals.keylogger.logfile` (default `nil` = notify only)
+- **Usercmds:** `:Debug keylogger start [file]`, `:Debug keylogger stop` —
+  `[file]` gets path completion
 
-## Neo-tree bridge is pcall-guarded
+## Indent diagnostics
 
-The opt-in Neo-tree safety bridge (`:Debug neotree …`) resolves its two
-targets — watcher-quarantine and safety — through a `pcall`-guarded
-`require`, so it degrades gracefully with a clear notification instead of
-erroring when the user's own `config.neotree.*` layer is absent.
+Prints the current buffer's indentation-related options, and can force
+Tree-sitter-driven indent on or restore `cindent`/`smartindent`.
 
-- **Module:** `actions/neotree_safety.lua` (`need`)
-- **Config:** `opts.features.neotree` (default `false`)
+- **Module:** `nvim_options/indent_helpers.lua`
+- **Config:** `opts.features.nvim_options`
+- **Usercmds:** `:Debug indent show`, `:Debug indent treesitter [true|false]`
 
-## Neo-tree bridge injectable
+## Markdown inline-highlight debug
 
-The quarantine/safety targets come from `config.neotree.quarantine` /
-`config.neotree.safety`, each either a module *name* to `require` or an
-already-loaded table injected directly — so the bridge works without the
-private `config.neotree.*` module layout a specific user config happens to
-use.
+Gathers debug information for markdown inline highlighting — the extmark and
+syntax state behind rendered inline styling — and opens the most recent debug
+log.
 
-- **Module:** `actions/neotree_safety.lua` (`need`), `config/DEFAULTS.lua`
-  (`neotree` table)
-- **Config:** `opts.neotree.quarantine`, `opts.neotree.safety` (default
-  module names `"config.neotree.watcher_quarantine"` /
-  `"config.neotree.safety"`)
-- **Usercmds:** `:Debug neotree status|exit|restart|backup-list|backup-clean|dryrun-toggle|dryrun-report|queue-status|queue-clear`
-  (see [BINDINGS.md](../BINDINGS.md#user-commands))
+- **Module:** `markdown/inline_debug.lua`
+- **Config:** `opts.features.markdown`
+- **Usercmds:** `:Debug markdown inline`, `:Debug markdown log`
 
-## `performance startup`
+## Module reload
 
-Spawns a headless Neovim under `--startuptime`, parses the resulting log,
-and reports the total startup time (optionally averaged over N runs) plus
-the slowest sourced scripts. Each measurement runs in its own subprocess and
-quits immediately, so it has no effect on the current session.
+Reloads the Lua module backing the current buffer: evict it from
+`package.loaded`, then `require` it fresh. This is the fast inner loop for
+iterating on a plugin's own source without restarting Neovim — with the limit
+that it clears only that one module, so anything that already holds a local
+reference to the old table keeps running against stale code.
+
+- **Module:** `actions/module_reload.lua`
+- **Config:** `opts.features.module_reload`
+- **Usercmds:** `:Debug module reload`
+
+## Startup benchmark
+
+Spawns a headless Neovim under `--startuptime`, parses the resulting log, and
+reports the total startup time — optionally averaged over N runs — plus the
+slowest sourced scripts. Each measurement runs in its own subprocess and quits
+immediately, so it has no effect on the current session. Averaging is the
+version worth running: run-to-run jitter on a real machine makes a single
+sample a weak answer to "did that config change help".
 
 - **Module:** `tools/startup.lua` (`M.parse`, `M.startup`)
 - **Config:** `opts.features.performance` (default `true`)
-- **Usercmds:** `:Debug performance startup [runs]` (see
-  [BINDINGS.md](../BINDINGS.md#user-commands))
+- **Usercmds:** `:Debug performance startup [runs]`
+
+## Neo-tree safety bridge (opt-in)
+
+A bridge to a user-specific Neo-tree watcher-quarantine and safety layer:
+quarantine status/exit/restart, backup list/clean, dry-run toggle/report, and
+queue status/clear.
+
+Both targets are injectable — each is either a module name to `require` or an
+already-loaded table — so the bridge does not depend on one particular private
+`config.neotree.*` layout. Resolution is `pcall`-guarded, so with the feature
+on but the target config absent, every action degrades to a clear warning
+notification instead of an error. That is deliberate, and it means "the command
+ran without an error" is not the same as "the command did something". Disabled
+by default, because the config it talks to lives outside this plugin.
+
+- **Module:** `actions/neotree_safety.lua` (`need`)
+- **Config:** `opts.features.neotree` (default `false`),
+  `opts.neotree.quarantine`, `opts.neotree.safety`
+- **Usercmds:** `:Debug neotree status|exit|restart|backup-list|backup-clean|dryrun-toggle|dryrun-report|queue-status|queue-clear`
+  — see [BINDINGS.md](../BINDINGS.md#user-commands)

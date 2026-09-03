@@ -1,7 +1,8 @@
 # Workflow — getting real use out of debugging.nvim day to day
 
-Every feature here is documented on its own elsewhere (`docs/FEATURES.md`,
-`docs/commands.md`, `docs/BINDINGS.md`). This is the different question:
+Every feature here is documented on its own elsewhere
+([FEATURES/](FEATURES/README.md), [commands.md](commands.md),
+[BINDINGS.md](BINDINGS.md)). This is the different question:
 once a freeze happens, or a config stops behaving, which `:Debug` category
 do you actually reach for first, and how do the pieces chain together.
 

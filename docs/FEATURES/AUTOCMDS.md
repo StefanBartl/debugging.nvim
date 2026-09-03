@@ -1,58 +1,59 @@
-# Autocommands
+# Autocommand inspection
 
-Everything under `:Debug autocmds` — the live registered-autocmd view and
-the static source-code audit that complements it.
+Everything under `:Debug autocmds` — three related views on autocommands that
+answer three different questions, and are easy to mix up.
 
-## Static autocmd source audit
+## Three views, three questions
 
-Scans Lua files under a root directory (default: your Neovim config's
-`lua/`), finds every `nvim_create_autocmd` call site, and reports where each
-autocmd is *defined* (path:line + implementation), grouped by event —
-merged in from the former `usrcmds.list.autocmd_audit`. Complements
-`debugging.autocmds.runtime`, the live `nvim_get_autocmds()` view.
+| Action | Answers | Source |
+|---|---|---|
+| `runtime [event] [pat]` | What is registered *right now* | `nvim_get_autocmds()` |
+| `sources [args]` | Where in the source tree it is *defined* | static scan of `nvim_create_autocmd` call sites |
+| `all [args]` | Whether those two agree | fuses both, flags runtime-only events |
 
-- **Module:** `autocmds/sources.lua` (`M.run`), `autocmds/runtime.lua`
-  (`M.list`)
-- **Usercmds:** `:Debug autocmds runtime [event] [pat]`, `:Debug autocmds
-  sources […]` (see [BINDINGS.md](../BINDINGS.md#user-commands))
+`autocmds all` is the one that answers "is this plugin-defined autocmd
+expected": it flags events registered at runtime with no matching source
+found, which is `sources`'s structural blind spot (dynamically registered
+autocmds, typically from another plugin) made visible rather than silently
+absent.
 
-## Tree-sitter parser for `autocmds sources`
+- **Module:** `autocmds/runtime.lua` (`M.list`), `autocmds/sources.lua`
+  (`M.run`, `M.all`)
+- **Config:** `opts.features.autocmds`
+- **Usercmds:** `:Debug autocmds runtime [event] [pat]`,
+  `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=][qf=]`,
+  `:Debug autocmds all [root=][refresh=][event=]` — see
+  [BINDINGS.md](../BINDINGS.md#user-commands)
 
-The audit parses with the Lua Tree-sitter grammar (`function_call` nodes
-named `nvim_create_autocmd`) whenever the parser is available, robust
-against multi-line and nested calls that tripped the original text parser;
-falls back to the light text/brace parser otherwise.
+## Tree-sitter parser, with a text fallback
+
+The static audit finds call sites by walking `function_call` nodes named
+`nvim_create_autocmd` with the Lua Tree-sitter grammar whenever that parser is
+available — robust against the multi-line and nested calls that a plain text
+parser mis-reads. Without the parser it falls back to a light text/brace scan,
+which is why an oddly wrapped call can show up under `runtime` but not under
+`sources` on a machine with no Lua parser installed.
 
 - **Module:** `autocmds/sources.lua` (`scan_file_ts`, `scan_file_text`,
   `scan_file`, `has_ts_lua`)
 
-## Quickfix output for `sources`
+## Quickfix output
 
-`:Debug autocmds sources qf=true` sends one `path:line` entry per source
-call site to the quickfix list and opens it, for direct jump-to-definition.
+`sources qf=true` sends one `path:line` entry per call site to the quickfix
+list and opens it, turning "find who registered this autocmd" into a normal
+`:cnext`/`<CR>` jump instead of reading a scratch report.
 
 - **Module:** `autocmds/sources.lua` (`fill_quickfix`, `parse_args`)
-- **Usercmds:** `:Debug autocmds sources qf=true` (see
-  [BINDINGS.md](../BINDINGS.md#user-commands))
+- **Usercmds:** `:Debug autocmds sources qf=true`
 
-## Combined runtime + sources view
+## Cached scan
 
-`:Debug autocmds all` fuses the static source audit with the live runtime
-view — where each event is *defined* vs currently *registered* — including a
-"registered at runtime but no source found" diff, typically plugin-defined
-autocmds.
-
-- **Module:** `autocmds/sources.lua` (`M.all`)
-- **Usercmds:** `:Debug autocmds all [root=][refresh=][event=]` (see
-  [BINDINGS.md](../BINDINGS.md#user-commands))
-
-## `autocmds sources`'s scan moved into lib.nvim
-
-The recursive directory walk delegates to `lib.nvim.fs.collect_recursive`
-(dropping the local `uv.fs_scandir`/`fs_scandir_next` walker), and the
-per-root result cache is a `lib.nvim.cache.memory` namespace instead of a
-hand-rolled local `_cache` table — a few seconds' TTL so repeated calls with
-different `sort=`/`event=` combinations don't rescan the whole tree each
-time; `refresh=true` forces a rescan regardless.
+The recursive directory walk goes through `lib.nvim.fs.collect_recursive`, and
+results are cached per project root in a `lib.nvim.cache.memory` namespace for
+a few seconds — so repeated calls with different `sort=`/`event=` combinations
+do not rescan the whole tree each time. The trade-off is visible: a source edit
+made right before re-running `sources` needs `refresh=true`, not a second plain
+run.
 
 - **Module:** `autocmds/sources.lua` (`scan_dir`, `get_scan`)
+- **Usercmds:** `:Debug autocmds sources refresh=true`
