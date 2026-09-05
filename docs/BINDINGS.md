@@ -30,6 +30,12 @@ table below — so moving one does not mean moving all seven. See
 | `<lt>y` | n | `capture_clipboard` | Capture `:messages` to clipboard only |
 | `<lt>x` | n | `clear` | Close all debug view windows |
 
+Two more `q`/`<Esc>` keymaps exist outside this table, both buffer-local and
+not user-configurable: one bound by the `FileType` autocmd below (closes a
+`messages`/`noice` debug view), and a separate one inside the bare `:Debug`
+overview float (`config.overview == "float"`, the default) — two distinct
+registration sites, not one shared close-keymap.
+
 ## User Commands
 
 Single `:Debug {category} {action} [args]` dispatcher. Categories are gated
