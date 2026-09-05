@@ -25,7 +25,12 @@ function M.check()
 
   -- ── lib.nvim dependency ───────────────────────────────────────────────────
   vim.health.start("debugging: lib.nvim")
-  check_require("lib.nvim.bindings.usercmd.composer", ":Debug command layer", "warn")
+  check_require(
+    "lib.nvim.bindings.usercmd.composer",
+    ":Debug command layer",
+    "error",
+    { 'Install "StefanBartl/lib.nvim"' }
+  )
   check_require("lib.nvim.notify", "notify", "warn")
   check_require("lib.nvim.buf_win_tab.buffer_utils", "reports: buffer_utils", "warn")
   check_require("lib.nvim.buf_win_tab.windows_utils", "reports: windows_utils", "warn")
