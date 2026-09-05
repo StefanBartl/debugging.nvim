@@ -371,11 +371,18 @@ function M.gather()
   -- Notify user
   notify.info(("wrote debug log to %s"):format(out_path))
 
-  -- Quick echo summary in command line (escape single quotes)
+  -- Quick echo summary in command line. Values are interpolated into a
+  -- single-quoted Vimscript string built via vim.cmd(), so any single quote
+  -- in them (a colorscheme/filetype name is not actually guaranteed free of
+  -- one) must be doubled per Vimscript's own escaping rule -- otherwise it
+  -- closes the string early and the rest is parsed as ex-commands.
+  local function esc_squote(s)
+    return (tostring(s):gsub("'", "''"))
+  end
   local quick = {
     ("buf=%d"):format(bufnr),
-    ("filetype=%s"):format(M.results.buffer.filetype or "<nil>"),
-    ("colorscheme=%s"):format(M.results.env.colorscheme or "<nil>"),
+    ("filetype=%s"):format(esc_squote(M.results.buffer.filetype or "<nil>")),
+    ("colorscheme=%s"):format(esc_squote(M.results.env.colorscheme or "<nil>")),
     ("termguicolors=%s"):format(tostring(M.results.env.termguicolors)),
     ("syntax_on=%s"):format(tostring(M.results.syntax_on)),
   }
