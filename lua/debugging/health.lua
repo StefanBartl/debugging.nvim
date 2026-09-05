@@ -13,14 +13,14 @@ function M.check()
   if vim.fn.has("nvim-0.9") == 1 then
     vim.health.ok("Neovim >= 0.9")
   else
-    vim.health.warn("Neovim 0.9+ recommended")
+    vim.health.warn("Neovim 0.9+ recommended", { "Upgrade Neovim to 0.9+" })
   end
   if vim.g.loaded_debugging then
     vim.health.ok(
       "plugin loaded (vim.g.loaded_debugging = " .. tostring(vim.g.loaded_debugging) .. ")"
     )
   else
-    vim.health.warn("plugin guard not set — call require('debugging').setup()")
+    vim.health.info("plugin guard not set (call require('debugging').setup())")
   end
 
   -- ── lib.nvim dependency ───────────────────────────────────────────────────
@@ -78,7 +78,10 @@ function M.check()
   if pcall(vim.fn.mkdir, state_dir, "p") then
     vim.health.ok("write permissions OK: " .. state_dir)
   else
-    vim.health.error("cannot write to: " .. state_dir)
+    vim.health.error(
+      "cannot write to: " .. state_dir,
+      { "Check write permissions on stdpath('state')" }
+    )
   end
 
   -- ── module_reload ─────────────────────────────────────────────────────────
@@ -127,12 +130,18 @@ function M.check()
     if hits[1] then
       vim.health.ok("bundled watcher script found: " .. hits[1])
     else
-      vim.health.warn("scripts/watch-nvim-procs.ps1 not found on the runtimepath")
+      vim.health.warn(
+        "scripts/watch-nvim-procs.ps1 not found on the runtimepath",
+        { "Reinstall debugging.nvim -- this script ships with the plugin" }
+      )
     end
     if vim.fn.executable("pwsh") == 1 or vim.fn.executable("powershell") == 1 then
       vim.health.ok("PowerShell available (pwsh or powershell.exe) for `:Debug proc watch`")
     else
-      vim.health.warn("neither pwsh nor powershell.exe on PATH — `:Debug proc watch` will fail")
+      vim.health.warn(
+        "neither pwsh nor powershell.exe on PATH — `:Debug proc watch` will fail",
+        { "Install PowerShell" }
+      )
     end
   else
     vim.health.info(
