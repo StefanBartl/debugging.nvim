@@ -1,14 +1,11 @@
 # debugging.nvim — Binding Cheatsheet
 
-Machine-readable overview of every keymap, user command, and autocommand
-defined by `debugging.nvim`. This file is documentation only and mirrors the
-source of truth:
+Every keymap, user command, and autocommand `debugging.nvim` defines. Kept in
+sync with:
 
 - keymaps  — `lua/debugging/bindings/keymaps.lua`
 - commands — `lua/debugging/bindings/usercmds.lua` (registration) + `lua/debugging/commands.lua` (dispatch/completion logic)
 - autocmds — `lua/debugging/bindings/autocmds.lua`
-
-Any change there must be reflected here.
 
 ## Default Keymaps
 
