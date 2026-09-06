@@ -92,7 +92,8 @@ packer.nvim: >lua
     views = {
       keymaps  = { enable = true, prefix = "<lt>" },
       autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-      timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3 },
+      timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3,
+                   capture_timeout_ms = 500 },
       capture  = true,
       output_dir = nil,
     },
@@ -346,7 +347,7 @@ the bundled watcher script + PowerShell availability on Windows.
     actions/reports.lua           buf/tab/win reports
     actions/module_reload.lua     reload Lua module of current buffer
     actions/neotree_safety.lua    opt-in Neo-tree bridge (pcall-guarded)
-    autocmds/@types/init.lua  Dbg.Autocmds.SourceItem/SourceOpts/SourceCache
+    autocmds/@types/init.lua  Dbg.Autocmds.SourceItem/SourceOpts
     autocmds/runtime.lua      live nvim_get_autocmds view
     autocmds/sources.lua      static source-code audit (Tree-sitter + text
                               fallback; cached per root; sources-vs-runtime all)

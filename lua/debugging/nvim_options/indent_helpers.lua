@@ -40,7 +40,6 @@ function M.prefer_treesitter_indent(enable)
     vim.bo.cindent = false
     vim.bo.smartindent = false
   else
-    -- Restore default behavior; currently disables tree-sitter preference
     vim.bo.cindent = true
     vim.bo.smartindent = true
   end

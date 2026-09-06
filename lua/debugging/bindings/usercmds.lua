@@ -9,21 +9,17 @@
 --- category/action registry, `dispatch()` and `complete()`. Every route
 --- built here ultimately calls its `dispatch()`.
 ---
---- Every route's `run` bypasses composer's own bound ctx.args/ctx.pos and
---- calls the ORIGINAL, unmodified `commands.dispatch(ctx.raw.fargs)` (composer's
---- untouched nvim-callback opts table has the exact same `.fargs` shape the
---- old `nvim_create_user_command` callback received) -- so the declared
---- per-route `args` schema below exists purely to drive <Tab> completion;
---- dispatch/feature-gating/error messages are unchanged.
+--- Every route's `run` bypasses composer's bound ctx.args/ctx.pos and calls
+--- the unmodified `commands.dispatch(ctx.raw.fargs)` (ctx.raw is the same
+--- `.fargs`-shaped opts table the old `nvim_create_user_command` callback
+--- received) -- the per-route `args` schema below exists purely to drive
+--- <Tab> completion; dispatch/feature-gating/error messages are unchanged.
 ---
 --- Only categories enabled by the resolved config get a route, snapshotted
---- at setup() time -- matching the original completion's own
---- enabled_categories() filtering (a disabled category no longer offers
---- <Tab> candidates). One accepted, minor tradeoff: dispatching a DISABLED
---- category by typing its exact name now gets composer's generic "unknown
---- subcommand" instead of the original's specific "category %q is disabled
---- (enable features.%s)" hint, since an unregistered category has no route
---- to carry that message through composer's own error path.
+--- at setup() time. Tradeoff: typing a DISABLED category's exact name now
+--- gets composer's generic "unknown subcommand" instead of the original's
+--- "category %q is disabled (enable features.%s)" hint, since an
+--- unregistered category has no route to carry that message through.
 
 local composer = require("lib.nvim.bindings.usercmd.composer")
 
