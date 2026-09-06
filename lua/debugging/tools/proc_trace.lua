@@ -127,12 +127,7 @@ function M.watch(args)
   local shell_exe = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
 
   vim.cmd("botright split")
-  -- `termopen` is deprecated in favour of `jobstart({ term = true })`, which
-  -- exists from 0.11. This plugin states Neovim 0.9+, so the deprecated call
-  -- is the one that works across the supported range -- a deliberate fallback,
-  -- not an oversight.
-  ---@diagnostic disable-next-line: deprecated
-  vim.fn.termopen({
+  local cmd = {
     shell_exe,
     "-NoLogo",
     "-NoProfile",
@@ -140,7 +135,16 @@ function M.watch(args)
     script,
     "-Seconds",
     tostring(seconds),
-  })
+  }
+  -- `jobstart({ term = true })` replaces the deprecated `termopen`, but only
+  -- exists from 0.11. This plugin states Neovim 0.9+, so older versions fall
+  -- back to the deprecated call -- a deliberate gate, not an oversight.
+  if vim.fn.has("nvim-0.11") == 1 then
+    vim.fn.jobstart(cmd, { term = true })
+  else
+    ---@diagnostic disable-next-line: deprecated
+    vim.fn.termopen(cmd)
+  end
   vim.cmd("startinsert")
   notify.info(("watching child processes for %ds — reproduce the freeze now"):format(seconds))
 end
