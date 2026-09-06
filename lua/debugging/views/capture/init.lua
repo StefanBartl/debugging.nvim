@@ -15,8 +15,7 @@ local write_file = lazy.require("lib.nvim.fs.write.to_file")
 
 local M = {}
 
--- Default capture directory
----@type string
+---@type string  Default capture directory
 M.base_dir = vim.fn.stdpath("config") .. "/docs/debug_views"
 
 ---@internal
@@ -222,7 +221,6 @@ local function try_noice()
       if ok_name and name and name:match("noice://") then
         local ok_lines, lines = pcall(vim.api.nvim_buf_get_lines, buf, 0, -1, false)
         if ok_lines and lines and #lines > 0 then
-          -- Filter out empty lines
           local filtered = {}
           for _, line in ipairs(lines) do
             if line ~= "" then
@@ -309,7 +307,6 @@ local function capture_messages_raw(debug)
     return true, msgs, src
   end
 
-  -- Build detailed error message
   local details = {}
   for _, attempt in ipairs(attempts) do
     table.insert(details, string.format("  • %s: %s", attempt.method, attempt.source))
@@ -341,7 +338,6 @@ function M.capture_messages(opts)
     notify.debug(("DebugViews: dir=%s\nlog=%s"):format(dir, logfile))
   end
 
-  -- Try all capture methods
   local ok_capture, messages, source = capture_messages_raw(debug)
   if not ok_capture or not messages then
     return false,

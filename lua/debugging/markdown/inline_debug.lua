@@ -22,8 +22,6 @@ local debugfolder = vim.fn.stdpath("data") .. "/debuglog/markdown_inline"
 ---@return string timestamp_string
 local function get_timestamp()
   local now_sec = math.floor(os.time())
-  -- os.date can theoretically return non-string types in some analyzer models;
-  -- wrapping with tostring guarantees a string return value.
   return tostring(os.date("%Y%m%d-%H%M%S", now_sec))
 end
 
@@ -64,9 +62,7 @@ end
 ---@param name string
 ---@return table|string hl_or_err  -- returns a table on success or an error string on failure
 local function get_highlight(name)
-  -- prefer modern API; guard with type check to avoid calling missing/old APIs
   if type(vim.api.nvim_get_hl) ~= "function" then
-    -- older Neovim without modern API: return a descriptive error string instead of calling deprecated functions
     return "<error: vim.api.nvim_get_hl not available on this Neovim build>"
   end
 
@@ -149,9 +145,7 @@ end
 local function collect_lsp_info(bufnr)
   local result = {}
 
-  -- Guard: ensure modern API exists; do not call deprecated vim.lsp.buf_get_clients
   if not (vim.lsp and type(vim.lsp.get_clients) == "function") then
-    -- Older Neovim without modern API — avoid calling deprecated functions to silence LSP warnings.
     result.clients = {}
     return result
   end
@@ -193,7 +187,10 @@ local function collect_lsp_info(bufnr)
       end
     end
 
-    -- If still unknown, include the client (it's better to show extra clients than miss one)
+    --- CDX: `or true` makes this unconditional -- `considered_relevant` above
+    --- is computed but never actually used to filter. Intentional ("always
+    --- include, better to show extra clients than miss one") or leftover from
+    --- a stricter filter that was disabled? Verify before tightening.
     if considered_relevant or true then
       table.insert(filtered, {
         name = c.name,
@@ -250,7 +247,6 @@ local function collect_autocmds()
   end
 
   local ok, res = pcall(function()
-    -- Request autocommands for the named augroup. This returns a list (table) on success.
     return vim.api.nvim_get_autocmds({ group = "MarkdownFencedFix" })
   end)
 
@@ -349,13 +345,10 @@ function M.gather()
   table.insert(log_lines, "=== SAMPLE TOP LINES OF BUFFER ===")
   table.insert(log_lines, M.results.buffer.lines_sample or "")
 
-  -- Ensures the timestamp `ts` is inserted correctly into the filename
   local out_path = debugfolder .. "_debuglog_" .. ts .. ".log"
-  --create the "debuglog" directory if it doesn't exist
   vim.fn.mkdir(debugfolder)
   M.out_path = out_path
 
-  -- write file robustly and return clear error on failure
   local fd, open_err = io.open(out_path, "w")
   if not fd then
     return false, ("failed to open log file '%s': %s"):format(out_path, tostring(open_err))
@@ -368,7 +361,6 @@ function M.gather()
     return false, ("failed to write log file '%s': %s"):format(out_path, tostring(write_err))
   end
 
-  -- Notify user
   notify.info(("wrote debug log to %s"):format(out_path))
 
   -- Quick echo summary in command line. Values are interpolated into a

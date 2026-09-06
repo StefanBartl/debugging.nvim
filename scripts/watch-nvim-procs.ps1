@@ -1,31 +1,30 @@
 <#
 .SYNOPSIS
-  Protokolliert alle Kindprozesse von nvim (rekursiv) mit Startzeit relativ
-  zum Watcher-Start und mit Lebensdauer. Zeigt genau, welcher Prozess kurz
-  nach dem nvim-Start auftaucht und wie lange er lebt/haengt.
+  Logs every child process of nvim (recursively) with its start time relative
+  to the watcher start and its lifetime. Shows exactly which process appears
+  shortly after nvim starts and how long it lives/hangs.
 
-.WARUM POLLING
-  Win32_ProcessStartTrace braeuchte Admin-Rechte. Polling (Get-CimInstance)
-  braucht keine und erfasst gerade die LANGlebigen/haengenden Prozesse
-  zuverlaessig - und die sind hier der Punkt (ein 60-90s haengender
-  Prozess-Spawn ist sekundenlang sichtbar).
+.WHY POLLING
+  Win32_ProcessStartTrace would need admin rights. Polling (Get-CimInstance)
+  needs none and reliably catches exactly the LONG-lived/hanging processes
+  that matter here (a 60-90s hanging process spawn is visible for seconds).
 
-.NUTZUNG
-  Bevorzugt ueber `:Debug proc watch [seconds]` (oeffnet dies automatisch in
-  einem Terminal-Split innerhalb der laufenden nvim-Instanz, deren Kindprozesse
-  beobachtet werden sollen).
+.USAGE
+  Preferred: via `:Debug proc watch [seconds]` (opens this automatically in a
+  terminal split inside the running nvim instance whose child processes are
+  to be observed).
 
-  Manuell (z.B. um eine ANDERE nvim-Instanz von aussen zu beobachten):
-    1. Dieses Fenster oeffnen und starten:
-         pwsh -NoProfile -File "<pfad>\watch-nvim-procs.ps1"
-       (oder powershell statt pwsh)
-    2. In einem ZWEITEN Fenster nvim starten und den Freeze abwarten.
-    3. Nach dem Freeze hier Strg+C -> Zusammenfassung (nach Lebensdauer sortiert).
+  Manual (e.g. to observe a DIFFERENT nvim instance from outside):
+    1. Open this window and start:
+         pwsh -NoProfile -File "<path>\watch-nvim-procs.ps1"
+       (or powershell instead of pwsh)
+    2. Start nvim in a SECOND window and wait for the freeze.
+    3. After the freeze, Ctrl+C here -> summary (sorted by lifetime).
 
 .PARAMETER Seconds
-  Wie lange beobachtet wird (Default 120). Strg+C beendet frueher.
+  How long to observe (default 120). Ctrl+C ends it early.
 .PARAMETER IntervalMs
-  Poll-Intervall (Default 150ms).
+  Poll interval (default 150ms).
 #>
 param(
   [int]$Seconds    = 120,
@@ -34,12 +33,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $t0     = [System.Diagnostics.Stopwatch]::StartNew()
-$seen   = @{}   # pid -> [pscustomobject] Datensatz
-$living = @{}   # pid -> $true, aktuell lebend
+$seen   = @{}   # pid -> [pscustomobject] record
+$living = @{}   # pid -> $true, currently alive
 
 Write-Host "Watcher laeuft. Starte jetzt nvim im zweiten Fenster. Strg+C beendet." -ForegroundColor Cyan
 
-# Rekursiv pruefen, ob eine PID von irgendeinem nvim-Prozess abstammt.
+# Recursively check whether a PID descends from any nvim process.
 function Test-DescendsFromNvim {
   param([int]$TargetPid, [hashtable]$Procs)
   $depth = 0
@@ -60,7 +59,7 @@ try {
     Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,CommandLine |
       ForEach-Object { $snapshot[[int]$_.ProcessId] = $_ }
 
-    # Neue Prozesse, die vom nvim-Baum abstammen
+    # New processes descending from the nvim tree
     foreach ($kv in $snapshot.GetEnumerator()) {
       $procId = $kv.Key
       if ($seen.ContainsKey($procId)) { continue }
@@ -85,7 +84,7 @@ try {
       }
     }
 
-    # Beendete Prozesse -> Lebensdauer festhalten
+    # Exited processes -> record lifetime
     foreach ($procId in @($living.Keys)) {
       if (-not $snapshot.ContainsKey($procId)) {
         $rec = $seen[$procId]

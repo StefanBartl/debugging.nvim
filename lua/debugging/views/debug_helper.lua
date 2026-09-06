@@ -10,6 +10,11 @@
 --- plugin:
 ---   :lua require("debugging.views.debug_helper").report()
 ---   :lua require("debugging.views.debug_helper").test_capture()
+---
+--- CDX: no caller anywhere in this repo (only self-referenced in its own
+--- report text). Looks like the exploratory tool that led to
+--- `views/capture/init.lua`'s current Noice-probing fallback chain. Confirm
+--- it's still wanted as a standalone dev tool before trimming/removing it.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.debug_helper]")
 
@@ -35,7 +40,6 @@ function M.check_noice()
 
   status.installed = true
 
-  -- Check manager and get sample messages
   local ok_manager, manager = pcall(require, "noice.message.manager")
   if ok_manager and manager then
     status.manager_available = true
@@ -43,7 +47,6 @@ function M.check_noice()
     if ok_msgs and messages then
       status.message_count = #messages
 
-      -- Get first 3 messages as samples
       for i = 1, math.min(3, #messages) do
         local msg = messages[i]
         local sample = {
@@ -59,11 +62,9 @@ function M.check_noice()
           keys = {},
         }
 
-        -- Check _lines content
         if msg._lines and type(msg._lines) == "table" then
           sample._lines_count = #msg._lines
           if msg._lines[1] then
-            -- Show structure of first line
             local line = msg._lines[1]
             if type(line) == "table" then
               sample._lines_sample = {
@@ -84,7 +85,6 @@ function M.check_noice()
           end
         end
 
-        -- Collect all keys
         for k, _ in pairs(msg) do
           table.insert(sample.keys, k)
         end
@@ -94,17 +94,14 @@ function M.check_noice()
     end
   end
 
-  -- Check history
   if noice.history and type(noice.history.get) == "function" then
     status.history_available = true
   end
 
-  -- Check API
   if noice.api and noice.api.status and noice.api.status.message then
     status.api_available = true
   end
 
-  -- Check buffers
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(buf) then
       local ok_name, name = pcall(vim.api.nvim_buf_get_name, buf)
@@ -127,14 +124,12 @@ function M.check_messages()
     exec2_content = "",
   }
 
-  -- Try vim.fn.execute
   local ok, result = pcall(vim.fn.execute, "messages")
   if ok and result then
     status.execute_works = true
     status.execute_content = result
   end
 
-  -- Try nvim_exec2
   local ok2, result2 = pcall(vim.api.nvim_exec2, "messages", { output = true })
   if ok2 and result2 and result2.output then
     status.exec2_works = true
@@ -160,7 +155,6 @@ function M.report_lines()
   add("DEBUGGING.VIEWS DIAGNOSTIC REPORT")
   add(rule)
 
-  -- Check Noice
   add("")
   add("📦 NOICE STATUS:")
   local noice_status = M.check_noice()
@@ -172,7 +166,6 @@ function M.report_lines()
     add("  Buffers: %d", noice_status.buffers_found)
     add("  Messages: %d", noice_status.message_count)
 
-    -- Show sample message structure
     if #noice_status.sample_messages > 0 then
       add("")
       add("  Sample Message Structure:")
@@ -209,7 +202,6 @@ function M.report_lines()
     end
   end
 
-  -- Check Messages
   add("")
   add("📝 MESSAGES STATUS:")
   local msg_status = M.check_messages()
@@ -227,14 +219,12 @@ function M.report_lines()
     add("    Bytes: %d", #msg_status.exec2_content)
   end
 
-  -- Check Paths
   add("")
   add("📁 PATHS:")
   local capture = require("debugging.views.capture")
   add("  base_dir: %s", capture.base_dir)
   add("  dir exists: %s", mark(vim.fn.isdirectory(capture.base_dir) == 1))
 
-  -- Platform
   add("")
   add("💻 PLATFORM:")
   local uname = (vim.uv or vim.loop).os_uname()
@@ -264,7 +254,6 @@ end
 ---Test capture with detailed output.
 ---@return boolean ok
 function M.test_capture()
-  -- Add some test messages first
   vim.notify("Test message 1", vim.log.levels.INFO)
   notify.warn("Test message 2")
   notify.error("Test message 3")
@@ -272,7 +261,6 @@ function M.test_capture()
   local rule = string.rep("=", 60)
   local out = { rule, "TESTING CAPTURE (added 3 test messages)", rule }
 
-  -- Try capture with debug
   local capture = require("debugging.views.capture")
   local ok, content, detail = capture.capture_messages({
     debug = true,

@@ -26,13 +26,15 @@ aborts if none of them has it.
 
 ## Layout
 
-| File                | Covers                                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `harness.lua`       | Shared assertions (`eq`, `ok`, `match`, `eq_list`) plus `scratch()` and `tmpfile()` helpers.       |
-| `config_spec.lua`   | `config/init.lua`: DEFAULTS merge, partial overrides, `all = true`, DEFAULTS immutability.         |
-| `sources_spec.lua`  | `autocmds/sources.lua`: `normalize_events`, `read_brace_block`, `parse_args`, completion, and an end-to-end scan over a temp tree. |
-| `commands_spec.lua` | `commands.lua`: dispatch, feature gating, buffer/window id validation, two-level completion.        |
-| `run.lua`           | Runner: resolves lib.nvim, loads each spec, reports results, sets exit code.                       |
+| File                     | Covers                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `harness.lua`            | Shared assertions (`eq`, `ok`, `match`, `eq_list`) plus `scratch()` and `tmpfile()` helpers.       |
+| `config_spec.lua`        | `config/init.lua`: DEFAULTS merge, partial overrides, `all = true`, DEFAULTS immutability.         |
+| `sources_spec.lua`       | `autocmds/sources.lua`: `normalize_events`, `read_brace_block`, `parse_args`, completion, and an end-to-end scan over a temp tree. |
+| `startup_spec.lua`       | `tools/startup.lua`: `--startuptime` log parsing (total, per-script entries, fallback to max clock). |
+| `commands_spec.lua`      | `commands.lua`: dispatch, feature gating, buffer/window id validation, two-level completion.        |
+| `handle_args_spec.lua`   | Composer argtypes on handle-taking actions: window/buffer/path completion, and the deliberately-generic slots (`proc`, `performance startup`). |
+| `run.lua`                | Runner: resolves lib.nvim, loads each spec, reports results, sets exit code.                       |
 
 ## Adding a spec
 
