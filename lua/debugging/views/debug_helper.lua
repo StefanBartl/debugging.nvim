@@ -49,6 +49,9 @@ function M.check_noice()
 
       for i = 1, math.min(3, #messages) do
         local msg = messages[i]
+        -- Deliberately probing fields the declared shape doesn't name --
+        -- that is this debug helper's whole job.
+        ---@cast msg table
         local sample = {
           has_content = msg.content ~= nil,
           content_type = type(msg.content),

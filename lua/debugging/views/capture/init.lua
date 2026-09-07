@@ -239,6 +239,10 @@ local function try_noice()
 
   -- Method 4: Try API status (usually just shows last message)
   if noice.api and noice.api.status and noice.api.status.message then
+    -- noice.api.status is a metatable-factory module (__index builds a
+    -- NoiceStatus per key at runtime) -- get() is real, LuaLS just cannot
+    -- see through it. Already pcall-guarded either way.
+    ---@diagnostic disable-next-line: undefined-field
     local ok_status, status_msg = pcall(noice.api.status.message.get)
     if ok_status and status_msg and status_msg ~= "" then
       return true, status_msg, "noice.api.status (last message only)"
