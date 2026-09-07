@@ -54,3 +54,9 @@ Two things run through every page and are worth knowing once:
   `setup()` disappears from `:Debug <Tab>` entirely. A command that "does not
   exist" is far more often a disabled feature than a typo — `:Debug health`
   settles it.
+
+## Working on it
+
+| Page | Answers |
+| --- | --- |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Ground rules, project layout, and how to add a category |
