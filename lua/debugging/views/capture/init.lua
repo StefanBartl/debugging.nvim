@@ -64,21 +64,21 @@ local function extract_noice_text(obj, depth)
         local parts = {}
         for _, part in ipairs(line) do
           if type(part) == "string" then
-            table.insert(parts, part)
+            parts[#parts + 1] = part
           elseif type(part) == "table" then
             -- Part might have _text field
             if part._text then
-              table.insert(parts, tostring(part._text))
+              parts[#parts + 1] = tostring(part._text)
             elseif part[1] then
-              table.insert(parts, tostring(part[1]))
+              parts[#parts + 1] = tostring(part[1])
             end
           end
         end
         if #parts > 0 then
-          table.insert(lines, table.concat(parts, ""))
+          lines[#lines + 1] = table.concat(parts, "")
         end
       elseif type(line) == "string" then
-        table.insert(lines, line)
+        lines[#lines + 1] = line
       end
     end
     if #lines > 0 then
@@ -104,19 +104,19 @@ local function extract_noice_text(obj, depth)
     local parts = {}
     for _, item in ipairs(obj) do
       if type(item) == "string" then
-        table.insert(parts, item)
+        parts[#parts + 1] = item
       elseif type(item) == "table" then
         if item._text then
-          table.insert(parts, tostring(item._text))
+          parts[#parts + 1] = tostring(item._text)
         elseif item[1] then
           local nested = extract_noice_text(item, depth + 1)
           if nested then
-            table.insert(parts, nested)
+            parts[#parts + 1] = nested
           end
         else
           local text = item.text or item.str
           if text then
-            table.insert(parts, tostring(text))
+            parts[#parts + 1] = tostring(text)
           end
         end
       end
@@ -180,9 +180,9 @@ local function try_noice()
           -- Include timestamp if available
           if msg.opts and msg.opts.timestamp then
             local ts = os.date("%H:%M:%S", msg.opts.timestamp)
-            table.insert(lines, string.format("[%s] %s", ts, text))
+            lines[#lines + 1] = string.format("[%s] %s", ts, text)
           else
-            table.insert(lines, text)
+            lines[#lines + 1] = text
           end
         end
       end
@@ -203,7 +203,7 @@ local function try_noice()
       for _, entry in ipairs(history) do
         local text = extract_noice_text(entry)
         if text and text ~= "" then
-          table.insert(lines, text)
+          lines[#lines + 1] = text
         end
       end
       if #lines > 0 then
@@ -224,7 +224,7 @@ local function try_noice()
           local filtered = {}
           for _, line in ipairs(lines) do
             if line ~= "" then
-              table.insert(filtered, line)
+              filtered[#filtered + 1] = line
             end
           end
           if #filtered > 0 then
@@ -309,7 +309,7 @@ local function capture_messages_raw(debug)
 
   local details = {}
   for _, attempt in ipairs(attempts) do
-    table.insert(details, string.format("  • %s: %s", attempt.method, attempt.source))
+    details[#details + 1] = string.format("  • %s: %s", attempt.method, attempt.source)
   end
 
   return false, nil, "all methods failed:\n" .. table.concat(details, "\n")
