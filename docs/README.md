@@ -8,7 +8,9 @@ The [repository README](../README.md) is the short version; this is the index.
 | Page | What it answers |
 |---|---|
 | [installation.md](installation.md) | How do I install it, and what does it need? |
+| [quickstart.md](quickstart.md) | What's the first thing to run after installing? |
 | [FEATURES/](FEATURES/README.md) | What can it actually do — one page per group of `:Debug` categories. |
+| [around-it.md](around-it.md) | How does this plugin's scope differ from its siblings in the collection? |
 | [WORKFLOW.md](WORKFLOW.md) | Which category do I reach for when, and how do they chain together? |
 
 ## Reference
@@ -16,6 +18,7 @@ The [repository README](../README.md) is the short version; this is the index.
 | Page | What it answers |
 |---|---|
 | [commands.md](commands.md) | What does each `:Debug {category} {action}` do, with which arguments? |
+| [what-you-get.md](what-you-get.md) | Which commands matter on day one, with the defaults enabled? |
 | [configuration.md](configuration.md) | Which `setup()` options exist, and what are their defaults? |
 | [BINDINGS.md](BINDINGS.md) | Every keymap, user command, and autocommand at a glance. |
 
