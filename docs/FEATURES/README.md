@@ -11,6 +11,28 @@ arguments, defaults, event names — see [commands.md](../commands.md),
 [configuration.md](../configuration.md) and the
 [bindings cheatsheet](../BINDINGS.md).
 
+## At a glance
+
+| Category | Does |
+| --- | --- |
+| **Views** | Auto-refreshing `:messages` and Noice windows, captured to a file or the clipboard |
+| **Autocmds** | The live registry, a Tree-sitter audit of the source, and a combined view of where the two disagree |
+| **Inspection** | Buffer, window and tab reports and inspectors, cursor state, recursive Lua value dumps |
+| **UI freezes** | A blocking-call tracer with Lua tracebacks, plus an external process-tree watcher on Windows |
+| **The rest** | Terminal keylogger, indent and Markdown diagnostics, module reload, startup benchmark, opt-in Neo-tree safety bridge |
+
+Every category is gated by a feature flag, so `:Debug <Tab>` lists what *your*
+setup can actually do rather than a static catalogue. That is the difference
+between a dispatcher and a menu: the completion is a report on the current
+session, not a table copied from the documentation.
+
+The autocmd category is the clearest case of why the editor needs inspecting at
+all. The live registry says what is registered *now*; the Tree-sitter audit says
+what the source claims to register. They disagree more often than anyone expects,
+and only the third view — the diff — makes that visible.
+
+## Pages
+
 | Page | What it covers |
 |---|---|
 | [CORE.md](CORE.md) | The unified `:Debug` command, its two-level completion, the feature flags and config system behind it, and `:checkhealth debugging`. |
