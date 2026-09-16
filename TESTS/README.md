@@ -60,10 +60,7 @@ bridge, buf/tab/win reports), the tools layer (buffer/window/tab inspector,
 cursor state, vardump, proc_trace's argument parsing), the terminal keylogger,
 and the indent helpers.
 
-Two real bugs surfaced while writing this pass. One was fixed inline (it was
-blocking the new test from passing and the fix is a one-line, self-evidently
-correct addition); the other is pinned as a regression assertion instead of
-fixed, since fixing it changes a file path a user could already be relying on:
+Two real bugs surfaced while writing this pass, and both are now fixed:
 
 - **Fixed: `markdown/inline_debug.lua`'s `M.gather()` could crash outright.**
   It called `vim.fn.mkdir(debugfolder)` without the `"p"` (parents) flag. On
@@ -73,16 +70,17 @@ fixed, since fixing it changes a file path a user could already be relying on:
   command instead of degrading gracefully, and unlike almost every other
   `mkdir` call in this codebase, this one wasn't `pcall`-guarded either. Now
   passes `"p"`, matching `terminals/keylogger.lua`'s equivalent call.
-- **Pinned (not fixed): `markdown/inline_debug.lua`'s log file is never
-  written into the directory `M.gather()` just created.** `out_path` is built
-  as `debugfolder .. "_debuglog_" .. ts .. ".log"` — no path separator
-  between `debugfolder` (`.../debuglog/markdown_inline`) and the suffix — so
-  the actual file lands as a *sibling* of that directory
-  (`.../debuglog/markdown_inline_debuglog_<ts>.log`), not inside it. The
-  `mkdir`'d `markdown_inline/` directory is created and then never used.
-  `markdown_spec.lua` asserts this exact (buggy) layout with a `BUG:`-prefixed
-  message rather than the "obviously intended" one, so a future fix is a
-  deliberate, visible test change.
+- **Fixed: `markdown/inline_debug.lua`'s log file was never written into the
+  directory `M.gather()` just created.** `out_path` used to be built as
+  `debugfolder .. "_debuglog_" .. ts .. ".log"` — no path separator between
+  `debugfolder` (`.../debuglog/markdown_inline`) and the suffix — so the
+  actual file landed as a *sibling* of that directory
+  (`.../debuglog/markdown_inline_debuglog_<ts>.log`), not inside it, leaving
+  the `mkdir`'d `markdown_inline/` directory permanently empty. Now built via
+  `lib.nvim.fs.path`'s `joinpath({ debugfolder, "debuglog_" .. ts .. ".log" })`,
+  matching the join convention already used by `views/capture/init.lua`, so
+  the log lands at `.../debuglog/markdown_inline/debuglog_<ts>.log`.
+  `markdown_spec.lua` now asserts the corrected layout.
 
 A few more real quirks came up and are pinned as ordinary (non-`BUG:`)
 assertions, documenting behaviour that is surprising but not wrong enough to
