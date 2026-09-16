@@ -30,26 +30,20 @@ return function(H)
 
     H.eq(vim.fn.filereadable(out_path), 1, "gather: the log file actually exists")
 
-    -- BUG: `out_path` is built as `debugfolder .. "_debuglog_" .. ts .. ".log"`
-    -- with no path separator between `debugfolder`
-    -- (".../debuglog/markdown_inline") and the suffix. `vim.fn.mkdir(debugfolder)`
-    -- does create the "markdown_inline" directory, but the log file's actual
-    -- path is a *sibling* of it ("markdown_inline_debuglog_<ts>.log" inside
-    -- the parent "debuglog" folder) -- the directory it just created is never
-    -- written into. Pinned here rather than fixed: fixing it changes the
-    -- resulting file path (a `:Debug markdown log` regression risk) and
-    -- deserves its own change.
+    -- `out_path` is joined from `debugfolder` (".../debuglog/markdown_inline")
+    -- and "debuglog_<ts>.log", so the log file lands inside the directory
+    -- `mkdir(debugfolder, "p")` just created, not next to it.
     local data_debuglog = vim.fn.stdpath("data") .. "/debuglog"
-    local unused_subdir = data_debuglog .. "/markdown_inline"
-    H.eq(vim.fn.isdirectory(unused_subdir), 1, "BUG: mkdir did create markdown_inline/")
+    local markdown_inline_dir = data_debuglog .. "/markdown_inline"
+    H.eq(vim.fn.isdirectory(markdown_inline_dir), 1, "gather: mkdir creates markdown_inline/")
     H.ok(
-      vim.fs.normalize(vim.fn.fnamemodify(out_path, ":h")) == vim.fs.normalize(data_debuglog),
-      "BUG: the log file lands in debuglog/ itself, not inside markdown_inline/"
+      vim.fs.normalize(vim.fn.fnamemodify(out_path, ":h")) == vim.fs.normalize(markdown_inline_dir),
+      "gather: the log file lands inside markdown_inline/, not beside it"
     )
     H.eq(
-      #vim.fn.readdir(unused_subdir),
-      0,
-      "BUG: the markdown_inline/ directory mkdir created stays empty"
+      #vim.fn.readdir(markdown_inline_dir),
+      1,
+      "gather: markdown_inline/ contains exactly the log file gather() wrote"
     )
 
     local content = table.concat(vim.fn.readfile(out_path), "\n")
