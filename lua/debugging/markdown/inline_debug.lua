@@ -346,7 +346,15 @@ function M.gather()
   table.insert(log_lines, M.results.buffer.lines_sample or "")
 
   local out_path = debugfolder .. "_debuglog_" .. ts .. ".log"
-  vim.fn.mkdir(debugfolder)
+  -- BUG (fixed here): this used to call vim.fn.mkdir(debugfolder) without
+  -- "p". On a machine where stdpath("data")/debuglog does not exist yet
+  -- (e.g. a fresh profile), that raised an uncaught E739 and crashed
+  -- `:Debug markdown inline` outright -- mkdir() only raises instead of
+  -- returning 0 when an intermediate parent is missing and "p" was not
+  -- passed. Note this doesn't actually write *into* debugfolder: see the
+  -- out_path concatenation above, which has no separator and lands the log
+  -- file next to it instead (also real, left alone -- see markdown_spec.lua).
+  vim.fn.mkdir(debugfolder, "p")
   M.out_path = out_path
 
   local fd, open_err = io.open(out_path, "w")
