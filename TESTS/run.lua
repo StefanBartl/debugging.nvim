@@ -47,10 +47,20 @@ end
 -- Ordered so failures point at the smallest layer first.
 local specs = {
   "config_spec.lua",
+  "init_spec.lua",
   "sources_spec.lua",
   "startup_spec.lua",
   "commands_spec.lua",
   "handle_args_spec.lua",
+  "actions_spec.lua",
+  "autocmds_runtime_spec.lua",
+  "nvim_options_spec.lua",
+  "keylogger_spec.lua",
+  "tools_spec.lua",
+  "markdown_spec.lua",
+  "bindings_spec.lua",
+  "views_spec.lua",
+  "capture_spec.lua",
 }
 
 local failed = 0
