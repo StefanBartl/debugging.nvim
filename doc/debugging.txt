@@ -204,6 +204,12 @@ keylogger ~
   and `<C-c>` appear as such rather than as raw bytes. Leaving the logged
   buffer stops the logger.
 
+  WARNING: every key in that terminal is captured, including what you type
+  at a `sudo`, `ssh` or `gpg` prompt. A password prompt is just more
+  keystrokes here -- the masking you see on screen happens after this reads
+  them. The logfile is created 0600; notify-only mode is not safer, it puts
+  the same keys in |:messages|. Stop the logger before authenticating.
+
 indent ~
   `show`                  Print indentation-related buffer options.
   `treesitter [true|false]`  Prefer Tree-sitter indent (disable cindent/

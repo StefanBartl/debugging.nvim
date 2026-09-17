@@ -126,6 +126,14 @@ persist. Worth deciding up front whether a given keylogging session needs a
 durable record — starting notify-only and realizing later you wanted the
 file means re-starting the logger, not recovering what was already typed.
 
+**It captures passwords.** Every key in that terminal is recorded,
+including what you type at a `sudo`, `ssh` or `gpg` prompt — a password
+prompt is just more keystrokes as far as this is concerned, and the
+masking you see happens after the logger has already read them. The
+logfile is created `0600`, and notify-only mode is *not* the safer choice:
+it puts the same keys into `:messages`. Stop the logger before
+authenticating, or authenticate in a different terminal.
+
 The logger *observes* keys through `vim.on_key()`; it does not intercept
 them, so what you type still reaches the terminal. That was not always
 true: it used to block on `vim.fn.getcharstr()`, which consumes the
