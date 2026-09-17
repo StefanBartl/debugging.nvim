@@ -9,6 +9,17 @@
 --- A logfile is used when either `:Debug keylogger start {path}` passes one, or
 --- `config.terminals.keylogger.logfile` is set. `~` and env vars are expanded.
 ---
+--- **What ends up in it.** Every key pressed in that terminal buffer, in
+--- order -- which routinely includes whatever is typed at a `sudo`, `ssh`
+--- or `gpg` prompt, because a password prompt is just more keystrokes as
+--- far as this is concerned. Neither the shell's echo suppression nor the
+--- prompt's own masking applies: those hide characters on screen, and
+--- this reads them before the terminal ever sees them.
+---
+--- The logfile is therefore created 0600 -- and notify-only mode is not
+--- the safer choice, it echoes the same keys into the message area where
+--- they stay in `:messages`. Stop the logger before authenticating.
+---
 --- **Observes keys, it does not eat them.** This used to drive a recursive
 --- `vim.schedule` loop around `vim.fn.getcharstr()`, which is not an
 --- observer at all: `getcharstr()` blocks and *consumes* the keypress, so
@@ -147,6 +158,14 @@ function M.start(logfile)
       return
     end
     _fh = fh
+
+    -- 0600 before the first keystroke is written. The file is about to
+    -- contain every key typed into a terminal, which routinely includes
+    -- what someone types at a `sudo`, `ssh` or `gpg` prompt -- not a file
+    -- to leave at the mercy of the process umask. Best-effort:
+    -- `fs_chmod` is meaningless on Windows and must not stop logging.
+    pcall(vim.uv.fs_chmod, M.logfile, 384) -- 0600
+
     _fh:write(string.format("\n=== keylogger session %s ===\n", os.date("%Y-%m-%d %H:%M:%S")))
     _fh:flush()
   end
