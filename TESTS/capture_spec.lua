@@ -142,20 +142,40 @@ return function(H)
     H.eq(detail6, "", "capture: neither-sink-requested detail is empty with debug=false")
 
     -- ============================================================= save_file / clipboard
+    --
+    -- Whether the clipboard sink can succeed at all depends on the
+    -- machine: `lib.nvim.cross.copy_to_clipboard` needs either a real
+    -- clipboard provider or one of pbcopy/wl-copy/xclip/xsel/clip.exe on
+    -- PATH, none of which a bare CI runner has. That used to be invisible
+    -- -- the function reported success regardless, from trusting
+    -- `pcall(setreg, ...)` not raising as proof the value stuck -- but
+    -- lib.nvim fixed that at the source (verifies the register round
+    -- trip), so this suite has to know which outcome it is looking at
+    -- instead of assuming the happy path.
+    --
+    -- `save_file` is unconditional either way: it needs nothing from the
+    -- environment, so its assertions run regardless of what the probe
+    -- below finds.
 
     local tmp_dir = vim.fs.normalize(vim.fn.tempname())
     capture.base_dir = tmp_dir
 
-    vim.cmd("echomsg 'debugging_capture_spec_marker_2'")
+    -- Probed with its own marker, not the one the real assertions use
+    -- below: if this call succeeds, `+` already carries proof of it and
+    -- there is no need to write and immediately overwrite the register a
+    -- second time before the real capture runs.
     vim.fn.setreg("+", "")
+    local clipboard_works = require("lib.nvim.cross.copy_to_clipboard")("debugging_capture_probe")
+    vim.fn.setreg("+", "")
+
+    vim.cmd("echomsg 'debugging_capture_spec_marker_2'")
     local ok7, content7, detail7 = capture.capture_messages({ save_file = true, clipboard = true })
-    H.ok(ok7, "capture: with a sink requested and it succeeding, capture reports success")
+    H.ok(ok7, "capture: with save_file always available, capture reports success")
     H.match(
       content7 or "",
       "debugging_capture_spec_marker_2",
       "capture: save_file/clipboard content matches"
     )
-    H.match(detail7, "→ clipboard", "capture: detail reports the clipboard sink")
     H.match(detail7, "%.log", "capture: detail reports the written logfile's basename")
 
     local written = vim.fn.glob(tmp_dir .. "/messages-*.log", false, true)
@@ -167,11 +187,30 @@ return function(H)
       "capture: the logfile holds the captured content"
     )
 
-    H.match(
-      vim.fn.getreg("+"),
-      "debugging_capture_spec_marker_2",
-      "capture: the clipboard sink was written"
-    )
+    if clipboard_works then
+      H.match(detail7, "→ clipboard", "capture: detail reports the clipboard sink")
+      H.match(
+        vim.fn.getreg("+"),
+        "debugging_capture_spec_marker_2",
+        "capture: the clipboard sink was written"
+      )
+    else
+      -- No provider and no external tool on this machine -- the honest
+      -- outcome, and the one every CI runner actually hits. capture_messages
+      -- degrades a single failed sink rather than failing the whole call
+      -- (save_file still succeeded above), which is the behaviour under
+      -- test here.
+      H.match(
+        detail7,
+        "clipboard not available",
+        "capture: a failed clipboard sink is reported, not silently dropped"
+      )
+      H.eq(
+        vim.fn.getreg("+"),
+        "",
+        "capture: the register is untouched when the sink honestly failed"
+      )
+    end
 
     vim.fn.delete(tmp_dir, "rf")
   end)
