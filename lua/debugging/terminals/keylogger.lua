@@ -8,10 +8,32 @@
 ---
 --- A logfile is used when either `:Debug keylogger start {path}` passes one, or
 --- `config.terminals.keylogger.logfile` is set. `~` and env vars are expanded.
+---
+--- **Observes keys, it does not eat them.** This used to drive a recursive
+--- `vim.schedule` loop around `vim.fn.getcharstr()`, which is not an
+--- observer at all: `getcharstr()` blocks and *consumes* the keypress, so
+--- the terminal being logged never received what you typed. The loop was
+--- also unrunnable in a headless test -- the spec had to stop the logger
+--- synchronously before control reached the event loop, and said so.
+---
+--- `vim.on_key(cb, ns)` is the right primitive and has been since it
+--- learned about namespaces: it observes without consuming, several
+--- listeners coexist under distinct namespaces, and `vim.on_key(nil, ns)`
+--- detaches one without touching the others. `ui.nvim`'s screenkey HUD and
+--- macro counter already use it that way; this was the odd one out
+--- (cross-feature report, finding C6).
+---
+--- The callback runs inside Neovim's input-processing path, not a normal
+--- call stack, so it does the least possible there and defers the notify
+--- and the file write onto the main loop — the same shape screenkey uses.
 
 local notify = require("lib.nvim.notify").create("[debugging.terminals.keylogger]")
 
 local M = {}
+
+--- Namespace for this module's `vim.on_key` listener. Created once; the
+--- listener itself is attached only while logging.
+local NS = vim.api.nvim_create_namespace("debugging_keylogger")
 
 -- Whether logging is currently active
 M.logging = false
@@ -55,43 +77,53 @@ local function write_key(key)
     _fh:flush()
   end)
   if not ok then
-    -- A broken handle should not wedge the recursive logging loop.
+    -- A broken handle must not take the observer down with it.
     _fh = nil
   end
 end
 
 ---@internal
----Buffers all keys pressed while the terminal buffer is current.
+---Record one observed key: notify, and append to the logfile if there is one.
+---
+---Deferred out of the `vim.on_key` callback, which runs in Neovim's input
+---path where neither `notify` nor file IO belongs.
+---@param key string # already human-readable, via `keytrans()`
 ---@return nil
-local function log_key()
-  if not M.logging then
+local function record(key)
+  notify.info(string.format("Key pressed: %s", key))
+  write_key(key)
+end
+
+---@internal
+---The `vim.on_key` callback. Deliberately minimal: it decides whether this
+---keypress is one of ours and hands everything else to the event loop.
+---@param key string # raw, post-mapping byte sequence
+---@return nil
+local function on_key(key)
+  if not M.logging or key == "" then
     return
   end
 
-  local bufnr = vim.api.nvim_get_current_buf()
-  if vim.bo[bufnr].buftype ~= "terminal" then
-    -- Left the terminal buffer while logging was active: the recursive
-    -- getcharstr chain below would otherwise die silently, leaving
-    -- M.logging stuck at `true` while nothing is actually being logged.
-    if M.logging then
-      M.stop("left the terminal buffer")
-    end
+  -- Keys arrive for the whole session, not per buffer, so the filter is
+  -- here. Leaving the logged buffer stops the logger rather than silently
+  -- recording keys meant for somewhere else.
+  if vim.api.nvim_get_current_buf() ~= M.bufnr then
+    vim.schedule(function()
+      if M.logging then
+        M.stop("left the terminal buffer")
+      end
+    end)
     return
   end
 
-  -- getcharstr blocks, so re-invoke repeatedly via vim.schedule
+  local ok, pretty = pcall(vim.fn.keytrans, key)
+  local text = (ok and type(pretty) == "string" and pretty ~= "") and pretty or key
+
   vim.schedule(function()
-    if not M.logging then
-      return
-    end
-    local ok, key = pcall(vim.fn.getcharstr)
-    if ok and key then
-      notify.info(string.format("Key pressed: %q", key))
-      write_key(key)
-    end
-    -- Recurse (re-checks buftype) while logging is still active
+    -- Re-checked: stop() may have run between the keypress and this
+    -- callback reaching the main loop.
     if M.logging then
-      log_key()
+      record(text)
     end
   end)
 end
@@ -121,12 +153,12 @@ function M.start(logfile)
 
   M.logging = true
   M.bufnr = vim.api.nvim_get_current_buf()
+  vim.on_key(on_key, NS)
   notify.info(
     ("Started logging keys in this terminal buffer%s. Press keys now."):format(
       M.logfile and (" (→ " .. M.logfile .. ")") or ""
     )
   )
-  log_key()
 end
 
 ---Stop logging keys.
@@ -138,6 +170,9 @@ function M.stop(reason)
     return
   end
   M.logging = false
+  -- Detach rather than leave the hook attached and ignore its own calls:
+  -- every keypress in the session would otherwise keep paying for it.
+  vim.on_key(nil, NS)
   if _fh then
     pcall(function()
       _fh:close()

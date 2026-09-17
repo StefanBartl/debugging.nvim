@@ -199,6 +199,11 @@ keylogger ~
                   also appended to that file for later review.
   `stop`          Stop logging.
 
+  Keys are observed via |vim.on_key()|, not consumed: what you type still
+  reaches the terminal. Recorded in readable form (|keytrans()|), so `<Esc>`
+  and `<C-c>` appear as such rather than as raw bytes. Leaving the logged
+  buffer stops the logger.
+
 indent ~
   `show`                  Print indentation-related buffer options.
   `treesitter [true|false]`  Prefer Tree-sitter indent (disable cindent/

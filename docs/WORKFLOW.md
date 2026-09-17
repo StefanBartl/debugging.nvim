@@ -126,6 +126,13 @@ persist. Worth deciding up front whether a given keylogging session needs a
 durable record — starting notify-only and realizing later you wanted the
 file means re-starting the logger, not recovering what was already typed.
 
+The logger *observes* keys through `vim.on_key()`; it does not intercept
+them, so what you type still reaches the terminal. That was not always
+true: it used to block on `vim.fn.getcharstr()`, which consumes the
+keypress, so the shell never saw the input it was supposedly logging. Keys
+are recorded in readable form (`keytrans()`), so `<Esc>` and `<C-c>` show
+up as such rather than as raw bytes.
+
 ## Startup benchmarking: average over runs, don't trust one sample
 
 `:Debug performance startup` with no argument runs `--startuptime` once.

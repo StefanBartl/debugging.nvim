@@ -3,13 +3,13 @@
 -- config default > notify-only), the file lifecycle (header written on
 -- start, handle closed on stop), and the start/stop guard warnings.
 --
--- M.start() always ends by calling into a recursive `vim.schedule(getcharstr)`
--- loop that blocks waiting for a real keypress -- that loop must never
--- actually run in a headless suite. Every case below calls M.stop()
--- synchronously, in the same call stack as M.start(), before control ever
--- returns to the event loop -- the deferred callback checks `M.logging` and
--- exits immediately once it does eventually run, instead of blocking on
--- getcharstr.
+-- It used to drive a recursive `vim.schedule(getcharstr)` loop that blocked
+-- waiting for a real keypress, so the note here said that loop "must never
+-- actually run in a headless suite" and every case had to stop the logger
+-- synchronously before control reached the event loop. That constraint is
+-- gone: `vim.on_key` observes rather than blocks, which is also what lets
+-- the last block below assert the thing that actually matters -- that a
+-- keypress is captured at all.
 
 return function(H)
   local keylogger = require("debugging.terminals.keylogger")
@@ -31,13 +31,10 @@ return function(H)
   local ok, err = pcall(function()
     config.setup({})
 
-    -- log_key() (called synchronously at the end of every M.start()) checks
-    -- whether the *current* buffer is a terminal, and self-stops immediately
-    -- -- synchronously, no schedule involved -- if it is not. A plain
-    -- scratch buffer would make every start() below revert to `logging =
-    -- false` before it even returns. Faking `buftype = "terminal"` on an
-    -- ordinary scratch buffer satisfies that check without spawning a real
-    -- terminal/shell process.
+    -- The logger records keys for the buffer that was current at start().
+    -- A real terminal buffer without a real shell: `nvim_open_term` sets
+    -- `buftype=terminal` and gives the buffer a channel, which is all the
+    -- module needs, and spawns nothing.
     local term_buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_current_buf(term_buf)
     vim.api.nvim_open_term(term_buf, {}) -- sets buftype=terminal, no real shell spawned
@@ -115,6 +112,50 @@ return function(H)
     keylogger.start(unopenable_dir)
     H.ok(keylogger.logging == false, "start(bad path): does not start logging on a write failure")
     H.match(last(), "could not open logfile", "start(bad path): reports the open failure")
+
+    -- ------------------------------------------------- observing real keys
+    --
+    -- The behaviour the old getcharstr loop could not have: keys reach the
+    -- logger AND continue on to the buffer, and a headless suite can drive
+    -- them. `feedkeys` with "x" processes them synchronously; the record
+    -- itself is deferred onto the event loop, so the wait below is for
+    -- `vim.schedule`, not for a human.
+    local capture_path = vim.fs.normalize(vim.fn.tempname()) .. "/captured.log"
+    vim.api.nvim_set_current_buf(term_buf)
+    keylogger.start(capture_path)
+    H.eq(keylogger.logging, true, "capture: logging is active")
+
+    -- Movement keys, not text: the scratch terminal buffer is not
+    -- modifiable, and an insert attempt would raise E21 into the suite's
+    -- output without telling us anything about the observer.
+    vim.api.nvim_feedkeys("jkl", "x", false)
+    vim.wait(200, function()
+      return false
+    end)
+
+    keylogger.stop()
+
+    local captured = table.concat(vim.fn.readfile(capture_path), "\n")
+    H.ok(captured:find("j", 1, true) ~= nil, "capture: an observed key reaches the logfile")
+    H.ok(
+      #vim.fn.readfile(capture_path) > 1,
+      "capture: the session header is not the only line written"
+    )
+    vim.fn.delete(vim.fn.fnamemodify(capture_path, ":h"), "rf")
+
+    -- The listener must not outlive stop(): every keypress in the session
+    -- would otherwise keep paying for a logger nobody asked for.
+    local after_path = vim.fs.normalize(vim.fn.tempname()) .. "/after.log"
+    keylogger.start(after_path)
+    keylogger.stop()
+    local lines_at_stop = #vim.fn.readfile(after_path)
+    vim.api.nvim_feedkeys("jkl", "x", false)
+    vim.wait(200, function()
+      return false
+    end)
+    H.eq(#vim.fn.readfile(after_path), lines_at_stop, "capture: no keys are recorded after stop()")
+    vim.fn.delete(vim.fn.fnamemodify(after_path, ":h"), "rf")
+
     vim.fn.delete(unopenable_dir, "rf")
   end)
 
