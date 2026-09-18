@@ -195,9 +195,14 @@ return function(H)
     local tabs_before = #vim.api.nvim_list_tabpages()
     proc_trace.open_log()
     H.eq(#vim.api.nvim_list_tabpages(), tabs_before + 1, "proc_trace.open_log: opens a new tab")
+    -- Both sides through H.realpath: `:edit` hands the buffer a name Neovim
+    -- has already canonicalized, while `log_path` is a raw `tempname()` that
+    -- never went through the editor. On macOS those are the same file spelled
+    -- two ways (`/var/...` vs `/private/var/...`), and normalizing separators
+    -- alone does not reconcile them.
     H.eq(
-      vim.fs.normalize(vim.api.nvim_buf_get_name(0)),
-      vim.fs.normalize(vim.fn.fnamemodify(log_path, ":p")),
+      H.realpath(vim.api.nvim_buf_get_name(0)),
+      H.realpath(vim.fn.fnamemodify(log_path, ":p")),
       "proc_trace.open_log: opens the actual log file"
     )
     vim.cmd("tabclose")
