@@ -61,6 +61,7 @@ local specs = {
   "bindings_spec.lua",
   "views_spec.lua",
   "capture_spec.lua",
+  "health_spec.lua",
 }
 
 local failed = 0

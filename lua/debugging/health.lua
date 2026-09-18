@@ -156,7 +156,20 @@ function M.check()
   end
 
   -- ── composer route pre-flight ─────────────────────────────────────────────
-  require("lib.nvim.bindings.usercmd.composer").checkhealth("Debug")
+  -- Guarded, unlike a plain `require(...)` here would be: the module-
+  -- resolution check above already reports composer as missing (level
+  -- "error") when it can't load, and that message is the point -- crashing
+  -- straight into an uncaught Lua error one section later would blow away
+  -- everything :checkhealth still had left to report (performance, neotree,
+  -- proc) and replace the graceful warning with a raw traceback instead.
+  local ok_composer, composer = pcall(require, "lib.nvim.bindings.usercmd.composer")
+  if ok_composer then
+    composer.checkhealth("Debug")
+  else
+    vim.health.warn(
+      "skipping :Debug route pre-flight -- composer unavailable (see lib.nvim section above)"
+    )
+  end
 end
 
 return M
