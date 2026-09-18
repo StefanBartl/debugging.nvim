@@ -44,6 +44,7 @@ aborts if none of them has it.
 | `bindings_spec.lua`           | `bindings/init.lua`'s `features.views` gate, `bindings/keymaps.lua`'s action wiring (driven through a real `lib.nvim.bindings.keymap` registration), `bindings/autocmds.lua`'s enable gate and FileType close-keymap behaviour, and `bindings/usercmds.lua`'s `DBG_AUTOCMD_EXPR` argtype via the real `:Debug` command. |
 | `views_spec.lua`              | `views/init.lua`'s setup/getter merge logic, `views/utils.lua`'s focus/scroll primitives, `views/display.lua`'s `clear_all`/tag lookups, `views/capture/clipboard/init.lua` (stubbed). |
 | `capture_spec.lua`            | `views/capture/init.lua`: every Noice retrieval strategy (manager/history/buffer/api.status, each faked), the real `:messages` fallback, the empty-content guard, and the save_file/clipboard sinks. |
+| `health_spec.lua`             | `health.lua`: one narrow regression guard (see below) for the composer pre-flight crash — not full coverage of the declarative reporter, see "Deliberately left untested".         |
 | `run.lua`                     | Runner: resolves lib.nvim, loads each spec, reports results, sets exit code.                                                                                                         |
 
 ## Coverage
@@ -60,7 +61,8 @@ bridge, buf/tab/win reports), the tools layer (buffer/window/tab inspector,
 cursor state, vardump, proc_trace's argument parsing), the terminal keylogger,
 and the indent helpers.
 
-Two real bugs surfaced while writing this pass, and both are now fixed:
+Three real bugs surfaced while writing this pass (two originally, one more
+in a 2026-09-18 re-audit), and all three are now fixed:
 
 - **Fixed: `markdown/inline_debug.lua`'s `M.gather()` could crash outright.**
   It called `vim.fn.mkdir(debugfolder)` without the `"p"` (parents) flag. On
@@ -81,6 +83,19 @@ Two real bugs surfaced while writing this pass, and both are now fixed:
   matching the join convention already used by `views/capture/init.lua`, so
   the log lands at `.../debuglog/markdown_inline/debuglog_<ts>.log`.
   `markdown_spec.lua` now asserts the corrected layout.
+- **Fixed: `health.lua`'s composer pre-flight could crash `:checkhealth`
+  outright.** Its last section called
+  `require("lib.nvim.bindings.usercmd.composer").checkhealth("Debug")`
+  unguarded — even though the module-resolution section a few lines above it
+  already probes that exact module via `check_require(..., "error", ...)`
+  and would already have reported it missing. If composer really is
+  unavailable, that bare `require` raised an uncaught Lua error instead of
+  degrading to the warning already issued, which also meant every section
+  after it (`neotree`, `proc`) never ran and `:checkhealth` showed a raw
+  traceback instead of a graceful report. Now `pcall`-guarded, falling back
+  to `vim.health.warn(...)` pointing back at the module-resolution error.
+  `health_spec.lua` pins the fix with composer forced missing via a scoped
+  `require` swap.
 
 A few more real quirks came up and are pinned as ordinary (non-`BUG:`)
 assertions, documenting behaviour that is surprising but not wrong enough to
@@ -117,7 +132,11 @@ justify changing without the author's input:
   branch would mean mocking every external it probes and mostly asserting
   "the right `vim.health.*` method got called with the right string" — testing
   the mocks more than the code, for a module whose failure mode (a wrong
-  hint in `:checkhealth`) has no functional blast radius.
+  hint in `:checkhealth`) has no functional blast radius. The one exception
+  is `health_spec.lua`'s narrow regression guard for the composer-crash bug
+  above — a real behaviour defect, not a declarative-reporter detail, so it
+  gets a real assertion instead of staying unguarded like the rest of this
+  file.
 - **`views/debug_helper.lua`** — confirmed dead code: its own header already
   flags "no caller anywhere in this repo (only self-referenced in its own
   report text)". Not wired into `:Debug`, not required by anything else in
