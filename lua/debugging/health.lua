@@ -1,13 +1,39 @@
 ---@module 'debugging.health'
 --- :checkhealth debugging — environment, lib.nvim deps, and per-feature externals.
 
-local check_require = require("lib.nvim.health").check_require
-
 local M = {}
+
+---Byte-identical fallback for `lib.nvim.health.check_require`, used only
+---when lib.nvim itself (or this particular submodule) can't be loaded --
+---the module-scope `require` this file used to have crashed `:checkhealth`
+---outright in that case, before a single section could report anything,
+---including the "lib.nvim is missing" message the rest of this file exists
+---to show. This was this file's own helper before it got extracted into
+---lib.nvim (see that module's header comment); every OTHER section below
+---keeps working the same either way since only this fallback changes.
+---@param mod string
+---@param label string
+---@param level "error"|"warn"|"info"
+---@param advice? string[]
+---@return nil
+local function fallback_check_require(mod, label, level, advice)
+  if pcall(require, mod) then
+    vim.health.ok(label .. " (" .. mod .. ")")
+  elseif level == "error" then
+    vim.health.error(label .. " missing (" .. mod .. ")", advice)
+  elseif level == "warn" then
+    vim.health.warn(label .. " missing (" .. mod .. ")", advice)
+  else
+    vim.health.info(label .. " not found (" .. mod .. ")")
+  end
+end
 
 ---Run every :checkhealth debugging section.
 ---@return nil
 function M.check()
+  local ok_lib_health, lib_health = pcall(require, "lib.nvim.health")
+  local check_require = ok_lib_health and lib_health.check_require or fallback_check_require
+
   -- ── Core ────────────────────────────────────────────────────────────────
   vim.health.start("debugging: core")
   if vim.fn.has("nvim-0.9") == 1 then
