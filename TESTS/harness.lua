@@ -74,4 +74,20 @@ function H.tmpfile(rel, lines, root)
   return root, abs
 end
 
+--- Canonical form of a path, for comparing two paths that reached the test
+--- by different routes. Neovim canonicalizes a file's name when it opens it,
+--- and on macOS that rewrites `/var/...` into `/private/var/...`, because
+--- `/var` is a symlink to `/private/var` -- so a buffer name and the
+--- `vim.fn.tempname()` the file was written under are two spellings of one
+--- path. `vim.fs.normalize()` does not close that gap: it normalizes
+--- separators and `~`, but never resolves a symlink. Run BOTH sides of a
+--- path comparison through this instead. Falls back to plain normalization
+--- when the path does not exist -- `fs_realpath` needs a real file.
+---@param path string
+---@return string
+function H.realpath(path)
+  local uv = vim.uv or vim.loop
+  return vim.fs.normalize(uv.fs_realpath(path) or path)
+end
+
 return H

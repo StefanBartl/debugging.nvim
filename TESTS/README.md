@@ -28,7 +28,7 @@ aborts if none of them has it.
 
 | File                        | Covers                                                                                                                                                                             |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `harness.lua`                 | Shared assertions (`eq`, `ok`, `match`, `eq_list`) plus `scratch()` and `tmpfile()` helpers.                                                                                         |
+| `harness.lua`                 | Shared assertions (`eq`, `ok`, `match`, `eq_list`) plus `scratch()`, `tmpfile()` and `realpath()` helpers.                                                                                         |
 | `config_spec.lua`             | `config/init.lua`: DEFAULTS merge, partial overrides, `all = true`, DEFAULTS immutability.                                                                                           |
 | `init_spec.lua`               | `init.lua`: `setup()`'s idempotency guard, `features.views` gating `views.setup()`, `bindings.setup()` always running.                                                               |
 | `sources_spec.lua`            | `autocmds/sources.lua`: `normalize_events`, `read_brace_block`, `parse_args`, completion, and an end-to-end scan over a temp tree.                                                    |
@@ -178,7 +178,9 @@ justify changing without the author's input:
 ## Adding a spec
 
 Create `<name>_spec.lua` returning `function(H) … end` (use `H.eq` / `H.ok` /
-`H.match` / `H.eq_list`) and add its filename to the `specs` list in `run.lua`.
+`H.match` / `H.eq_list`) and add its filename to the `specs` list in
+`run.lua`. Compare paths with `H.realpath()` on both sides rather than
+`vim.fs.normalize`, which does not resolve the macOS `/var` symlink.
 
 Two conventions worth keeping:
 
