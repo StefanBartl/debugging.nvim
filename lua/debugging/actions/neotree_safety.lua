@@ -44,22 +44,38 @@ local function need(key)
   return m
 end
 
+---@internal
+---Run an operation against an injected neotree target, guarding against a
+---target of unexpected shape (missing/misnamed fields, wrong types) so a
+---malformed injection degrades to a notification instead of an uncaught
+---error, matching the module's pcall-guarantee.
+---@param label string
+---@param fn fun()
+local function guarded(label, fn)
+  local ok, err = pcall(fn)
+  if not ok then
+    notify.warn(("neotree.%s: unexpected error — %s"):format(label, err))
+  end
+end
+
 ---@return nil
 function M.quarantine_status()
   local wq = need("quarantine")
   if not wq then
     return
   end
-  local in_q = wq.is_quarantined()
-  local healthy, reason = wq.health_check()
-  notify.info(
-    string.format(
-      "Quarantine Status:\n  Active: %s\n  Watchers Healthy: %s%s",
-      in_q and "YES" or "NO",
-      healthy and "YES" or "NO",
-      reason and ("\n  Reason: " .. reason) or ""
+  guarded("quarantine_status", function()
+    local in_q = wq.is_quarantined()
+    local healthy, reason = wq.health_check()
+    notify.info(
+      string.format(
+        "Quarantine Status:\n  Active: %s\n  Watchers Healthy: %s%s",
+        in_q and "YES" or "NO",
+        healthy and "YES" or "NO",
+        reason and ("\n  Reason: " .. reason) or ""
+      )
     )
-  )
+  end)
 end
 
 ---@return nil
@@ -68,8 +84,10 @@ function M.quarantine_exit()
   if not wq then
     return
   end
-  wq.exit_quarantine()
-  notify.info("Quarantine exited manually")
+  guarded("quarantine_exit", function()
+    wq.exit_quarantine()
+    notify.info("Quarantine exited manually")
+  end)
 end
 
 ---@return nil
@@ -78,12 +96,14 @@ function M.restart_watchers()
   if not wq then
     return
   end
-  local ok, msg = wq.restart_watchers()
-  if ok then
-    notify.info("Watchers restarted")
-  else
-    notify.warn("Failed to restart watchers: " .. (msg or "unknown"))
-  end
+  guarded("restart_watchers", function()
+    local ok, msg = wq.restart_watchers()
+    if ok then
+      notify.info("Watchers restarted")
+    else
+      notify.warn("Failed to restart watchers: " .. (msg or "unknown"))
+    end
+  end)
 end
 
 ---@return nil
@@ -92,7 +112,9 @@ function M.backup_list()
   if not safety then
     return
   end
-  safety.backup.show_backup_ui()
+  guarded("backup_list", function()
+    safety.backup.show_backup_ui()
+  end)
 end
 
 ---@return nil
@@ -101,8 +123,10 @@ function M.backup_clean()
   if not safety then
     return
   end
-  local cleaned = safety.backup.clean_old_backups(7)
-  notify.info(string.format("Cleaned %d old backups", cleaned))
+  guarded("backup_clean", function()
+    local cleaned = safety.backup.clean_old_backups(7)
+    notify.info(string.format("Cleaned %d old backups", cleaned))
+  end)
 end
 
 ---@return nil
@@ -111,7 +135,9 @@ function M.dryrun_toggle()
   if not safety then
     return
   end
-  safety.dry_run.toggle()
+  guarded("dryrun_toggle", function()
+    safety.dry_run.toggle()
+  end)
 end
 
 ---@return nil
@@ -120,7 +146,9 @@ function M.dryrun_report()
   if not safety then
     return
   end
-  safety.dry_run.show_report()
+  guarded("dryrun_report", function()
+    safety.dry_run.show_report()
+  end)
 end
 
 ---@return nil
@@ -129,7 +157,9 @@ function M.queue_status()
   if not safety then
     return
   end
-  notify.info(vim.inspect(safety.queue.status()))
+  guarded("queue_status", function()
+    notify.info(vim.inspect(safety.queue.status()))
+  end)
 end
 
 ---@return nil
@@ -138,8 +168,10 @@ function M.queue_clear()
   if not safety then
     return
   end
-  safety.queue.clear()
-  notify.info("Queue cleared")
+  guarded("queue_clear", function()
+    safety.queue.clear()
+    notify.info("Queue cleared")
+  end)
 end
 
 return M
