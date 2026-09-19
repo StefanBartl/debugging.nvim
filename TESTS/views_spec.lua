@@ -24,18 +24,15 @@ return function(H)
         "views.setup: sibling timing keys are preserved"
       )
 
-      -- NOTE (documented behaviour, not a bug): unlike debugging.config.setup(),
-      -- which deep-copies a fresh DEFAULTS table on every call, views.setup()
-      -- merges onto whatever _timings/_keymaps_cfg/_autocmds_cfg already hold.
-      -- A second call with no `timings` key does NOT revert the override --
-      -- it accumulates. Harmless in practice because debugging.init's `_done`
-      -- guard means the real setup() path only ever calls this once, but worth
-      -- pinning so a future change of that guard is a deliberate decision.
+      -- A second call with no `timings` key resets to the hardcoded defaults,
+      -- the same as the sibling _keymaps_cfg/_autocmds_cfg assignments below:
+      -- setup() merges into a fresh defaults copy, not the live table, so an
+      -- override never survives past the call that didn't repeat it.
       views.setup({})
       H.eq(
         views.get_timings().delay_messages_ms,
-        12345,
-        "views.setup: repeated calls accumulate rather than reset to hardcoded defaults"
+        baseline.delay_messages_ms,
+        "views.setup: repeated calls reset to hardcoded defaults, matching keymaps/autocmds"
       )
 
       views.setup({ keymaps = { prefix = "<Space>d" } })

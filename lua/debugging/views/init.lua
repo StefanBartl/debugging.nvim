@@ -15,8 +15,8 @@ local display = require("debugging.views.display")
 
 local M = {}
 
----@type Dbg.Views.Timings  Resolved timings, shared with the action functions.
-local _timings = {
+---@type Dbg.Views.Timings
+local DEFAULT_TIMINGS = {
   delay_messages_ms = 30,
   delay_noice_ms = 50,
   retry_delay_ms = 60,
@@ -27,6 +27,9 @@ local _timings = {
   -- belongs here with the other timings rather than in display.lua.
   capture_timeout_ms = 500,
 }
+
+---@type Dbg.Views.Timings  Resolved timings, shared with the action functions.
+local _timings = vim.tbl_extend("force", {}, DEFAULT_TIMINGS)
 
 ---@type Dbg.Views.Keymaps
 local _keymaps_cfg = { enable = true, prefix = "<lt>" }
@@ -40,7 +43,11 @@ local _autocmds_cfg = { enable = true, group_name = "DebugViewsAuto", auto_refre
 function M.setup(opts)
   opts = opts or {}
 
-  _timings = vim.tbl_extend("force", _timings, opts.timings or {})
+  -- Merge into a fresh copy of the defaults, not the live `_timings` table --
+  -- otherwise a value only ever accumulates: a later setup({}) would leave
+  -- whatever the previous call set instead of resetting it, unlike the two
+  -- sibling assignments below.
+  _timings = vim.tbl_extend("force", {}, DEFAULT_TIMINGS, opts.timings or {})
 
   _keymaps_cfg = vim.tbl_extend("force", {
     enable = true,
