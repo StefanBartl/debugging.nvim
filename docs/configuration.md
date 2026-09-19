@@ -86,3 +86,12 @@ require("debugging").setup({
 The action names are `messages`, `noice_all`, `noice_errors`, `capture`,
 `capture_file`, `capture_clipboard` and `clear` — the same names listed in the
 [bindings cheatsheet](BINDINGS.md#default-keymaps).
+
+## Validation
+
+Options are checked before they are merged. An unknown key — at the top
+level or inside `features`, `terminals`, `neotree`, `views` — is ignored
+with a warning that names the nearest known key (e.g. `views = { timing =
+{...} }` → "did you mean 'views.timings'?"), and an option table given as
+something other than a table falls back to that table's default. Both are
+listed again under `:checkhealth debugging`.

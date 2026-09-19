@@ -49,6 +49,16 @@ function M.check()
     vim.health.info("plugin guard not set (call require('debugging').setup())")
   end
 
+  -- ── configuration ─────────────────────────────────────────────────────────
+  vim.health.start("debugging: configuration")
+  local config_issues = require("debugging.config").issues()
+  if #config_issues == 0 then
+    vim.health.ok("every setup() option was recognised")
+  end
+  for _, issue in ipairs(config_issues) do
+    vim.health.warn(issue, { "Fix the key in require('debugging').setup({ ... })" })
+  end
+
   -- ── lib.nvim dependency ───────────────────────────────────────────────────
   vim.health.start("debugging: lib.nvim")
   check_require(

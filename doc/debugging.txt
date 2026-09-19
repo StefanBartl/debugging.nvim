@@ -132,6 +132,13 @@ overview ~
   scrollable floating window, q/<Esc> to close; the default) or "notify" (a
   single notification). Falls back to a notification when no UI is attached.
 
+validation ~
+  Options are checked before they are merged. An unknown key — at the top
+  level or inside `features`, `terminals`, `neotree`, `views` — is ignored
+  with a warning naming the nearest known key, and an option table given as
+  something other than a table falls back to that table's default. Both are
+  listed again under |:checkhealth| debugging.
+
 ==============================================================================
 5. THE :Debug COMMAND                                                  *:Debug*
 
