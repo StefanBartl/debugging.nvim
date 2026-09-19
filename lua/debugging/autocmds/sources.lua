@@ -24,6 +24,7 @@ require("debugging.autocmds.@types")
 local tbl_insert, tbl_concat, tbl_sort = table.insert, table.concat, table.sort
 local notify = require("lib.nvim.notify").create("[debugging]")
 local collect_recursive = require("lib.nvim.fs.collect_recursive")
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 local memory_cache = require("lib.nvim.cache.memory")
 local window = require("lib.nvim.window")
 local list = require("lib.nvim.ui.list")
@@ -316,7 +317,7 @@ local function parse_args(args)
     elseif key == "freq" then
       opts.show_freq = val ~= "false"
     elseif key == "root" then
-      opts.root = vim.fn.expand(val)
+      opts.root = expand_path(val)
     elseif key == "refresh" then
       opts.refresh = val ~= "false"
     elseif key == "qf" then
@@ -357,7 +358,16 @@ end
 ---@param all Dbg.Autocmds.SourceItem[]
 ---@return Dbg.Autocmds.SourceItem[]
 local function select_items(opts, by_event, all)
-  local items = opts.event and (by_event[opts.event] or {}) or all
+  local source = opts.event and (by_event[opts.event] or {}) or all
+
+  -- `source` is a live reference into the cached scan (get_scan()/scan_cache
+  -- hand back their tables unchanged) -- sort a copy, never the cache itself,
+  -- or rendering for display would permanently reorder it for every other
+  -- consumer within the cache TTL.
+  local items = {}
+  for i, item in ipairs(source) do
+    items[i] = item
+  end
 
   if opts.sort == "event" then
     tbl_sort(items, function(a, b)
@@ -483,18 +493,20 @@ end
 ---@internal
 ---Group the currently-registered autocmds by event name.
 ---@return table<string, table[]>
+---@return boolean errored  True when `nvim_get_autocmds` itself failed, as
+--- opposed to legitimately returning no registrations.
 local function runtime_by_event()
   local out = {}
   local ok, autocmds = pcall(vim.api.nvim_get_autocmds, {})
   if not ok or type(autocmds) ~= "table" then
-    return out
+    return out, true
   end
   for _, au in ipairs(autocmds) do
     local ev = au.event or "?"
     out[ev] = out[ev] or {}
     tbl_insert(out[ev], au)
   end
-  return out
+  return out, false
 end
 
 ---`:Debug autocmds all` — fuse the static source audit with the live runtime
@@ -512,7 +524,12 @@ function M.all(args)
   if not by_event or not all then
     return
   end
-  local by_event_rt = runtime_by_event()
+  local by_event_rt, rt_errored = runtime_by_event()
+  if rt_errored then
+    notify.warn(
+      "autocmd sources: failed to read runtime autocmds — runtime counts below are incomplete"
+    )
+  end
 
   local lines = {}
   tbl_insert(lines, "=== Autocmds: Sources vs Runtime ===")
@@ -648,6 +665,7 @@ M._internal = {
   parse_args = parse_args,
   is_autocmd_name = is_autocmd_name,
   has_ts_lua = has_ts_lua,
+  select_items = select_items,
 }
 
 return M
