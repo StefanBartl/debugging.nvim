@@ -251,6 +251,30 @@ local function build_registry()
         end,
       },
     },
+    neotest = {
+      feature = "neotest",
+      actions = { "adapters", "state", "file", "root", "framework", "discover" },
+      run = {
+        adapters = function()
+          require("debugging.actions.neotest").adapters()
+        end,
+        state = function()
+          require("debugging.actions.neotest").state()
+        end,
+        file = function()
+          require("debugging.actions.neotest").file()
+        end,
+        root = function()
+          require("debugging.actions.neotest").root()
+        end,
+        framework = function()
+          require("debugging.actions.neotest").framework()
+        end,
+        discover = function()
+          require("debugging.actions.neotest").discover()
+        end,
+      },
+    },
     module = {
       feature = "module_reload",
       actions = { "reload" },
@@ -340,6 +364,7 @@ local function enabled_categories()
     "proc",
     "performance",
     "neotree",
+    "neotest",
     "health",
   }
   local out = {}

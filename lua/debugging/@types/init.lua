@@ -23,6 +23,7 @@ require("debugging.views.@types")
 ---@field markdown? boolean       # :Debug markdown
 ---@field module_reload? boolean  # :Debug module reload
 ---@field neotree? boolean        # :Debug neotree … (config-specific, opt-in)
+---@field neotest? boolean        # :Debug neotest adapters|state|file|root|framework|discover
 ---@field proc_trace? boolean     # :Debug proc start|stop|status|log|watch
 ---@field performance? boolean    # :Debug performance startup
 
@@ -38,11 +39,17 @@ require("debugging.views.@types")
 ---@field quarantine string|table
 ---@field safety string|table
 
+---@class Dbg.Config.Neotest
+---@field output? "float"|"notify"  # scratch float per report, or one notification
+---@field markers? string[]         # files worth reporting in a root / the cwd
+---@field package_frameworks? string[] # dependency names looked for in package.json
+
 ---@class Dbg.Config
 ---@field features? Dbg.Config.Features
 ---@field views? Dbg.Views.Modules
 ---@field terminals? Dbg.Config.Terminals
 ---@field neotree? Dbg.Config.Neotree
+---@field neotest? Dbg.Config.Neotest
 ---@field command? string         # name of the unified user command (default "Debug")
 ---@field overview? "float"|"notify"  # how `:Debug` (no args) renders the overview
 ---@field all? boolean           # shorthand: enable every feature category

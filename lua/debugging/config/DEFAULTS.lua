@@ -16,6 +16,7 @@ local DEFAULTS = {
     nvim_options = true, -- :Debug indent
     markdown = true, -- :Debug markdown
     neotree = false, -- :Debug neotree … (config-specific, opt-in)
+    neotest = true, -- :Debug neotest adapters|state|file|root|framework|discover
     module_reload = true, -- :Debug module reload
     proc_trace = true, -- :Debug proc start|stop|status|log|watch
     performance = true, -- :Debug performance startup
@@ -38,6 +39,35 @@ local DEFAULTS = {
   neotree = {
     quarantine = "config.neotree.watcher_quarantine",
     safety = "config.neotree.safety",
+  },
+
+  -- neotest diagnostics (:Debug neotest …). Reads neotest's public state and
+  -- the adapter tables from `neotest.setup()`; without neotest every action
+  -- degrades to one notification.
+  neotest = {
+    -- "float" -- scratch float per report (default); "notify" -- one notification
+    output = "float",
+    -- Files whose presence in a project root / the cwd is worth reporting
+    -- (`:Debug neotest root|framework`).
+    markers = {
+      "package.json",
+      "vitest.config.ts",
+      "vitest.config.js",
+      "vitest.config.mjs",
+      "vitest.workspace.ts",
+      "jest.config.ts",
+      "jest.config.js",
+      "jest.config.mjs",
+      "tsconfig.json",
+      "go.mod",
+      "Cargo.toml",
+      "pyproject.toml",
+      "pytest.ini",
+      "setup.cfg",
+      "TESTS/run.lua",
+    },
+    -- Dependency names `:Debug neotest framework` looks for in package.json.
+    package_frameworks = { "vitest", "jest", "mocha", "ava", "playwright", "cypress" },
   },
 
   -- Views subsystem (keymaps, auto-refresh autocmds, capture).

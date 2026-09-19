@@ -114,3 +114,30 @@ by default, because the config it talks to lives outside this plugin.
   `opts.neotree.quarantine`, `opts.neotree.safety`
 - **Usercmds:** `:Debug neotree status|exit|restart|backup-list|backup-clean|dryrun-toggle|dryrun-report|queue-status|queue-clear`
   — see [BINDINGS.md](../BINDINGS.md#user-commands)
+
+## neotest diagnostics
+
+"Why is neotest not finding my tests?" has a fixed order of suspects, and
+the six `:Debug neotest` actions walk it: `adapters` shows the adapters
+handed to `neotest.setup()` next to the ids neotest has actually registered
+(an adapter registers only once it claims a root for an opened file, so an
+empty second list with a full first one is a hint, not a bug); `state` is
+what neotest knows about the current buffer, including whether any adapter
+holds a positions tree for it; `file` asks every configured adapter's own
+`is_test_file(path)` about the current file — the adapter's answer, not a
+pattern match on its id; `root` asks each adapter's `root(dir)` for the
+project it derives and lists the marker files in that root; `framework`
+reads the cwd (`vim.fs.dir`, not `glob`, so a path with `[` in it still
+lists) for the same markers and names the test frameworks `package.json`
+mentions; `discover` counts positions per registered adapter by type.
+
+Everything is read-only and every neotest access is `pcall`-guarded: without
+neotest each action is one notification, and a neotest that renamed a field
+degrades to "?" in the report rather than an error. The reports open in a
+scratch float (`q` closes) or, with `neotest.output = "notify"`, in one
+notification; each action also returns its lines.
+
+- **Module:** `actions/neotest.lua`
+- **Config:** `opts.features.neotest` (default `true`), `opts.neotest.output`,
+  `opts.neotest.markers`, `opts.neotest.package_frameworks`
+- **Usercmds:** `:Debug neotest adapters|state|file|root|framework|discover`

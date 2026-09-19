@@ -53,6 +53,7 @@ local specs = {
   "commands_spec.lua",
   "handle_args_spec.lua",
   "actions_spec.lua",
+  "neotest_spec.lua",
   "autocmds_runtime_spec.lua",
   "nvim_options_spec.lua",
   "keylogger_spec.lua",

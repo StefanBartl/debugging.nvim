@@ -15,6 +15,7 @@ require("debugging").setup({
     markdown     = true,   -- :Debug markdown
     module_reload = true,  -- :Debug module reload
     neotree      = false,  -- :Debug neotree … (config-specific, opt-in)
+    neotest      = true,   -- :Debug neotest adapters|state|file|root|framework|discover
     proc_trace   = true,   -- :Debug proc start|stop|status|log|watch
     performance  = true,   -- :Debug performance startup
   },
@@ -32,6 +33,20 @@ require("debugging").setup({
   neotree = {
     quarantine = "config.neotree.watcher_quarantine",
     safety     = "config.neotree.safety",
+  },
+  -- neotest diagnostics (:Debug neotest …). Reads neotest's public state and
+  -- the adapter tables from `neotest.setup()`; without neotest every action
+  -- degrades to one notification.
+  neotest = {
+    output = "float",    -- "float": a scratch float per report; "notify": one notification
+    markers = {          -- files worth reporting in a project root / the cwd
+      "package.json", "vitest.config.ts", "vitest.config.js", "vitest.config.mjs",
+      "vitest.workspace.ts", "jest.config.ts", "jest.config.js", "jest.config.mjs",
+      "tsconfig.json", "go.mod", "Cargo.toml", "pyproject.toml", "pytest.ini",
+      "setup.cfg", "TESTS/run.lua",
+    },
+    -- dependency names `:Debug neotest framework` looks for in package.json
+    package_frameworks = { "vitest", "jest", "mocha", "ava", "playwright", "cypress" },
   },
   views = {
     keymaps  = { enable = true, prefix = "<lt>" },
@@ -90,7 +105,7 @@ The action names are `messages`, `noice_all`, `noice_errors`, `capture`,
 ## Validation
 
 Options are checked before they are merged. An unknown key — at the top
-level or inside `features`, `terminals`, `neotree`, `views` — is ignored
+level or inside `features`, `terminals`, `neotree`, `neotest`, `views` — is ignored
 with a warning that names the nearest known key (e.g. `views = { timing =
 {...} }` → "did you mean 'views.timings'?"), and an option table given as
 something other than a table falls back to that table's default. Both are

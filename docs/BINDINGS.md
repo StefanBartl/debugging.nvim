@@ -62,6 +62,7 @@ by `config.features.*`.
 | `:Debug proc watch [seconds]` | (Windows) external process-tree watcher — every child process of this Neovim instance, however it was spawned |
 | `:Debug performance startup [runs]` | Benchmark startup time and list the slowest sourced scripts |
 | `:Debug neotree status\|exit\|restart\|backup-list\|backup-clean\|dryrun-toggle\|dryrun-report\|queue-status\|queue-clear` | Opt-in Neo-tree safety bridge (needs `features.neotree = true`) |
+| `:Debug neotest adapters\|state\|file\|root\|framework\|discover` | neotest diagnostics: configured vs registered adapters, the current buffer's positions tree, which adapter's `is_test_file()` claims the file, the root each adapter's `root()` derives plus the marker files in it, the cwd's framework markers and `package.json` frameworks, discovered positions per adapter. Read-only; without neotest each degrades to one notification |
 | `:Debug health` | Run `:checkhealth debugging` |
 
 ## Autocommands

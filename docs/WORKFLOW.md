@@ -115,6 +115,20 @@ prints a warning about a target "not configured," that's the expected
 behavior for anyone without the private `config.neotree.*` layout, not a
 bug to chase.
 
+## neotest: `adapters` first, then `file`, then `root`
+
+When a test file shows no signs in the gutter, the question is which link
+broke, and `:Debug neotest` has one action per link. `adapters` — is the
+adapter even configured, and has it registered? An adapter registers only
+after it claims a root for an opened file, so "configured 3, registered 0"
+in a fresh session is normal until a test file is open. `file` — does the
+adapter's own `is_test_file()` say yes to this path? That is the check most
+"no tests found" cases fail on, and it is the adapter's answer, not a guess
+from its id. `root` — does its `root()` find a project from this file's
+directory, and are the expected markers in it? Only then is `discover`
+worth reading. `framework` is for the other direction: you are in a cwd and
+want to know what neotest *should* be seeing there.
+
 ## Keylogger: notify-only unless you set a logfile
 
 `:Debug keylogger start` with no argument only notifies keys as they're

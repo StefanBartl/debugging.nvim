@@ -163,6 +163,18 @@ function M.check()
     end
   end
 
+  -- ── neotest diagnostics ───────────────────────────────────────────────────
+  vim.health.start("debugging: neotest")
+  if require("debugging.config").get().features.neotest then
+    check_require("neotest", "neotest (for :Debug neotest …)", "info")
+    local ok_cfg, ncfg = pcall(require, "neotest.config")
+    if ok_cfg and type(ncfg) == "table" and type(ncfg.adapters) == "table" then
+      vim.health.ok(("neotest.config.adapters: %d configured"):format(#ncfg.adapters))
+    end
+  else
+    vim.health.info("features.neotest is off")
+  end
+
   -- ── proc_trace (freeze diagnosis) ─────────────────────────────────────────
   vim.health.start("debugging: proc (freeze diagnosis)")
   check_require("lib.nvim.system.proc_trace", "lib.nvim.system.proc_trace", "warn")
