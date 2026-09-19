@@ -1,0 +1,3 @@
+{
+  "DEP-02": "lua/debugging/tools/proc_trace.lua:154 is the else-branch of `if vim.fn.has(\"nvim-0.11\") == 1 then jobstart(cmd, {term=true}) else termopen(cmd) end`, with `---@diagnostic disable-next-line: deprecated` immediately above -- a correctly version-gated fallback, not an unguarded deprecated call. grep's line-based check cannot see the comment on the line above it."
+}
