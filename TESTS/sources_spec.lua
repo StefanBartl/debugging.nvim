@@ -142,4 +142,30 @@ return function(H)
   H.ok(ok, "run: missing root does not raise: " .. tostring(err))
   H.eq(#vim.api.nvim_list_wins(), win_before, "run: missing root opens no window")
   H.match(notified or "", "not a directory", "run: missing root is reported")
+
+  -- ------------------------------------------------------------- select_items
+
+  -- ERR-54: `select_items` receives a live reference into the cached scan
+  -- (get_scan()/scan_cache hand back their tables unchanged) -- it must sort
+  -- a copy, never that shared table itself, or a `sort=event`/`sort=frequency`
+  -- report would permanently reorder every other consumer's view within the
+  -- cache TTL.
+  local unsorted = {
+    { events = { "ZEvent" }, path = "z.lua", line = 1 },
+    { events = { "AEvent" }, path = "a.lua", line = 1 },
+    { events = { "MEvent" }, path = "m.lua", line = 1 },
+  }
+  local original_order = { unsorted[1].path, unsorted[2].path, unsorted[3].path }
+
+  local sorted = P.select_items({ sort = "event" }, {}, unsorted)
+  H.eq_list(
+    { sorted[1].path, sorted[2].path, sorted[3].path },
+    { "a.lua", "m.lua", "z.lua" },
+    "select_items: sort=event orders the returned items"
+  )
+  H.eq_list(
+    { unsorted[1].path, unsorted[2].path, unsorted[3].path },
+    original_order,
+    "select_items: the source table itself is left in its original order"
+  )
 end
