@@ -351,8 +351,15 @@ function M.gather()
   -- machine where stdpath("data")/debuglog does not exist yet (e.g. a fresh
   -- profile), that raised an uncaught E739 and crashed `:Debug markdown
   -- inline` outright -- mkdir() only raises instead of returning 0 when an
-  -- intermediate parent is missing and "p" was not passed.
-  vim.fn.mkdir(debugfolder, "p")
+  -- intermediate parent is missing and "p" was not passed. "p" narrows that,
+  -- it doesn't remove it: permission denied, or a plain file already sitting
+  -- where the directory should go, still raises -- pcall it at this system
+  -- boundary so it reports through this function's (ok, err) contract too.
+  local ok_mkdir, mkdir_err = pcall(vim.fn.mkdir, debugfolder, "p")
+  if not ok_mkdir then
+    return false,
+      ("failed to create debug log directory '%s': %s"):format(debugfolder, tostring(mkdir_err))
+  end
   M.out_path = out_path
 
   local fd, open_err = io.open(out_path, "w")
