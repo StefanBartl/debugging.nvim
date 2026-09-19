@@ -170,7 +170,7 @@ function M.focus_and_bottom(win, attempts, retry_delay)
     return
   end
 
-  M.force_focus(win)
+  local focused = M.force_focus(win)
 
   if not api.nvim_win_is_valid(win) then
     return
@@ -183,7 +183,12 @@ function M.focus_and_bottom(win, attempts, retry_delay)
 
   local last = api.nvim_buf_line_count(buf)
   pcall(api.nvim_win_set_cursor, win, { last, 0 })
-  vim.cmd("normal! G")
+  -- `normal! G` acts on whatever window is current, not on `win` -- only
+  -- run it once focus actually landed there, or it moves the cursor in the
+  -- window the user is still editing instead.
+  if focused then
+    vim.cmd("normal! G")
+  end
   M.ensure_bottom(win, attempts, retry_delay)
 end
 
