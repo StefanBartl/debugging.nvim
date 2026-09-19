@@ -64,6 +64,30 @@ return function(H)
   H.eq(config.get().views.capture, false, "config: sibling key in the same table still applies")
   H.match(config.issues()[1], "unknown option 'views.timing'", "config: nested issue is prefixed")
 
+  -- A misspelled key nested two levels in (inside an option group that is
+  -- itself nested, e.g. views.timings.*) is caught the same way, not merged
+  -- in as a dead field beside the untouched default (ERR-50).
+  config.setup({ views = { timings = { attempt = 5 } } })
+  H.eq(
+    config.get().views.timings.attempts,
+    DEFAULTS.views.timings.attempts,
+    "config: typo'd twice-nested key does not apply"
+  )
+  H.ok(
+    config.get().views.timings.attempt == nil,
+    "config: typo'd twice-nested key is not silently carried into the active config"
+  )
+  H.match(
+    config.issues()[1],
+    "unknown option 'views.timings.attempt'",
+    "config: twice-nested issue carries the full dotted path"
+  )
+  H.match(
+    config.issues()[1],
+    "did you mean 'views.timings.attempts'",
+    "config: twice-nested issue hints the nearest known key"
+  )
+
   -- An option table given as the wrong type falls back to its default
   -- instead of replacing the whole table (which would break every reader
   -- that indexes straight into it, e.g. views.keymaps.enable).

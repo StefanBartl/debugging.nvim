@@ -15,10 +15,19 @@ local _active = nil
 ---@type string[]
 local _issues = {}
 
----Keys `setup()` accepts and, for the option tables among them, their keys.
----`true` means any key goes; deeper structures (e.g. `terminals.keylogger`,
----`views.timings`) are accepted opaquely once their own table is known.
----@type table<string, true|table<string, true>>
+---Keys `setup()` accepts, recursively. `true` means "leaf -- any value of the
+---right shape goes"; a nested table names that option group's own accepted
+---keys, walked to whatever depth the group actually has, so a typo inside a
+---nested table (e.g. `views.timings.attempt`) is caught exactly like a
+---top-level one instead of vanishing into the merge unexamined.
+---
+---`neotree.quarantine`/`neotree.safety` and `neotest.markers`/
+---`neotest.package_frameworks` stay `true` (leaves) on purpose: the former
+---are polymorphic (module-name string or an already-loaded table, per
+---DEFAULTS' comment), the latter are plain string arrays -- neither is a
+---named option group, so recursing into them would misread numeric array
+---indices as unknown option keys.
+---@type table<string, true|table<string, any>>
 local KNOWN = {
   features = {
     views = true,
@@ -34,10 +43,22 @@ local KNOWN = {
     proc_trace = true,
     performance = true,
   },
-  terminals = { keylogger = true },
+  terminals = { keylogger = { logfile = true } },
   neotree = { quarantine = true, safety = true },
   neotest = { output = true, markers = true, package_frameworks = true },
-  views = { keymaps = true, autocmds = true, timings = true, capture = true, output_dir = true },
+  views = {
+    keymaps = { enable = true, prefix = true },
+    autocmds = { enable = true, group_name = true, auto_refresh = true },
+    timings = {
+      delay_messages_ms = true,
+      delay_noice_ms = true,
+      retry_delay_ms = true,
+      attempts = true,
+      capture_timeout_ms = true,
+    },
+    capture = true,
+    output_dir = true,
+  },
   command = true,
   overview = true,
   all = true, -- back-compat: bare `all = true` activates every feature category
@@ -66,35 +87,53 @@ local function describe_unknown(key, known, prefix)
 end
 
 ---@internal
----Drop what cannot be merged, and say so. A misspelled key would otherwise
----land in the active config as a dead field with the default still in
----force -- silently, since `tbl_deep_extend("force", ...)` accepts anything.
----@param user_opts table
+---Recursively drop what cannot be merged at this level, and say so, walking
+---into nested option groups by their full dotted path. A misspelled key --
+---at any depth -- would otherwise land in the active config as a dead field
+---with the real default still in force, silently, since
+---`tbl_deep_extend("force", ...)` accepts anything.
+---@param user_tbl table  this level's user-supplied options
+---@param known table<string, true|table>  this level's accepted keys (a KNOWN subtree)
+---@param defaults table  this level's defaults, for nested "must be a table" checks
+---@param prefix string  dotted path prefix for messages, e.g. "views." ("" at the root)
 ---@return table clean  the accepted subset, nested option tables copied
 ---@return string[] issues
-local function sanitize(user_opts)
+local function sanitize_level(user_tbl, known, defaults, prefix)
   local clean, issues = {}, {}
-  for key, value in pairs(user_opts) do
-    local known = KNOWN[key]
-    if known == nil then
-      issues[#issues + 1] = describe_unknown(key, KNOWN, "")
-    elseif type(DEFAULTS[key]) == "table" and type(value) ~= "table" then
-      issues[#issues + 1] =
-        string.format("option '%s' must be a table, got %s -- using the default", key, type(value))
-    elseif type(known) == "table" then
-      local nested = {}
-      for sub_key, sub_value in pairs(value) do
-        if known[sub_key] then
-          nested[sub_key] = sub_value
-        else
-          issues[#issues + 1] = describe_unknown(sub_key, known, key .. ".")
-        end
+  for key, value in pairs(user_tbl) do
+    local known_entry = known[key]
+    if known_entry == nil then
+      issues[#issues + 1] = describe_unknown(key, known, prefix)
+    elseif type(known_entry) == "table" then
+      if type(value) ~= "table" then
+        issues[#issues + 1] = string.format(
+          "option '%s%s' must be a table, got %s -- using the default",
+          prefix,
+          key,
+          type(value)
+        )
+      else
+        local sub_defaults = type(defaults[key]) == "table" and defaults[key] or {}
+        local nested, nested_issues =
+          sanitize_level(value, known_entry, sub_defaults, prefix .. key .. ".")
+        clean[key] = nested
+        vim.list_extend(issues, nested_issues)
       end
-      clean[key] = nested
     else
       clean[key] = value
     end
   end
+  return clean, issues
+end
+
+---@internal
+---Entry point for `sanitize_level()`: validates the whole user table against
+---the root `KNOWN`/`DEFAULTS` trees and sorts the collected issues.
+---@param user_opts table
+---@return table clean
+---@return string[] issues
+local function sanitize(user_opts)
+  local clean, issues = sanitize_level(user_opts, KNOWN, DEFAULTS, "")
   table.sort(issues)
   return clean, issues
 end
