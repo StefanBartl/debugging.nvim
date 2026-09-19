@@ -141,6 +141,65 @@ return function(H)
     )
     H.eq(detail6, "", "capture: neither-sink-requested detail is empty with debug=false")
 
+    -- ===================================================== ERR-11: empty vs errored
+    --
+    -- try_execute()/try_exec2() used to report "returned empty" both when the
+    -- underlying call legitimately found nothing AND when it threw, so a
+    -- clean, empty `:messages` history looked identical to a broken capture
+    -- pipeline. `:messages` in this shared test session already has content
+    -- from earlier specs' notifications, so the real functions are stubbed
+    -- here instead of relying on the ambient history being empty.
+
+    clear_noice_stubs() -- noice absent -> falls through to execute/exec2 either way
+
+    local orig_execute, orig_exec2 = vim.fn.execute, vim.api.nvim_exec2
+
+    -- Case 1: both fallbacks legitimately produce nothing (no error) -> the
+    -- dedicated "no messages to capture" branch, not a reported failure.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.execute = function()
+      return ""
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_exec2 = function()
+      return { output = "" }
+    end
+    local ok_empty, content_empty, detail_empty =
+      capture.capture_messages({ save_file = false, clipboard = false })
+    H.eq(ok_empty, false, "capture: legitimately empty messages is not 'successful'")
+    H.eq(content_empty, "", "capture: legitimately empty messages yields an empty string")
+    H.match(
+      detail_empty,
+      "no messages to capture %(empty content%)",
+      "capture: legitimately empty messages is reported as empty, not as a failure"
+    )
+
+    -- Case 2: both fallbacks throw -> a real failure, reported distinctly
+    -- from case 1 rather than with the same "returned empty" text.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.execute = function()
+      error("boom (execute)")
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_exec2 = function()
+      error("boom (exec2)")
+    end
+    local ok_err, content_err, detail_err =
+      capture.capture_messages({ save_file = false, clipboard = false })
+    H.eq(ok_err, false, "capture: a genuine failure is not 'successful'")
+    H.eq(content_err, nil, "capture: a genuine failure has no content")
+    H.match(
+      detail_err,
+      "Failed to capture messages",
+      "capture: a genuine failure is reported as a failure, not as empty content"
+    )
+    H.ok(
+      not detail_err:match("empty content"),
+      "capture: a genuine failure's detail is distinguishable from the empty%-content case"
+    )
+
+    vim.fn.execute, vim.api.nvim_exec2 = orig_execute, orig_exec2
+
     -- ============================================================= save_file / clipboard
     --
     -- Whether the clipboard sink can succeed at all depends on the
@@ -178,7 +237,12 @@ return function(H)
     )
     H.match(detail7, "%.log", "capture: detail reports the written logfile's basename")
 
-    local written = vim.fn.glob(tmp_dir .. "/messages-*.log", false, true)
+    -- `glob` reads its argument as a pattern, not a path: under Windows,
+    -- $TEMP is the 8.3 short form for any profile name over eight
+    -- characters, and glob then tries (and fails) to resolve the `~1` in it
+    -- as a home-directory reference, silently returning an empty list.
+    local globbable = require("lib.nvim.fs.globbable")
+    local written = vim.fn.glob(globbable(tmp_dir) .. "/messages-*.log", false, true)
     H.eq(#written, 1, "capture: save_file wrote exactly one timestamped logfile")
     local file_content = table.concat(vim.fn.readfile(written[1]), "\n")
     H.match(

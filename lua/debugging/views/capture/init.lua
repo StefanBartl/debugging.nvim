@@ -255,23 +255,33 @@ end
 ---@internal
 ---Try to get messages via vim.fn.execute
 ---@return boolean success, string|nil messages, string|nil source
+---@return boolean errored  True when the pcall itself threw (as opposed to a
+--- legitimately empty `:messages` history).
 local function try_execute()
   local ok_exec, messages = pcall(vim.fn.execute, "messages")
-  if ok_exec and messages and rstrip(messages) ~= "" then
-    return true, messages, "vim.fn.execute('messages')"
+  if not ok_exec then
+    return false, nil, "vim.fn.execute threw: " .. tostring(messages), true
   end
-  return false, nil, "vim.fn.execute returned empty"
+  if messages and rstrip(messages) ~= "" then
+    return true, messages, "vim.fn.execute('messages')", false
+  end
+  return false, nil, "vim.fn.execute returned empty", false
 end
 
 ---@internal
 ---Try to get messages via nvim_exec2
 ---@return boolean success, string|nil messages, string|nil source
+---@return boolean errored  True when the pcall itself threw (as opposed to a
+--- legitimately empty `:messages` history).
 local function try_exec2()
   local ok_exec, res = pcall(vim.api.nvim_exec2, "messages", { output = true })
-  if ok_exec and res and res.output and rstrip(res.output) ~= "" then
-    return true, res.output, "nvim_exec2('messages')"
+  if not ok_exec then
+    return false, nil, "nvim_exec2 threw: " .. tostring(res), true
   end
-  return false, nil, "nvim_exec2 returned empty"
+  if res and res.output and rstrip(res.output) ~= "" then
+    return true, res.output, "nvim_exec2('messages')", false
+  end
+  return false, nil, "nvim_exec2 returned empty", false
 end
 
 ---@internal
@@ -280,6 +290,7 @@ end
 ---@return boolean success, string|nil messages, string|nil source
 local function capture_messages_raw(debug)
   local attempts = {}
+  local any_errored = false
 
   -- Strategy 1: Try Noice first (most reliable with Noice installed)
   local ok, msgs, src = try_noice()
@@ -292,7 +303,9 @@ local function capture_messages_raw(debug)
   end
 
   -- Strategy 2: Try vim.fn.execute
-  ok, msgs, src = try_execute()
+  local errored
+  ok, msgs, src, errored = try_execute()
+  any_errored = any_errored or errored
   table.insert(attempts, { method = "execute", success = ok, source = src })
   if ok then
     if debug then
@@ -302,13 +315,21 @@ local function capture_messages_raw(debug)
   end
 
   -- Strategy 3: Try nvim_exec2
-  ok, msgs, src = try_exec2()
+  ok, msgs, src, errored = try_exec2()
+  any_errored = any_errored or errored
   table.insert(attempts, { method = "exec2", success = ok, source = src })
   if ok then
     if debug then
       notify.debug("DebugViews: ✓ captured via " .. src)
     end
     return true, msgs, src
+  end
+
+  -- Every strategy came back empty rather than throwing: the message
+  -- history is genuinely empty, not broken -- report as a (empty) success
+  -- so the caller's "no messages to capture" branch handles it.
+  if not any_errored then
+    return true, "", "no messages recorded yet"
   end
 
   local details = {}
