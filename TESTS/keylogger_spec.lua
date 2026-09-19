@@ -14,6 +14,7 @@
 return function(H)
   local keylogger = require("debugging.terminals.keylogger")
   local config = require("debugging.config")
+  local expand_path = require("lib.nvim.cross.fs.expand_path")
 
   local orig_notify = vim.notify
   local seen = {}
@@ -68,7 +69,7 @@ return function(H)
     local explicit_path = tmp_dir .. "/explicit.log"
 
     keylogger.start(explicit_path)
-    H.eq(keylogger.logfile, vim.fn.expand(explicit_path), "start(path): explicit path wins")
+    H.eq(keylogger.logfile, expand_path(explicit_path), "start(path): explicit path wins")
     keylogger.stop()
 
     H.eq(vim.fn.filereadable(explicit_path), 1, "start(path): logfile was actually created")
@@ -83,7 +84,7 @@ return function(H)
     config.setup({ terminals = { keylogger = { logfile = cfg_path } } })
 
     keylogger.start() -- no explicit arg -> falls back to config
-    H.eq(keylogger.logfile, vim.fn.expand(cfg_path), "start(): falls back to config.logfile")
+    H.eq(keylogger.logfile, expand_path(cfg_path), "start(): falls back to config.logfile")
     keylogger.stop()
     vim.fn.delete(vim.fn.fnamemodify(cfg_path, ":h"), "rf")
 
@@ -92,7 +93,7 @@ return function(H)
     keylogger.start(override_path)
     H.eq(
       keylogger.logfile,
-      vim.fn.expand(override_path),
+      expand_path(override_path),
       "start(path): explicit arg overrides config default"
     )
     keylogger.stop()

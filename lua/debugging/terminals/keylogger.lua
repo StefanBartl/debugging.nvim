@@ -39,6 +39,7 @@
 --- and the file write onto the main loop — the same shape screenkey uses.
 
 local notify = require("lib.nvim.notify").create("[debugging.terminals.keylogger]")
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 
 local M = {}
 
@@ -72,7 +73,7 @@ local function resolve_logfile(explicit)
   if not path or path == "" then
     return nil
   end
-  return vim.fn.expand(path)
+  return expand_path(path)
 end
 
 ---@internal
@@ -163,8 +164,12 @@ function M.start(logfile)
     -- contain every key typed into a terminal, which routinely includes
     -- what someone types at a `sudo`, `ssh` or `gpg` prompt -- not a file
     -- to leave at the mercy of the process umask. Best-effort:
-    -- `fs_chmod` is meaningless on Windows and must not stop logging.
-    pcall(vim.uv.fs_chmod, M.logfile, 384) -- 0600
+    -- `fs_chmod` is meaningless on Windows and must not stop logging. The
+    -- `vim.uv` lookup itself is inside the pcall too -- it doesn't exist
+    -- before 0.10, and this plugin declares 0.9+.
+    pcall(function()
+      (vim.uv or vim.loop).fs_chmod(M.logfile, 384) -- 0600
+    end)
 
     _fh:write(string.format("\n=== keylogger session %s ===\n", os.date("%Y-%m-%d %H:%M:%S")))
     _fh:flush()
