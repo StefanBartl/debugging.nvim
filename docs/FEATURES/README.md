@@ -19,7 +19,7 @@ arguments, defaults, event names — see [commands.md](../commands.md),
 | **Autocmds** | The live registry, a Tree-sitter audit of the source, and a combined view of where the two disagree |
 | **Inspection** | Buffer, window and tab reports and inspectors, cursor state, recursive Lua value dumps |
 | **UI freezes** | A blocking-call tracer with Lua tracebacks, plus an external process-tree watcher on Windows |
-| **The rest** | Terminal keylogger, indent and Markdown diagnostics, module reload, startup benchmark, opt-in Neo-tree safety bridge |
+| **The rest** | Terminal keylogger, indent and Markdown diagnostics, module reload, startup benchmark, neotest diagnostics, opt-in Neo-tree safety bridge |
 
 Every category is gated by a feature flag, so `:Debug <Tab>` lists what *your*
 setup can actually do rather than a static catalogue. That is the difference
@@ -38,7 +38,7 @@ and only the third view — the diff — makes that visible.
 | [CORE.md](CORE.md) | The unified `:Debug` command, its two-level completion, the feature flags and config system behind it, and `:checkhealth debugging`. |
 | [VIEWS.md](VIEWS.md) | Auto-refreshing `:messages` and Noice windows, capturing them to a file or the clipboard, and the keymaps that drive both. |
 | [AUTOCMDS.md](AUTOCMDS.md) | The three views on autocommands — live, static source audit, and the combined diff that shows where they disagree. |
-| [TOOLS.md](TOOLS.md) | The single-purpose categories: reports, inspectors, keylogger, indent and markdown diagnostics, module reload, startup benchmark, Neo-tree bridge. |
+| [TOOLS.md](TOOLS.md) | The single-purpose categories: reports, inspectors, keylogger, indent and markdown diagnostics, module reload, startup benchmark, neotest diagnostics, Neo-tree bridge. |
 | [PROC.md](PROC.md) | Diagnosing a UI freeze: the in-process call tracer, the external process-tree watcher, and what neither of them can see. |
 
 ## Where to start

@@ -25,6 +25,7 @@ lua/debugging/
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
     module_reload.lua         reload Lua module of the current buffer
     neotree_safety.lua        opt-in Neo-tree bridge (pcall-guarded)
+    neotest.lua               :Debug neotest — adapter/root/file/discovery reports
   autocmds/
     @types/init.lua           Dbg.Autocmds.SourceItem/SourceOpts
     runtime.lua               live nvim_get_autocmds view

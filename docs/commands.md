@@ -22,6 +22,7 @@ prose, with the reasoning behind each part.
 | `proc` | `start [threshold_ms]` · `stop` · `status` · `log` · `watch [seconds]` | Diagnose UI freezes: log slow `system()`/`jobstart` calls with tracebacks, plus an external process-tree watcher (Windows) |
 | `performance` | `startup [runs]` | Benchmark startup time (`--startuptime`) and list the slowest sourced scripts |
 | `neotree` | `status` · `exit` · `restart` · `backup-*` · `dryrun-*` · `queue-*` | Neo-tree safety bridge (opt-in, config-specific) |
+| `neotest` | `adapters` · `state` · `file` · `root` · `framework` · `discover` | Why is neotest not finding my tests: configured vs registered adapters, the current buffer's tree, which adapter claims the file, the roots they derive, the cwd's framework markers, discovered position counts |
 | `health` | — | Run `:checkhealth debugging` |
 
 ## Command Reference
@@ -54,6 +55,10 @@ prose, with the reasoning behind each part.
 :Debug performance startup      " benchmark startup time (1 run)
 :Debug performance startup 5    " average the total over 5 launches
 :Debug neotree status           " Neo-tree quarantine status (opt-in)
+:Debug neotest adapters         " configured (neotest.setup) vs registered adapters
+:Debug neotest file             " does any adapter's is_test_file() want this file?
+:Debug neotest root             " the project root each adapter derives, and its markers
+:Debug neotest discover         " positions per registered adapter, tests total
 :Debug health                   " run :checkhealth debugging
 ```
 
@@ -85,6 +90,7 @@ by the active config appear (e.g. `neotree` is opt-in — see `features.neotree`
 :Debug module <Tab>                → reload
 :Debug proc <Tab>                  → start stop status log watch
 :Debug performance <Tab>           → startup
+:Debug neotest <Tab>               → adapters state file root framework discover
 ```
 
 ## Health Check
@@ -94,5 +100,6 @@ by the active config appear (e.g. `neotree` is opt-in — see `features.neotree`
 ```
 
 Verifies Neovim version, the lib.nvim modules each feature relies on, clipboard
-providers, optional Tree-sitter / Noice, write permissions, and the opt-in
-Neo-tree bridge.
+providers, optional Tree-sitter / Noice, write permissions, the opt-in
+Neo-tree bridge, and whether neotest (and how many adapters) is there for
+`:Debug neotest`.
