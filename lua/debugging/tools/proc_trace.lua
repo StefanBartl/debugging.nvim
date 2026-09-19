@@ -123,7 +123,15 @@ function M.watch(args)
     return
   end
 
-  local seconds = args and args[1] and tonumber(args[1]) or 120
+  local seconds = 120
+  if args and args[1] then
+    local parsed = tonumber(args[1])
+    if parsed then
+      seconds = parsed
+    else
+      notify.warn(("ignoring non-numeric seconds: %q"):format(args[1]))
+    end
+  end
   local shell_exe = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
 
   vim.cmd("botright split")

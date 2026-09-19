@@ -179,7 +179,16 @@ local function build_registry()
           require("debugging.nvim_options.indent_helpers").print_indent_options()
         end,
         treesitter = function(args)
-          local enable = not (args[1] == "false" or args[1] == "0")
+          local raw = args[1]
+          local enable
+          if raw == nil or raw == "" or raw == "true" or raw == "1" then
+            enable = true
+          elseif raw == "false" or raw == "0" then
+            enable = false
+          else
+            notify.error(("invalid argument %q — expected true or false"):format(raw))
+            return
+          end
           require("debugging.nvim_options.indent_helpers").prefer_treesitter_indent(enable)
         end,
       },
