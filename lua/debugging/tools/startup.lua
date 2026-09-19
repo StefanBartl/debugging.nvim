@@ -112,7 +112,15 @@ end
 ---@param args string[]
 ---@return nil
 function M.startup(args)
-  local runs = tonumber(args and args[1]) or 1
+  local runs = 1
+  if args and args[1] then
+    local parsed = tonumber(args[1])
+    if parsed then
+      runs = parsed
+    else
+      notify.warn(("ignoring non-numeric run count: %q"):format(args[1]))
+    end
+  end
   runs = math.max(1, math.min(math.floor(runs), 20))
 
   local totals = {}
