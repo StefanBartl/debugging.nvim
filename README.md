@@ -34,20 +34,20 @@ rather than memorised.
 Start at [docs/README.md](docs/README.md) — what's where, and which question
 each page answers.
 
-**The Basics**
+### The Basics
 
 - [Requirements](docs/installation.md#requirements) — Neovim version, required and optional plugins.
 - [Installation](docs/installation.md) — every plugin manager, and what lazy-loading costs.
 - [Quickstart](docs/quickstart.md) — the first thing to run after installing.
 
-**Configuration**
+### Configuration
 
 - [What you get with the defaults](docs/what-you-get.md) — the commands that matter on day one.
 - [All options](docs/configuration.md) — every `setup()` option and its default.
 - [Command reference](docs/commands.md) — every category and action, with completion behaviour.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command and autocommand in one table.
 
-**The Rest**
+### The Rest
 
 - [Features](docs/FEATURES/README.md) — what each group of `:Debug` categories does, and why it works that way.
 - [Around it](docs/around-it.md) — how this plugin's scope differs from its siblings in the collection.
