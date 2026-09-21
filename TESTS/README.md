@@ -143,7 +143,7 @@ justify changing without the author's input:
   `lua/debugging/`. Left untested rather than given a suite for unreachable
   code; worth a follow-up removal decision from the author (see the report
   this suite's PR/commit was written against).
-- **`views/display.lua`'s `execute_and_refresh`/`refresh_log_view`** — real
+- **`views/display.lua`'s `show_command_output`/`refresh_log_view`** — real
   window/timer choreography (`vim.defer_fn` chains, `lib.nvim.buf_win_tab.capture`
   callbacks, real `:messages`/`:Noice ...` command execution) with no pure
   branch to isolate from the UI side effect. `clear_all()` and the tag-lookup
