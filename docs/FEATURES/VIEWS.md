@@ -15,7 +15,7 @@ current output instead of a frozen snapshot from when it was opened.
 `q` and `<Esc>` close a view window — bound per buffer through a `FileType`
 autocmd rather than globally, so neither key changes meaning anywhere else.
 
-- **Module:** `views/display.lua` (`execute_and_refresh`, `refresh_log_view`,
+- **Module:** `views/display.lua` (`show_command_output`, `refresh_log_view`,
   `clear_all`), `views/init.lua`
 - **Config:** `opts.features.views`, `opts.views.autocmds`,
   `opts.views.timings`

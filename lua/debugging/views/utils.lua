@@ -156,7 +156,7 @@ end
 ---@param attempts integer
 ---@param retry_delay integer
 ---@return nil
-function M.focus_and_bottom(win, attempts, retry_delay)
+function M.reveal_at_bottom(win, attempts, retry_delay)
   if not (win and api.nvim_win_is_valid(win)) then
     return
   end

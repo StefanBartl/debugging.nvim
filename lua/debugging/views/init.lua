@@ -88,7 +88,7 @@ end
 ---Show the :messages window.
 ---@return nil
 function M.messages_show()
-  display.execute_and_refresh("messages", "messages", _timings)
+  display.show_command_output("messages", "messages", _timings)
 end
 
 ---Capture :messages to file + clipboard.
@@ -107,7 +107,7 @@ end
 ---Show all Noice messages.
 ---@return nil
 function M.noice_all()
-  display.execute_and_refresh("noice_all", "Noice all", _timings)
+  display.show_command_output("noice_all", "Noice all", _timings)
 end
 
 ---Show Noice errors.

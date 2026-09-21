@@ -16,7 +16,7 @@ local api = vim.api
 local M = {}
 
 ---@type string[]  Known view tags — kept in sync with the tags passed to
---- execute_and_refresh()/refresh_log_view() by debugging.views.
+--- show_command_output()/refresh_log_view() by debugging.views.
 local KNOWN_TAGS = { "messages", "noice_all", "noice_errors" }
 
 ---Find the window currently showing the view tagged `tag`.
@@ -39,7 +39,7 @@ end
 ---@param cmd string
 ---@param timings Dbg.Views.Timings
 ---@return nil
-function M.execute_and_refresh(tag, cmd, timings)
+function M.show_command_output(tag, cmd, timings)
   local existing_win = M.find_window_by_tag(tag)
 
   if existing_win and api.nvim_win_is_valid(existing_win) then
@@ -48,7 +48,7 @@ function M.execute_and_refresh(tag, cmd, timings)
     vim.cmd(cmd)
     vim.defer_fn(function()
       if api.nvim_win_is_valid(existing_win) then
-        utils.focus_and_bottom(existing_win, timings.attempts, timings.retry_delay_ms)
+        utils.reveal_at_bottom(existing_win, timings.attempts, timings.retry_delay_ms)
       end
     end, 50)
     return
@@ -78,7 +78,7 @@ function M.execute_and_refresh(tag, cmd, timings)
               end
               return
             end
-            utils.focus_and_bottom(win, timings.attempts, timings.retry_delay_ms)
+            utils.reveal_at_bottom(win, timings.attempts, timings.retry_delay_ms)
           end, 30)
         end
       end
@@ -121,7 +121,7 @@ function M.refresh_log_view(win, tag, timings)
       end
       return
     end
-    utils.focus_and_bottom(win, timings.attempts, timings.retry_delay_ms)
+    utils.reveal_at_bottom(win, timings.attempts, timings.retry_delay_ms)
   end, 50)
 end
 

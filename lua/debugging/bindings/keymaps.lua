@@ -45,7 +45,7 @@ function M.setup(km, timings)
   ---@return fun(): nil
   local function show(view, label)
     return function()
-      display.execute_and_refresh(view, label, timings)
+      display.show_command_output(view, label, timings)
     end
   end
 

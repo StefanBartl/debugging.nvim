@@ -139,11 +139,11 @@ return function(H)
       )
 
       vim.api.nvim_win_set_cursor(win, { 1, 0 })
-      utils.focus_and_bottom(win, 1, 10)
+      utils.reveal_at_bottom(win, 1, 10)
       H.eq(
         vim.api.nvim_win_get_cursor(win)[1],
         3,
-        "utils.focus_and_bottom: also moves cursor to bottom"
+        "utils.reveal_at_bottom: also moves cursor to bottom"
       )
 
       vim.cmd("only")
