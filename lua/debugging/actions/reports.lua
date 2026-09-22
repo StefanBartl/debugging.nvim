@@ -13,10 +13,28 @@ local tablib = require("lib.nvim.buf_win_tab.tabs_utils")
 
 local M = {}
 
+---@internal
+---Whether the current buffer still has unresolved merge-conflict markers
+---(gitsuite.nvim, optional) -- explains otherwise confusing symptoms (wrong
+---syntax highlighting, LSP errors) that a buffer report should surface.
+---@param bufnr integer
+---@return boolean has  false when gitsuite.nvim is not installed or errors.
+local function has_conflicts(bufnr)
+  local ok, conflict = pcall(require, "gitsuite.features.conflict")
+  if not ok then
+    return false
+  end
+  local ok_call, result = pcall(conflict.has_conflicts, bufnr)
+  return ok_call and result == true
+end
+
 ---Print a buffer report to :messages.
 ---@return nil
 function M.buf()
   buflib.print_summary()
+  if has_conflicts(vim.api.nvim_get_current_buf()) then
+    notify.warn("current buffer has unresolved merge-conflict markers")
+  end
 end
 
 ---Print a tab report to :messages.

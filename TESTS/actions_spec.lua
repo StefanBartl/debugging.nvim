@@ -1,8 +1,10 @@
 -- TESTS/actions_spec.lua
 -- Covers `debugging.actions.*`: module_reload (path -> module name ->
 -- reload), neotree_safety (the injectable table/module-name bridge), and
--- reports (the report/win id-validation branch; buf/tab just delegate to
--- lib.nvim and are exercised for "does not error").
+-- reports (the report/win id-validation branch; tab just delegates to
+-- lib.nvim and is exercised for "does not error"; buf additionally gets a
+-- pcall-guarded gitsuite.nvim conflict-marker check, covered here with a
+-- faked module for the absent/clean/conflicted cases).
 
 return function(H)
   local orig_notify = vim.notify
@@ -183,6 +185,58 @@ return function(H)
 
     local ok_win_id = pcall(reports.win, vim.api.nvim_get_current_win())
     H.ok(ok_win_id, "reports.win: valid explicit window id does not error")
+
+    -- reports.buf: gitsuite.nvim conflict-marker check (optional, pcall-guarded)
+    local saved_conflict = package.loaded["gitsuite.features.conflict"]
+
+    package.loaded["gitsuite.features.conflict"] = nil
+    local orig_preload = package.preload["gitsuite.features.conflict"]
+    package.preload["gitsuite.features.conflict"] = function()
+      error("no gitsuite here")
+    end
+    reset()
+    local ok_buf_absent = pcall(reports.buf)
+    H.ok(ok_buf_absent, "reports.buf: does not error without gitsuite.nvim")
+    package.preload["gitsuite.features.conflict"] = orig_preload
+
+    -- print_summary() itself notify.debug()s a "Listed buffer: N" line on
+    -- every call (lib.nvim.buf_win_tab.buffer_utils, unrelated to this
+    -- check) -- assert on message content, not on #seen being empty.
+    local function any_match(pat)
+      for _, s in ipairs(seen) do
+        if s.msg:match(pat) then
+          return true
+        end
+      end
+      return false
+    end
+
+    package.loaded["gitsuite.features.conflict"] = {
+      has_conflicts = function()
+        return false
+      end,
+    }
+    reset()
+    pcall(reports.buf)
+    H.ok(
+      not any_match("unresolved merge%-conflict markers"),
+      "reports.buf: no conflict warning on a clean buffer"
+    )
+
+    package.loaded["gitsuite.features.conflict"] = {
+      has_conflicts = function()
+        return true
+      end,
+    }
+    reset()
+    pcall(reports.buf)
+    H.match(
+      last(),
+      "unresolved merge%-conflict markers",
+      "reports.buf: warns about conflict markers"
+    )
+
+    package.loaded["gitsuite.features.conflict"] = saved_conflict
   end)
 
   vim.notify = orig_notify

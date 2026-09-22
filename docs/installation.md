@@ -7,7 +7,9 @@
 - Optional: a clipboard provider (for `messages capture`), `noice.nvim` (for
   `noice` views), Tree-sitter (markdown / indent diagnostics), `which-key.nvim`
   (groups the views keymap prefix), PowerShell (`pwsh` or `powershell.exe`, for
-  `proc watch` — Windows only)
+  `proc watch` — Windows only), [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim)
+  (`:Debug report buf` warns when the current buffer still has unresolved
+  merge-conflict markers)
 
 ## Installation
 
