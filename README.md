@@ -19,6 +19,9 @@
 ![Status](https://img.shields.io/badge/status-beta-orange)
 [![CI](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/debugging/)
+
+> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/debugging/) on the site.
 
 One `:Debug {category} {action}` command for every Neovim debugging tool.
 
