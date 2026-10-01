@@ -16,9 +16,8 @@ local M = {}
 ---`keymaps = { messages = "<leader>dm" }` now moves exactly one, `= false`
 ---drops one, and `prefix` still supplies the default for the rest.
 ---@param km Dbg.Views.Keymaps
----@param timings Dbg.Views.Timings
 ---@return Lib.Keymap.Registered[]
-function M.setup(km, timings)
+function M.setup(km)
   local prefix = km.prefix
 
   ---`capture_messages` has always taken `save_file`/`clipboard`, but the only
@@ -40,15 +39,6 @@ function M.setup(km, timings)
     end
   end
 
-  ---@param view string
-  ---@param label string
-  ---@return fun(): nil
-  local function show(view, label)
-    return function()
-      display.show_command_output(view, label, timings)
-    end
-  end
-
   ---@type Lib.Keymap.Spec
   local spec = {
     prefix = prefix,
@@ -63,20 +53,31 @@ function M.setup(km, timings)
       "clear",
     },
     actions = {
+      -- Delegate to debugging.views' own action functions (single source of
+      -- truth, shared with the :Debug dispatcher) rather than calling
+      -- display.show_command_output directly -- all three now open the
+      -- recent-messages popup with a different filter, not a raw :messages/
+      -- :Noice dump. See debugging.views.recent.
       messages = {
         default = prefix .. "m",
-        rhs = show("messages", "messages"),
-        desc = "Messages view",
+        rhs = function()
+          require("debugging.views").messages_show()
+        end,
+        desc = "Messages view (non-error)",
       },
       noice_all = {
         default = prefix .. "n",
-        rhs = show("noice_all", "Noice all"),
-        desc = "Noice all",
+        rhs = function()
+          require("debugging.views").noice_all()
+        end,
+        desc = "Recent messages (all)",
       },
       noice_errors = {
         default = prefix .. "e",
-        rhs = "<Cmd>Noice errors<CR>",
-        desc = "Noice errors",
+        rhs = function()
+          require("debugging.views").noice_errors()
+        end,
+        desc = "Recent errors",
       },
 
       capture = {

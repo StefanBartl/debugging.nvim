@@ -102,6 +102,31 @@ The action names are `messages`, `noice_all`, `noice_errors`, `capture`,
 `capture_file`, `capture_clipboard` and `clear` — the same names listed in the
 [bindings cheatsheet](BINDINGS.md#default-keymaps).
 
+## Recent-messages popup
+
+`views.recent` configures what `messages`/`noice_all`/`noice_errors` (the
+`<m`/`<n`/`<e` keys) actually open: a popup backed by
+[lib.nvim.messages](https://github.com/StefanBartl/lib.nvim), live and
+paginated via `ui.kit.message_log` when [ui.nvim](https://github.com/StefanBartl/ui.nvim)
+is installed, a static one-shot dump (`lib.nvim.output.viewer`) otherwise.
+
+```lua
+require("debugging").setup({
+  views = {
+    recent = {
+      window_s = 10,            -- seconds of history shown on open; <C-j> extends by the same amount
+      order = "newest_last",    -- or "newest_first"
+      collapsed_default = false, -- start in first-line-only mode
+    },
+  },
+})
+```
+
+`messages` filters to non-error entries, `noice_all` is unfiltered, `noice_errors`
+shows only errors — three views over the same live store, not three separate
+logs. In-popup keys (pagination, collapse, `?` cheatsheet) are documented on
+`ui.kit.message_log` itself, in [ui.nvim's README](https://github.com/StefanBartl/ui.nvim/blob/main/lua/ui/kit/README.md#message-log-paginated-time-ordered-entry-list).
+
 ## Validation
 
 Options are checked before they are merged. An unknown key — at the top

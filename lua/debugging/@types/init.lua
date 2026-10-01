@@ -6,6 +6,7 @@ require("debugging.views.@types")
 ---@field keymaps? Dbg.Views.Keymaps
 ---@field autocmds? Dbg.Views.Autocmds
 ---@field timings? Dbg.Views.Timings
+---@field recent? Dbg.Views.Recent
 ---@field capture? boolean
 ---@field output_dir? string # Only used if capture=true
 

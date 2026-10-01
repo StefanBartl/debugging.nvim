@@ -19,19 +19,24 @@ table below — so moving one does not mean moving all seven. See
 
 | lhs | mode | action | desc |
 | --- | --- | --- | --- |
-| `<lt>m` | n | `messages` | Show `:messages` view (auto-refreshing) |
-| `<lt>n` | n | `noice_all` | Show Noice all view (auto-refreshing) |
-| `<lt>e` | n | `noice_errors` | Show Noice errors (`:Noice errors`) |
+| `<lt>m` | n | `messages` | Recent messages, non-error (`views.recent`, live + paginated when ui.nvim is installed) |
+| `<lt>n` | n | `noice_all` | Recent messages, unfiltered (`views.recent`) |
+| `<lt>e` | n | `noice_errors` | Recent messages, errors only (`views.recent`) |
 | `<lt>c` | n | `capture` | Capture `:messages` to file + clipboard |
 | `<lt>f` | n | `capture_file` | Capture `:messages` to file only |
 | `<lt>y` | n | `capture_clipboard` | Capture `:messages` to clipboard only |
 | `<lt>x` | n | `clear` | Close all debug view windows |
 
 Two more `q`/`<Esc>` keymaps exist outside this table, both buffer-local and
-not user-configurable: one bound by the `FileType` autocmd below (closes a
-`messages`/`noice` debug view), and a separate one inside the bare `:Debug`
-overview float (`config.overview == "float"`, the default) — two distinct
-registration sites, not one shared close-keymap.
+not user-configurable: one inside the bare `:Debug` overview float
+(`config.overview == "float"`, the default), and one built into the
+`messages`/`noice_all`/`noice_errors` popup itself — `ui.kit.surface`'s own
+`nice_quit` (ui.nvim installed) or `ui.kit.viewer`'s (the fallback dump, via
+`lib.nvim.output.viewer`), not the `FileType` autocmd below: that autocmd's
+`messages`/`noice` filetype pattern predates `views.recent` and no longer
+matches anything these three keys open (left in place, harmless, same
+reasoning as `views/display.lua`'s own now-unreachable tag branches — see
+that module's doc comment).
 
 ## User Commands
 

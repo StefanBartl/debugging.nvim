@@ -58,6 +58,7 @@ local KNOWN = {
     },
     capture = true,
     output_dir = true,
+    recent = { window_s = true, order = true, collapsed_default = true },
   },
   command = true,
   overview = true,

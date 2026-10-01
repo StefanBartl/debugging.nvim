@@ -43,6 +43,7 @@ aborts if none of them has it.
 | `markdown_spec.lua`           | `markdown/inline_debug.lua`: `gather()` end to end against a real buffer, `open_log()`, and a pinned regression for the mkdir/path bugs found while writing this suite.              |
 | `bindings_spec.lua`           | `bindings/init.lua`'s `features.views` gate, `bindings/keymaps.lua`'s action wiring (driven through a real `lib.nvim.bindings.keymap` registration), `bindings/autocmds.lua`'s enable gate and FileType close-keymap behaviour, and `bindings/usercmds.lua`'s `DBG_AUTOCMD_EXPR` argtype via the real `:Debug` command. |
 | `views_spec.lua`              | `views/init.lua`'s setup/getter merge logic, `views/utils.lua`'s focus/scroll primitives, `views/display.lua`'s `clear_all`/tag lookups, `views/capture/clipboard/init.lua` (stubbed). |
+| `views_recent_spec.lua`       | `views/recent.lua`: filter -> `lib.nvim.messages.snapshot()` levels mapping (all/non_error/error), the real fallback branch (ui.kit genuinely absent from this suite's rtp) vs. a stubbed `ui.kit.message_log` path, window-tag reuse (focus instead of reopening), the live `on_message` listener respecting the filter, `load_more` wiring, and unsubscribe-on-close. Both `lib.nvim.messages` and `debugging.views` are stubbed -- their own logic has its own suites (lib.nvim, `views_spec.lua`). |
 | `capture_spec.lua`            | `views/capture/init.lua`: every Noice retrieval strategy (manager/history/buffer/api.status, each faked), the real `:messages` fallback, the empty-content guard, and the save_file/clipboard sinks. |
 | `health_spec.lua`             | `health.lua`: one narrow regression guard (see below) for the composer pre-flight crash — not full coverage of the declarative reporter, see "Deliberately left untested".         |
 | `run.lua`                     | Runner: resolves lib.nvim, loads each spec, reports results, sets exit code.                                                                                                         |
@@ -143,21 +144,26 @@ justify changing without the author's input:
   `lua/debugging/`. Left untested rather than given a suite for unreachable
   code; worth a follow-up removal decision from the author (see the report
   this suite's PR/commit was written against).
-- **`views/display.lua`'s `show_command_output`/`refresh_log_view`** — real
-  window/timer choreography (`vim.defer_fn` chains, `lib.nvim.buf_win_tab.capture`
-  callbacks, real `:messages`/`:Noice ...` command execution) with no pure
-  branch to isolate from the UI side effect. `clear_all()` and the tag-lookup
-  wrappers — the parts with actual iteration/lookup logic — are tested
-  directly in `views_spec.lua`.
-- **`views/init.lua`'s `messages_show`/`noice_all`/`noice_errors`/
-  `windows_clear`/`messages_capture`** — one-line delegators to
-  `views.display`/`views.capture`/`vim.cmd`. What they call into
+- **`views/display.lua`'s `refresh_log_view`** — real window/timer
+  choreography (`vim.defer_fn` chains, real `:messages`/`:Noice ...` command
+  execution) with no pure branch to isolate from the UI side effect; its
+  `messages`/`noice_all`/`noice_errors` tag branches are unreachable now
+  (`<m`/`<n`/`<e` moved to `views/recent.lua`, see below) but left in place
+  rather than deleted alongside the tags, so there is nothing live left to
+  test here either way. `clear_all()` and the tag-lookup wrappers — the parts
+  with actual iteration/lookup logic — are tested directly in
+  `views_spec.lua`. `show_command_output` (the function these tag branches
+  used to share with the `<m`/`<n`/`<e` dispatch) was removed outright once
+  `views/recent.lua` left it with zero callers.
+- **`views/init.lua`'s `windows_clear`/`messages_capture`** — one-line
+  delegators to `views.display`/`views.capture`. What they call into
   (`display.clear_all`, `capture.capture_messages`, and the same
   capture-then-notify pattern already exercised through
-  `bindings/keymaps.lua`'s `capture_to` closure) is what's actually tested;
-  `noice_errors()` specifically runs `vim.cmd("Noice errors")` unguarded,
-  which errors outright with Noice absent (as in this suite) — not
-  meaningfully callable without bundling the optional dependency.
+  `bindings/keymaps.lua`'s `capture_to` closure) is what's actually tested.
+  `messages_show`/`noice_all`/`noice_errors` moved to `views/recent.lua`
+  (`recent.show("non_error"|"all"|"error")`) and **are** tested now, in
+  `views_recent_spec.lua` — unlike the old `vim.cmd("Noice errors")` direct
+  call, nothing here hard-requires Noice to be installed to run safely.
 - **`tools/proc_trace.lua`'s `M.watch()`** — spawns a real terminal split
   running an external PowerShell script against the live process tree
   (Windows-only). Every other `proc_trace` action is exercised in

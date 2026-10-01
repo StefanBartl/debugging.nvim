@@ -1,11 +1,17 @@
 ---@module 'debugging.views.display'
---- Open, refresh and close the debug log windows.
+--- Close (and, for whatever still uses tag-matched command re-runs, refresh)
+--- the debug log windows. Windows are identified solely by the `custom_tag`
+--- window variable and looked up via find_window_by_tag() rather than
+--- tracked in a module-level registry — a deliberate choice, since a stale
+--- registry is exactly what once made clear_all() miss open windows.
 ---
---- Owns the lifecycle of the split windows behind `:Debug messages` and
---- `:Debug noice`. Windows are identified solely by the `custom_tag` window
---- variable and looked up via find_window_by_tag() rather than tracked in a
---- module-level registry — a deliberate choice, since a stale registry is
---- exactly what once made clear_all() miss open windows.
+--- `<m`/`<n`/`<e` (messages/all/errors) moved to `debugging.views.recent`'s
+--- live, `lib.nvim.messages`-backed popup; `show_command_output` (the raw
+--- `:messages`/`:Noice *` dispatcher they used to share) went with it.
+--- `refresh_log_view`'s `messages`/`noice_all`/`noice_errors` branches are
+--- unreachable now (nothing produces those tags anymore) but harmless --
+--- left in place rather than also ripped out, since `clear_all()`/
+--- `find_window_by_tag`/`get_window_tag` stay genuinely used.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.display]")
 local window_tag = require("lib.nvim.window").tag
@@ -15,9 +21,13 @@ local api = vim.api
 
 local M = {}
 
----@type string[]  Known view tags — kept in sync with the tags passed to
---- show_command_output()/refresh_log_view() by debugging.views.
-local KNOWN_TAGS = { "messages", "noice_all", "noice_errors" }
+---@type string[]  Known view tags, so `clear_all()` finds every window this
+--- subsystem can open. `messages`/`noice_all`/`noice_errors` are now
+--- unreachable (debugging.views.recent's "recent_*" tags replaced them as
+--- the <m>/<n>/<e> targets) but `refresh_log_view` below still matches them
+--- harmlessly if some other caller ever produces one again -- left in place
+--- rather than ripped out along with the three now-dead tags.
+local KNOWN_TAGS = { "recent_messages", "recent_all", "recent_errors" }
 
 ---Find the window currently showing the view tagged `tag`.
 ---@param tag string
@@ -31,62 +41,6 @@ end
 ---@return string|nil
 function M.get_window_tag(win)
   return window_tag.get(win)
-end
-
----Run `cmd` and show its output in the window tagged `tag`, reusing an
----existing one when present instead of opening a duplicate.
----@param tag string
----@param cmd string
----@param timings Dbg.Views.Timings
----@return nil
-function M.show_command_output(tag, cmd, timings)
-  local existing_win = M.find_window_by_tag(tag)
-
-  if existing_win and api.nvim_win_is_valid(existing_win) then
-    utils.make_focusable(existing_win)
-    utils.force_focus(existing_win)
-    vim.cmd(cmd)
-    vim.defer_fn(function()
-      if api.nvim_win_is_valid(existing_win) then
-        utils.reveal_at_bottom(existing_win, timings.attempts, timings.retry_delay_ms)
-      end
-    end, 50)
-    return
-  end
-
-  -- Try to use lib.buf_win_tab.capture if available
-  local ok_capture, capture_lib = pcall(require, "lib.nvim.buf_win_tab.capture")
-  if ok_capture and capture_lib.capture then
-    capture_lib.capture(cmd, {
-      timeout = timings.capture_timeout_ms or 500,
-      tag = { buf = tag, win = tag },
-    }, function(result)
-      if not result.wins or #result.wins == 0 then
-        if tag == "noice_errors" then
-          notify.info("No errors available")
-        end
-        return
-      end
-
-      for _, win in ipairs(result.wins) do
-        if api.nvim_win_is_valid(win) then
-          utils.make_focusable(win)
-          vim.defer_fn(function()
-            if not api.nvim_win_is_valid(win) then
-              if tag == "noice_errors" then
-                notify.info("No errors available")
-              end
-              return
-            end
-            utils.reveal_at_bottom(win, timings.attempts, timings.retry_delay_ms)
-          end, 30)
-        end
-      end
-    end)
-  else
-    -- Fallback: just execute command
-    vim.cmd(cmd)
-  end
 end
 
 ---Re-run the command backing an already-open tagged view window.
