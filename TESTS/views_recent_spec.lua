@@ -55,9 +55,18 @@ return function(H)
 
       local orig_viewer = package.loaded["lib.nvim.output.viewer"]
       local dumped
+      local fallback_bufnr = vim.api.nvim_create_buf(false, true)
+      local fallback_winid = vim.api.nvim_open_win(fallback_bufnr, false, {
+        relative = "editor",
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 3,
+      })
       package.loaded["lib.nvim.output.viewer"] = {
         show_lines = function(title, lines)
           dumped = { title = title, lines = lines }
+          return { winid = fallback_winid, bufnr = fallback_bufnr }
         end,
       }
 
@@ -69,6 +78,17 @@ return function(H)
       eq(dumped.lines[1], "(no messages)", "fallback: empty snapshot shows the placeholder line")
       ok(#seen > 0, "fallback: notifies that live updates/pagination are unavailable")
 
+      -- The fallback window must be tagged too -- otherwise display.clear_all()
+      -- (the `<x>` cleanup) and M.show()'s own reuse check silently don't see
+      -- it, since both only ever look through lib.nvim.window.tag.
+      local window_tag = require("lib.nvim.window").tag
+      eq(
+        window_tag.get(fallback_winid),
+        "recent_errors",
+        "the fallback popup's window is tagged too"
+      )
+
+      pcall(vim.api.nvim_win_close, fallback_winid, true)
       package.loaded["lib.nvim.output.viewer"] = orig_viewer
     end
 

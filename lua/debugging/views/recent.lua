@@ -94,7 +94,10 @@ function M.show(filter)
     if #lines == 0 then
       lines = { "(no messages)" }
     end
-    require("lib.nvim.output.viewer").show_lines(FILTER_TITLE[filter], lines)
+    local surf = require("lib.nvim.output.viewer").show_lines(FILTER_TITLE[filter], lines)
+    if surf then
+      window_tag.set(surf.winid, tag, surf.bufnr)
+    end
     notify.info("ui.nvim not installed -- showing a static snapshot, no live updates/pagination")
     return
   end
