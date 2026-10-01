@@ -95,8 +95,7 @@ return function(H)
         clear_calls = clear_calls + 1
       end
 
-      local timings = { attempts = 3, retry_delay_ms = 60 }
-      local bound = keymaps.setup({ enable = true, prefix = "<lt>" }, timings)
+      local bound = keymaps.setup({ enable = true, prefix = "<lt>" })
 
       local function find(name)
         for _, entry in ipairs(bound) do

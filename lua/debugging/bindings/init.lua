@@ -24,7 +24,7 @@ function M.setup(cfg)
   local ac = views.get_autocmds_config()
 
   if km.enable then
-    require("debugging.bindings.keymaps").setup(km, timings)
+    require("debugging.bindings.keymaps").setup(km)
   end
 
   if ac.enable then

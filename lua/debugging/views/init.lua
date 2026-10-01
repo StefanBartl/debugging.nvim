@@ -28,6 +28,13 @@ local DEFAULT_TIMINGS = {
   capture_timeout_ms = 500,
 }
 
+---@type Dbg.Views.Recent
+local DEFAULT_RECENT = {
+  window_s = 10,
+  order = "newest_last",
+  collapsed_default = false,
+}
+
 ---@type Dbg.Views.Timings  Resolved timings, shared with the action functions.
 local _timings = vim.tbl_extend("force", {}, DEFAULT_TIMINGS)
 
@@ -36,6 +43,9 @@ local _keymaps_cfg = { enable = true, prefix = "<lt>" }
 
 ---@type Dbg.Views.Autocmds
 local _autocmds_cfg = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true }
+
+---@type Dbg.Views.Recent
+local _recent_cfg = vim.tbl_extend("force", {}, DEFAULT_RECENT)
 
 ---Resolve timings + keymap/autocmd config for the views subsystem.
 ---@param opts Dbg.Views.Modules|nil
@@ -60,6 +70,8 @@ function M.setup(opts)
     auto_refresh = true,
   }, opts.autocmds or {})
 
+  _recent_cfg = vim.tbl_extend("force", {}, DEFAULT_RECENT, opts.recent or {})
+
   if opts.capture and opts.output_dir then
     capture.base_dir = opts.output_dir
   end
@@ -83,12 +95,20 @@ function M.get_autocmds_config()
   return _autocmds_cfg
 end
 
--- Action functions (called by the :Debug dispatcher) ---------------------------
+---Get the resolved recent-messages-popup config.
+---@return Dbg.Views.Recent
+function M.get_recent_config()
+  return _recent_cfg
+end
 
----Show the :messages window.
+-- Action functions (called by the :Debug dispatcher and the <m/n/e keymaps) ---
+
+---Show the recent-messages popup, filtered to non-error entries. Replaces
+---the old raw `:messages` dump -- backed by `lib.nvim.messages` + (when
+---ui.nvim is installed) `ui.kit.message_log` now; see `debugging.views.recent`.
 ---@return nil
 function M.messages_show()
-  display.show_command_output("messages", "messages", _timings)
+  require("debugging.views.recent").show("non_error")
 end
 
 ---Capture :messages to file + clipboard.
@@ -104,16 +124,18 @@ function M.messages_capture()
   end
 end
 
----Show all Noice messages.
+---Show the recent-messages popup, unfiltered. Replaces the old `:Noice all`
+---dump -- see `M.messages_show`'s doc comment.
 ---@return nil
 function M.noice_all()
-  display.show_command_output("noice_all", "Noice all", _timings)
+  require("debugging.views.recent").show("all")
 end
 
----Show Noice errors.
+---Show the recent-messages popup, filtered to errors only. Replaces the old
+---`:Noice errors` passthrough -- see `M.messages_show`'s doc comment.
 ---@return nil
 function M.noice_errors()
-  vim.cmd("Noice errors")
+  require("debugging.views.recent").show("error")
 end
 
 ---Close all debug windows.

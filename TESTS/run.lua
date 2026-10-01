@@ -61,6 +61,7 @@ local specs = {
   "markdown_spec.lua",
   "bindings_spec.lua",
   "views_spec.lua",
+  "views_recent_spec.lua",
   "capture_spec.lua",
   "health_spec.lua",
 }

@@ -157,16 +157,20 @@ return function(H)
 
       vim.cmd("vsplit")
       local tagged_win = vim.api.nvim_get_current_win()
-      window_tag.set(tagged_win, "messages")
+      window_tag.set(tagged_win, "recent_messages")
       vim.cmd("vsplit")
       local other_win = vim.api.nvim_get_current_win()
 
       H.eq(
-        display.find_window_by_tag("messages"),
+        display.find_window_by_tag("recent_messages"),
         tagged_win,
         "display.find_window_by_tag: finds it"
       )
-      H.eq(display.get_window_tag(tagged_win), "messages", "display.get_window_tag: reads it back")
+      H.eq(
+        display.get_window_tag(tagged_win),
+        "recent_messages",
+        "display.get_window_tag: reads it back"
+      )
       H.eq(display.get_window_tag(other_win), nil, "display.get_window_tag: untagged window is nil")
 
       display.clear_all()
