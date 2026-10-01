@@ -64,8 +64,8 @@ return function(H)
         height = 3,
       })
       package.loaded["lib.nvim.output.viewer"] = {
-        show_lines = function(title, lines)
-          dumped = { title = title, lines = lines }
+        show_lines = function(title, lines, opts)
+          dumped = { title = title, lines = lines, opts = opts }
           return { winid = fallback_winid, bufnr = fallback_bufnr }
         end,
       }
@@ -77,6 +77,13 @@ return function(H)
       ok(dumped ~= nil, "no ui.kit: falls back to lib.nvim.output.viewer.show_lines")
       eq(dumped.lines[1], "(no messages)", "fallback: empty snapshot shows the placeholder line")
       ok(#seen > 0, "fallback: notifies that live updates/pagination are unavailable")
+
+      -- A 1-line snapshot ("(no messages)" or a single entry) must still ask
+      -- for at least a 2-row window -- lib.nvim.window.tag.find() requires
+      -- height > 1 strictly, so a literal height=1 window would be tagged
+      -- but never findable, silently defeating the tagging above.
+      ok(dumped.opts ~= nil, "show_lines was called with an opts table")
+      ok(dumped.opts.height >= 2, "height is floored at 2 even for a 1-line snapshot")
 
       -- The fallback window must be tagged too -- otherwise display.clear_all()
       -- (the `<x>` cleanup) and M.show()'s own reuse check silently don't see
