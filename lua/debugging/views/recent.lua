@@ -94,7 +94,14 @@ function M.show(filter)
     if #lines == 0 then
       lines = { "(no messages)" }
     end
-    local surf = require("lib.nvim.output.viewer").show_lines(FILTER_TITLE[filter], lines)
+    -- height floored at 2: lib.nvim.window.tag.find() requires height > 1
+    -- strictly, and a sparse snapshot (0-1 entries -- the common case for
+    -- the error filter) would otherwise open a legitimate but invisible-to-
+    -- find() 1-row window, silently defeating both the reuse check above
+    -- and display.clear_all()'s <x> cleanup.
+    local surf = require("lib.nvim.output.viewer").show_lines(FILTER_TITLE[filter], lines, {
+      height = math.max(2, #lines),
+    })
     if surf then
       window_tag.set(surf.winid, tag, surf.bufnr)
     end
