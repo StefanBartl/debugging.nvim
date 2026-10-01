@@ -12,11 +12,17 @@
 --- unreachable now (nothing produces those tags anymore) but harmless --
 --- left in place rather than also ripped out, since `clear_all()`/
 --- `find_window_by_tag`/`get_window_tag` stay genuinely used.
+---
+--- Focus/scroll-to-bottom now comes from `lib.nvim.window.focus_helpers`
+--- directly -- this module used to carry its own copy of those primitives
+--- in `views/utils.lua` (ensure_bottom/make_focusable/force_focus/
+--- reveal_at_bottom), duplicating what lib.nvim already had. `utils.lua`
+--- now only keeps `is_target_view`, which has no lib.nvim equivalent.
 
 local notify = require("lib.nvim.notify").create("[debugging.views.display]")
 local window_tag = require("lib.nvim.window").tag
+local focus_helpers = require("lib.nvim.window.focus_helpers")
 
-local utils = require("debugging.views.utils")
 local api = vim.api
 
 local M = {}
@@ -75,7 +81,10 @@ function M.refresh_log_view(win, tag, timings)
       end
       return
     end
-    utils.reveal_at_bottom(win, timings.attempts, timings.retry_delay_ms)
+    focus_helpers.reveal_at_bottom(
+      win,
+      { attempts = timings.attempts, retry_delay_ms = timings.retry_delay_ms }
+    )
   end, 50)
 end
 
