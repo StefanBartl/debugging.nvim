@@ -1,8 +1,10 @@
 -- TESTS/views_spec.lua
 -- Covers `debugging.views` (the setup()/getter merge logic, not the
 -- command-executing action functions -- see TESTS/README.md), `views.utils`
--- (the window focus/scroll primitives), `views.display`'s `clear_all` and
--- tag-lookup wrappers, and `views.capture.clipboard` (stubbed against a fake
+-- (now just `is_target_view` -- the window focus/scroll primitives it used
+-- to duplicate moved to lib.nvim.window.focus_helpers, tested there),
+-- `views.display`'s `clear_all` and tag-lookup wrappers, and
+-- `views.capture.clipboard` (stubbed against a fake
 -- `lib.nvim.cross.copy_to_clipboard`).
 
 return function(H)
@@ -98,55 +100,6 @@ return function(H)
         false,
         "utils.is_target_view: an unrelated filetype is false"
       )
-
-      vim.cmd("vsplit")
-      local win = vim.api.nvim_get_current_win()
-      vim.api.nvim_win_set_buf(win, msg_buf)
-      vim.api.nvim_buf_set_lines(msg_buf, 0, -1, false, { "one", "two", "three" })
-      vim.api.nvim_win_set_cursor(win, { 1, 0 })
-
-      utils.ensure_bottom(win, 1, 10)
-      H.eq(
-        vim.api.nvim_win_get_cursor(win)[1],
-        3,
-        "utils.ensure_bottom: cursor moves to the last line"
-      )
-
-      local floating = vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), false, {
-        relative = "editor",
-        row = 0,
-        col = 0,
-        width = 10,
-        height = 3,
-        focusable = false,
-      })
-      H.eq(utils.make_focusable(floating), true, "utils.make_focusable: reports success")
-      H.eq(
-        vim.api.nvim_win_get_config(floating).focusable,
-        true,
-        "utils.make_focusable: actually flips a non-focusable float to focusable"
-      )
-      vim.api.nvim_win_close(floating, true)
-
-      H.eq(utils.force_focus(win), true, "utils.force_focus: switches to a valid window")
-      H.eq(vim.api.nvim_get_current_win(), win, "utils.force_focus: the window is now current")
-
-      H.eq(utils.force_focus(999999), false, "utils.force_focus: an invalid window reports failure")
-      H.eq(
-        utils.make_focusable(999999),
-        false,
-        "utils.make_focusable: an invalid window reports failure"
-      )
-
-      vim.api.nvim_win_set_cursor(win, { 1, 0 })
-      utils.reveal_at_bottom(win, 1, 10)
-      H.eq(
-        vim.api.nvim_win_get_cursor(win)[1],
-        3,
-        "utils.reveal_at_bottom: also moves cursor to bottom"
-      )
-
-      vim.cmd("only")
     end
 
     -- =================================================================== display
