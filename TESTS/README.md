@@ -13,16 +13,21 @@ all places where a silent wrong answer is plausible.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
+bash scripts/test.sh                 # every spec
+bash scripts/test.sh --file config   # only spec files whose name contains "config"
+bash scripts/test.sh --json ir.json  # also write the machine-readable result
 ```
 
-The runner prints one line per spec and exits non-zero if any spec failed
+The suite is run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+(configured in `.testing.lua`, dialect `h`: the specs run on `TESTS/harness.lua`).
+It prints one line per spec and exits non-zero if any spec failed
 (`DEBUGGING_TESTS_OK` on success).
 
 [lib.nvim](https://github.com/StefanBartl/lib.nvim) is a hard dependency —
-every module requires `lib.nvim.notify` at load time. The runner looks for it
-in `$LIB_NVIM_PATH`, then `../lib.nvim`, then the lazy.nvim install dir, and
-aborts if none of them has it.
+every module requires `lib.nvim.notify` at load time. `scripts/test.sh` looks
+for it (and for testing.nvim) in `$LIB_NVIM_DIR` / `$TESTING_NVIM_DIR`, then
+`.deps/<name>`, then `../<name>`, then the lazy.nvim install dir, and exits 1
+naming all four places if one is missing.
 
 ## Layout
 
@@ -46,7 +51,7 @@ aborts if none of them has it.
 | `views_recent_spec.lua`       | `views/recent.lua`: filter -> `lib.nvim.messages.snapshot()` levels mapping (all/non_error/error), the real fallback branch (ui.kit genuinely absent from this suite's rtp) vs. a stubbed `ui.kit.message_log` path, window-tag reuse (focus instead of reopening), the live `on_message` listener respecting the filter, `load_more` wiring, and unsubscribe-on-close. Both `lib.nvim.messages` and `debugging.views` are stubbed -- their own logic has its own suites (lib.nvim, `views_spec.lua`). |
 | `capture_spec.lua`            | `views/capture/init.lua`: every Noice retrieval strategy (manager/history/buffer/api.status, each faked), the real `:messages` fallback, the empty-content guard, and the save_file/clipboard sinks. |
 | `health_spec.lua`             | `health.lua`: one narrow regression guard (see below) for the composer pre-flight crash — not full coverage of the declarative reporter, see "Deliberately left untested".         |
-| `run.lua`                     | Runner: resolves lib.nvim, loads each spec, reports results, sets exit code.                                                                                                         |
+| `minimal_init.lua`            | Runtimepath for child runs: this plugin plus testing.nvim and lib.nvim; fatal when a dependency is missing.                                                                          |
 
 ## Coverage
 
@@ -184,8 +189,8 @@ justify changing without the author's input:
 ## Adding a spec
 
 Create `<name>_spec.lua` returning `function(H) … end` (use `H.eq` / `H.ok` /
-`H.match` / `H.eq_list`) and add its filename to the `specs` list in
-`run.lua`. Compare paths with `H.realpath()` on both sides rather than
+`H.match` / `H.eq_list`); testing.nvim discovers every `*_spec.lua` under
+`TESTS/` by itself. Compare paths with `H.realpath()` on both sides rather than
 `vim.fs.normalize`, which does not resolve the macOS `/var` symlink.
 
 Two conventions worth keeping:

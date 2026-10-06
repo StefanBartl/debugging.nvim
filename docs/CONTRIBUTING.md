@@ -67,8 +67,9 @@ require("debugging").setup({})
 
 ## Tests
 
-`TESTS/` is a [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
-busted-style suite. [GitHub Actions](../.github/workflows/ci.yml) runs it on
+`TESTS/` is a headless suite on its own `TESTS/harness.lua`, run by
+[testing.nvim](https://github.com/StefanBartl/testing.nvim) via
+`bash scripts/test.sh` (see `TESTS/README.md`). [GitHub Actions](../.github/workflows/ci.yml) runs it on
 every push and PR to `main`.
 
 ## Workflow
