@@ -13,5 +13,19 @@ return {
   deps = { "lib.nvim" },
   -- "none" = all specs in one nvim, "file" = one nvim per spec file
   -- (nothing leaks from one file into the next).
-  isolated = "none",
+  isolated = "file",
+  -- Guards (docs/GUARDS.md of testing.nvim): the suite is clean under every one of them with the
+  -- per-file isolation above (setup() state, plugin-owned log/capture dirs and the clipboard job
+  -- die with the child), so all of them fail the run.
+  guards = {
+    fs = "error",
+    state = "error",
+    scheduled_error = "error",
+    prompt = "error",
+    deprecation = "error",
+    process_net = "error",
+  },
+  -- Nothing legitimate needs an allowlist: no spec spawns a foreign executable or opens a socket,
+  -- and writes below the child's own stdpath() sandbox are not findings.
+  guard_allow = { fs = {}, spawn = {}, network = {} },
 }
