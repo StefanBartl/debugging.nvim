@@ -126,8 +126,24 @@ return function(H)
     H.eq_list(ts, { "true", "false" }, "complete: indent treesitter booleans")
   end)
 
+  -- Every `:Debug` route carries a description (composer option float, docs).
+  local ok_desc, err_desc = pcall(function()
+    require("debugging").setup({ features = { neotree = true } })
+    local handle = require("lib.nvim.bindings.usercmd.composer").registry().Debug
+    local bare = {}
+    for _, route in ipairs(handle:spec().routes) do
+      if not route.desc or route.desc == "" then
+        bare[#bare + 1] = table.concat(route.path, " ")
+      end
+    end
+    H.eq(table.concat(bare, ", "), "", "every :Debug route has a description")
+  end)
+
   vim.notify = orig_notify
   if not ok then
     error(err, 0)
+  end
+  if not ok_desc then
+    error(err_desc, 0)
   end
 end

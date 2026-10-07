@@ -54,6 +54,11 @@ local HANDLE_ARG = {
 }
 
 ---@internal
+--- One-line text per route (`"<category> <action>"`), for the composer option float.
+---@type table<string, string>
+local descs = require("debugging.command_descs")
+
+---@internal
 ---Build one composer route per enabled category/action, all dispatching
 --- through the unchanged commands.dispatch(ctx.raw.fargs).
 ---@param commands table  the `debugging.commands` module
@@ -70,6 +75,7 @@ local function build_routes(commands)
         -- Free-form categories (dump, health): :Debug {category} [arg]
         routes[#routes + 1] = {
           path = { category },
+          desc = descs[category],
           args = { { name = "arg", type = "STRING", optional = true } },
           run = dispatch_route,
         }
@@ -107,6 +113,7 @@ local function build_routes(commands)
           end
           routes[#routes + 1] = {
             path = { category, action },
+            desc = descs[category .. " " .. action],
             args = args,
             run = dispatch_route,
           }
