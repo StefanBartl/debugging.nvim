@@ -126,17 +126,36 @@ return function(H)
     H.eq_list(ts, { "true", "false" }, "complete: indent treesitter booleans")
   end)
 
-  -- Every `:Debug` route carries a description (composer option float, docs).
+  -- Every `:Debug` route carries a description (composer option float, docs), and every
+  -- text belongs to a route. The registry lists all categories whatever the feature
+  -- flags say, so the opt-in ones (neotree) are covered too.
   local ok_desc, err_desc = pcall(function()
-    require("debugging").setup({ features = { neotree = true } })
-    local handle = require("lib.nvim.bindings.usercmd.composer").registry().Debug
-    local bare = {}
-    for _, route in ipairs(handle:spec().routes) do
-      if not route.desc or route.desc == "" then
-        bare[#bare + 1] = table.concat(route.path, " ")
+    local descs = require("debugging.command_descs")
+    local expected = {}
+    for category, entry in pairs(require("debugging.commands").registry()) do
+      if entry.run.__default then
+        expected[category] = true
+      else
+        for _, action in ipairs(entry.actions) do
+          expected[category .. " " .. action] = true
+        end
       end
     end
+    local bare, dead = {}, {}
+    for key in pairs(expected) do
+      if not descs[key] then
+        bare[#bare + 1] = key
+      end
+    end
+    for key in pairs(descs) do
+      if not expected[key] then
+        dead[#dead + 1] = key
+      end
+    end
+    table.sort(bare)
+    table.sort(dead)
     H.eq(table.concat(bare, ", "), "", "every :Debug route has a description")
+    H.eq(table.concat(dead, ", "), "", "command_descs.lua has no entry without a route")
   end)
 
   vim.notify = orig_notify
