@@ -19,7 +19,7 @@ prose, with the reasoning behind each part.
 | `indent` | `show` · `treesitter [true\|false]` | Print indent options / prefer Tree-sitter indent |
 | `markdown` | `inline` · `log` | Gather markdown inline-highlight debug info / open the log |
 | `module` | `reload` | Reload the Lua module of the current buffer |
-| `proc` | `start [threshold_ms]` · `stop` · `status` · `log` · `watch [seconds]` | Diagnose UI freezes: log slow `system()`/`jobstart` calls with tracebacks, plus an external process-tree watcher (Windows) |
+| `proc` | `start [threshold_ms]` · `stop` · `status` · `log` · `watch [seconds]` | Diagnose UI freezes: log the duration of `system()`/`jobstart` calls (a traceback for slow ones), plus an external process-tree watcher (Windows) |
 | `performance` | `startup [runs]` | Benchmark startup time (`--startuptime`) and list the slowest sourced scripts |
 | `neotree` | `status` · `exit` · `restart` · `backup-*` · `dryrun-*` · `queue-*` | Neo-tree safety bridge (opt-in, config-specific) |
 | `neotest` | `adapters` · `state` · `file` · `root` · `framework` · `discover` | Why is neotest not finding my tests: configured vs registered adapters, the current buffer's tree, which adapter claims the file, the roots they derive, the cwd's framework markers, discovered position counts |
@@ -38,17 +38,17 @@ prose, with the reasoning behind each part.
 :Debug autocmds sources event=BufWritePre sort=event   " static source audit
 :Debug autocmds sources qf=true       " send call sites to the quickfix list
 :Debug autocmds all              " combined sources-vs-runtime view + diff
-:Debug inspect buffer           " inspect current buffer options
+:Debug inspect buffer           " inspect current buffer options (or a buffer number, <Tab> lists them)
 :Debug inspect window           " inspect current window options
 :Debug inspect tab 2            " inspect tab page #2 (windows + buffers)
 :Debug cursor state             " cursor / window / buffer state
 :Debug dump my_global           " dump a global var (or word under cursor)
 :Debug keylogger start          " log keys in the current terminal buffer
 :Debug keylogger start ~/keys.log  " …and also append them to a file
-:Debug indent treesitter false  " restore cindent/smartindent
+:Debug indent treesitter false  " turn cindent/smartindent on
 :Debug markdown inline          " gather markdown inline-highlight debug
 :Debug module reload            " reload Lua module of the current buffer
-:Debug proc start 200           " start logging system()/jobstart calls ≥200ms
+:Debug proc start 200           " log system()/jobstart durations, tracebacks from 200ms
 :Debug proc stop                " stop and restore the wrapped functions
 :Debug proc log                 " open the log
 :Debug proc watch 60            " (Windows) external process-tree watcher, 60s

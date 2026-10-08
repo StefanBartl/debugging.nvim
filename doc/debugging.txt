@@ -220,7 +220,7 @@ keylogger ~
 indent ~
   `show`                  Print indentation-related buffer options.
   `treesitter [true|false]`  Prefer Tree-sitter indent (disable cindent/
-                             smartindent), or restore with `false`.
+                             smartindent), or turn both on with `false`.
 
 markdown ~
   `inline`   Gather markdown inline-highlight debug information.
@@ -282,8 +282,9 @@ plugin spawning far more processes than expected).
 Two complementary layers:
 
   1. `proc start/stop/status/log` wraps the process-spawning Lua APIs (see
-     `proc` under |debugging-categories| above) and logs slow calls with a
-     full stack traceback — which plugin/config line triggered it.
+     `proc` under |debugging-categories| above) and logs the duration of
+     every call, with a full stack traceback for slow ones — which
+     plugin/config line triggered it.
   2. `proc watch [seconds]` (Windows only) drives an external PowerShell
      script that polls the Win32 process tree directly, catching spawns that
      never go through `vim.fn.*`/`vim.system` (LSP servers, etc.).

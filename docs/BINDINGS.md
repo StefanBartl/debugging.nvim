@@ -52,14 +52,14 @@ by `config.features.*`.
 | `:Debug autocmds runtime [event] [pat]` | Live `nvim_get_autocmds()` view |
 | `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=][qf=]` | Static source-code audit of `nvim_create_autocmd` call sites (Tree-sitter parser with text fallback; cached per root; `refresh=true` forces a rescan; `qf=true` sends `path:line` to the quickfix list) |
 | `:Debug autocmds all [root=][refresh=][event=]` | Combined view: where each event is defined (sources) vs currently registered (runtime), plus a runtime-only diff |
-| `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state. `[bufnr]` completes against the loaded buffers. |
+| `:Debug inspect buffer [bufnr]` | Inspect buffer-scoped options and state. `[bufnr]` is a buffer number and completes against the existing buffers. |
 | `:Debug inspect window [winid]` | Inspect window-scoped options and state |
 | `:Debug inspect tab [tabnr]` | Inspect a tab page's windows and their buffers |
 | `:Debug cursor state` | Print cursor / window / buffer state |
 | `:Debug dump [varname]` | Recursively dump a global Lua var (or word under cursor) |
 | `:Debug keylogger start [file]\|stop` | Log keys pressed in the current terminal buffer (optionally append to a file). `[file]` gets path completion — the file need not exist yet; the directory part completes on the way there. |
 | `:Debug indent show` | Print indentation-related buffer options |
-| `:Debug indent treesitter [true\|false]` | Prefer Tree-sitter indent, or restore with false |
+| `:Debug indent treesitter [true\|false]` | Prefer Tree-sitter indent, or turn cindent/smartindent on with false |
 | `:Debug markdown inline` | Gather markdown inline-highlight debug info |
 | `:Debug markdown log` | Open the most recent markdown debug log |
 | `:Debug module reload` | Reload the Lua module of the current buffer |
