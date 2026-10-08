@@ -102,7 +102,10 @@ require("debugging").setup({
 
 The action names are `messages`, `noice_all`, `noice_errors`, `capture`,
 `capture_file`, `capture_clipboard` and `clear` — the same names listed in the
-[bindings cheatsheet](BINDINGS.md#default-keymaps).
+[bindings cheatsheet](BINDINGS.md#default-keymaps). Those seven are the only
+action keys `views.keymaps` accepts besides `enable` and `prefix`; a misspelled
+one (`mesages = "<F12>"`) is ignored with a warning that names the nearest
+action, like any other unknown option (see [Validation](#validation)).
 
 ## Recent-messages popup
 

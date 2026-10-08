@@ -43,15 +43,9 @@ function M.setup(km)
   local spec = {
     prefix = prefix,
     which_key = { group = "Debug" },
-    order = {
-      "messages",
-      "noice_all",
-      "noice_errors",
-      "capture",
-      "capture_file",
-      "capture_clipboard",
-      "clear",
-    },
+    -- Shared with the config schema: `views.keymaps.<action>` is only an
+    -- accepted option for the names in this list.
+    order = require("debugging.config.KEYMAP_ACTIONS"),
     actions = {
       -- Delegate to debugging.views' own action functions (single source of
       -- truth, shared with the :Debug dispatcher) rather than calling

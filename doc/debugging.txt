@@ -90,6 +90,8 @@ packer.nvim: >lua
       safety     = "config.neotree.safety",
     },
     views = {
+      -- one key per action is also accepted: messages = "<F12>", capture = { "<F9>", "..." },
+      -- clear = false (names: docs/configuration.md, "Views keymaps")
       keymaps  = { enable = true, prefix = "<lt>" },
       autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
       timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3,

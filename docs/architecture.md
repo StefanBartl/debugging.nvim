@@ -9,6 +9,8 @@ lua/debugging/
   @types/init.lua             LuaLS type definitions
   config/
     DEFAULTS.lua              Immutable defaults
+    KEYMAP_ACTIONS.lua        Names of the views keymap actions (config schema
+                              and bindings/keymaps.lua read the same list)
     init.lua                  Merge + access to active config
   commands.lua                :Debug dispatch + two-level completion (logic only)
   health.lua                  :checkhealth debugging

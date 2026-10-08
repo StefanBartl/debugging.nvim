@@ -65,6 +65,13 @@ local KNOWN = {
   all = true, -- back-compat: bare `all = true` activates every feature category
 }
 
+-- `views.keymaps` also takes one entry per keymap action (`messages = "<F12>"`,
+-- a list of keys, or `false`), see docs/configuration.md. The names come from
+-- the list `debugging.bindings.keymaps` declares its actions from.
+for _, action in ipairs(require("debugging.config.KEYMAP_ACTIONS")) do
+  KNOWN.views.keymaps[action] = true
+end
+
 ---@internal
 ---`key` with the nearest known one as a hint when there is a plausible one.
 ---@param key any

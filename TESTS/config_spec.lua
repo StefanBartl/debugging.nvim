@@ -115,6 +115,86 @@ return function(H)
   require("debugging.bindings").setup(config.get())
   H.eq(#vim.api.nvim_get_keymap("n"), before, "config: keymaps = false registers no keymap")
 
+  -- Per-action keymap overrides (docs/configuration.md, "Views keymaps"): a key per action name,
+  -- an lhs, a list of them, or `false`. They used to be reported as unknown options and dropped,
+  -- because the schema knew `enable` and `prefix` only -- the keymap registry that consumes them
+  -- never saw one. The example is the one the documentation shows.
+  local actions = require("debugging.config.KEYMAP_ACTIONS")
+  config.setup({
+    views = {
+      keymaps = {
+        enable = true,
+        prefix = "<leader>d",
+        messages = "<F12>",
+        capture = { "<leader>dc", "<F9>" },
+        capture_clipboard = false,
+      },
+    },
+  })
+  local km = config.get().views.keymaps
+  H.eq(#config.issues(), 0, "config: the documented keymap action keys are no issue")
+  H.eq(km.prefix, "<leader>d", "config: prefix is kept beside the action keys")
+  H.eq(km.messages, "<F12>", "config: an lhs for one action reaches the merged config")
+  H.eq_list(km.capture, { "<leader>dc", "<F9>" }, "config: a list of lhs for one action is kept")
+  H.eq(km.capture_clipboard, false, "config: false (no key for this action) is kept")
+  H.eq(km.noice_all, nil, "config: an action that was not named is not invented")
+
+  -- Every action name is accepted, with each of the three value shapes.
+  for _, action in ipairs(actions) do
+    for _, value in ipairs({ "<F5>", { "<F5>", "<F6>" }, false }) do
+      config.setup({ views = { keymaps = { [action] = value } } })
+      H.eq(
+        #config.issues(),
+        0,
+        "config: views.keymaps." .. action .. " = " .. vim.inspect(value) .. " is accepted"
+      )
+    end
+  end
+
+  -- A mistyped action name is still reported, with the nearest real one.
+  config.setup({ views = { keymaps = { mesages = "<F12>" } } })
+  H.eq(config.get().views.keymaps.mesages, nil, "config: a mistyped action key does not apply")
+  H.match(
+    config.issues()[1],
+    "unknown option 'views.keymaps.mesages'",
+    "config: a mistyped action key is reported with its full path"
+  )
+  H.match(
+    config.issues()[1],
+    "did you mean 'views.keymaps.messages'",
+    "config: a mistyped action key hints the nearest action"
+  )
+
+  -- The list the schema reads and the actions the keymap registry declares are the same set, in
+  -- both directions: an action added to bindings/keymaps.lua without its name in the list (the
+  -- state in which an override of it is dropped as unknown) fails here.
+  config.setup({
+    views = { keymaps = { enable = true, prefix = "<leader>d", messages = "<F12>", clear = false } },
+  })
+  require("debugging.views").setup(config.get().views)
+  local bound =
+    require("debugging.bindings.keymaps").setup(require("debugging.views").get_keymaps_config())
+  local declared, lhs_of = {}, {}
+  for _, entry in ipairs(bound) do
+    declared[entry.name] = true
+    if entry.lhs then
+      lhs_of[entry.name] = lhs_of[entry.name] or {}
+      table.insert(lhs_of[entry.name], entry.lhs)
+      pcall(vim.keymap.del, entry.mode, entry.lhs)
+    end
+  end
+  local listed = {}
+  for _, action in ipairs(actions) do
+    listed[action] = true
+    H.ok(declared[action], "config: action '" .. action .. "' is declared by bindings.keymaps")
+  end
+  for name in pairs(declared) do
+    H.ok(listed[name], "config: declared action '" .. name .. "' is in KEYMAP_ACTIONS")
+  end
+  H.eq_list(lhs_of.messages, { "<F12>" }, "config: the override reaches the keymap registry")
+  H.eq(lhs_of.clear, nil, "config: clear = false binds no key for that action")
+  H.eq_list(lhs_of.noice_all, { "<leader>dn" }, "config: an unnamed action keeps its prefix key")
+
   -- A clean setup() reports no issues.
   config.setup({ features = { views = false } })
   H.eq(#config.issues(), 0, "config: valid setup() reports no issues")
