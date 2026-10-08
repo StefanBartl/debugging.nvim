@@ -10,10 +10,12 @@
 ---
 --- Types: the handle-taking actions used to share a generic `STRING` slot, which completed nothing -- and a window or
 --- buffer id is unguessable, so the only way to supply one was to run `:echo win_getid()` first. They now use the
---- composer type that can enumerate their values. `proc` thresholds and `performance startup` run counts take values
---- this plugin does not enumerate, so a completer there would have nothing true to offer: they stay `STRING`.
---- `keylogger start` writes a file, so file completion is the right one even though the file does not exist yet --
---- it completes the directory part on the way there.
+--- composer type that can enumerate their values: `WINDOW` for window ids, `DBG_BUFNR` (registered in
+--- `debugging.bindings.usercmds`) for buffer numbers -- not the stock `BUFFER`, which completes basenames that
+--- `inspect buffer` rejects, because the handler reads a number. `proc` thresholds and `performance startup`
+--- run counts take values this plugin does not enumerate, so a completer there would have nothing true to
+--- offer: they stay `STRING`. `keylogger start` writes a file, so file completion is the right one even though
+--- the file does not exist yet -- it completes the directory part on the way there.
 
 ---@type table<string, Lib.UserCmd.Composer.ArgSpec[]>
 return {
@@ -61,14 +63,14 @@ return {
       desc = "Prefer Tree-sitter indent in the current buffer (default: true)",
       enum_desc = {
         ["true"] = "turn cindent and smartindent off",
-        ["false"] = "turn cindent and smartindent on again",
+        ["false"] = "turn cindent and smartindent on",
       },
     },
   },
   ["inspect buffer"] = {
     {
       name = "bufnr",
-      type = "BUFFER",
+      type = "DBG_BUFNR",
       optional = true,
       desc = "Buffer number to inspect (default: current buffer)",
     },

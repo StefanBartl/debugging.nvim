@@ -40,6 +40,31 @@ composer.register_type("DBG_AUTOCMD_EXPR", {
   end,
 })
 
+-- `inspect buffer` takes a buffer *number* and nothing else (`commands.parse_id`). The stock BUFFER type
+-- completes basenames and validates by name, so it offers values the handler then rejects; this one offers and
+-- accepts exactly the numbers the handler can use, the way WINDOW does for window ids. Every buffer is a valid
+-- target (the inspector reports `loaded`), so unloaded and unlisted ones are offered too.
+composer.register_type("DBG_BUFNR", {
+  desc = "Buffer number",
+  validate = function(raw)
+    local n = tonumber(raw)
+    if n and n == math.floor(n) and vim.api.nvim_buf_is_valid(n) then
+      return true, n, nil
+    end
+    return false, nil, ("'%s' is not a valid buffer number"):format(raw)
+  end,
+  complete = function(arg_lead)
+    local out = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local candidate = tostring(buf)
+      if vim.startswith(candidate, arg_lead) then
+        out[#out + 1] = candidate
+      end
+    end
+    return out
+  end,
+})
+
 ---@internal
 --- One-line text per route (`"<category> <action>"`), for the composer option float.
 ---@type table<string, string>
