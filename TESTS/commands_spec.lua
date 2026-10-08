@@ -126,21 +126,29 @@ return function(H)
     H.eq_list(ts, { "true", "false" }, "complete: indent treesitter booleans")
   end)
 
-  -- Every `:Debug` route carries a description (composer option float, docs), and every
-  -- text belongs to a route. The registry lists all categories whatever the feature
-  -- flags say, so the opt-in ones (neotree) are covered too.
-  local ok_desc, err_desc = pcall(function()
-    local descs = require("debugging.command_descs")
-    local expected = {}
+  -- The key of every `:Debug` route: "<category> <action>", or "<category>" for a free-form
+  -- one. The registry lists all categories whatever the feature flags say, so the opt-in ones
+  -- (neotree) are covered too.
+  ---@return table<string, true>
+  local function route_keys()
+    local keys = {}
     for category, entry in pairs(require("debugging.commands").registry()) do
       if entry.run.__default then
-        expected[category] = true
+        keys[category] = true
       else
         for _, action in ipairs(entry.actions) do
-          expected[category .. " " .. action] = true
+          keys[category .. " " .. action] = true
         end
       end
     end
+    return keys
+  end
+
+  -- Every `:Debug` route carries a description (composer option float, docs), and every
+  -- text belongs to a route.
+  local ok_desc, err_desc = pcall(function()
+    local descs = require("debugging.command_descs")
+    local expected = route_keys()
     local bare, dead = {}, {}
     for key in pairs(expected) do
       if not descs[key] then
@@ -158,11 +166,76 @@ return function(H)
     H.eq(table.concat(dead, ", "), "", "command_descs.lua has no entry without a route")
   end)
 
+  -- Every positional argument of a `:Debug` route says what it is in the composer option float.
+  -- `command_args.lua` holds them (a route that is not listed there takes no argument), each text
+  -- is one line without a closing full stop, and every entry belongs to a route.
+  local ok_args, err_args = pcall(function()
+    local args = require("debugging.command_args")
+    local argtypes = require("lib.nvim.bindings.usercmd.composer.argtypes")
+    local expected = route_keys()
+
+    local dead = {}
+    for key in pairs(args) do
+      if not expected[key] then
+        dead[#dead + 1] = key
+      end
+    end
+    table.sort(dead)
+    H.eq(table.concat(dead, ", "), "", "command_args.lua has no entry without a route")
+
+    ---@param label string
+    ---@param text any
+    local function check_text(label, text)
+      H.ok(type(text) == "string" and text ~= "", label .. ": has a text")
+      if type(text) == "string" then
+        H.ok(not text:find("[\r\n]"), label .. ": the text is one line")
+        H.ok(not text:find("%.$"), label .. ": the text has no closing full stop")
+        H.ok(#text >= 12 and #text <= 80, label .. ": the text is 12 to 80 characters long")
+      end
+    end
+    local texts = 0
+    for key, specs in pairs(args) do
+      for _, spec in ipairs(specs) do
+        local label = ("%s <%s>"):format(key, spec.name)
+        -- the type's own text stands in for an argument without one (`autocmds all`)
+        local text = spec.desc or argtypes.get(spec.type).desc
+        check_text(label, text)
+        texts = texts + 1
+        for value, value_text in pairs(spec.enum_desc or {}) do
+          H.ok(
+            vim.tbl_contains(spec.enum or spec.values or {}, value),
+            label .. ": enum_desc names '" .. value .. "', which is not one of its values"
+          )
+          H.ok(
+            not value_text:find("%.$") and not value_text:find("[\r\n]"),
+            label .. ": enum_desc '" .. value .. "' is one line"
+          )
+        end
+      end
+    end
+    H.ok(texts >= 10, "command_args.lua carries the arguments of the routes, saw " .. texts)
+
+    -- A lib.nvim older than `help.undocumented` cannot answer the question; that is a missing
+    -- feature of the dependency, not a defect of this plugin.
+    local composer = require("lib.nvim.bindings.usercmd.composer")
+    if type(composer.help.undocumented) ~= "function" then
+      return
+    end
+    local missing = {}
+    for _, m in ipairs(composer.help.undocumented("Debug", { args = true })) do
+      missing[#missing + 1] = ("%s <%s>"):format(m.route, m.name)
+    end
+    H.eq(table.concat(missing, ", "), "", "every :Debug argument has a help text")
+  end)
+
   vim.notify = orig_notify
   if not ok then
     error(err, 0)
   end
   if not ok_desc then
     error(err_desc, 0)
+  end
+  if not ok_args then
+    error(err_args, 0)
   end
 end
