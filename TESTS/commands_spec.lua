@@ -215,9 +215,52 @@ return function(H)
     end
     H.ok(texts >= 10, "command_args.lua carries the arguments of the routes, saw " .. texts)
 
+    -- The routes the command was built from carry exactly these slots and texts. The checks above
+    -- read the files, and `undocumented` below only sees slots that exist, so a route that lost its
+    -- slot or its text in `usercmds.build_routes` would otherwise ship green.
+    local composer = require("lib.nvim.bindings.usercmd.composer")
+    local descs = require("debugging.command_descs")
+    local built = {}
+    for _, route in ipairs(composer.registry().Debug:spec().routes) do
+      local key = table.concat(route.path, " ")
+      built[key] = true
+      H.eq(route.desc, descs[key], key .. ": the route carries its description")
+      if args[key] then
+        H.ok(
+          vim.deep_equal(route.args, args[key]),
+          key .. ": the route carries the slots of command_args.lua"
+        )
+      else
+        H.eq(route.args, nil, key .. ": the route takes no slot")
+      end
+    end
+    -- a listed route of an enabled category exists, so the loop above cannot pass by seeing nothing
+    local registry = commands.registry()
+    for key in pairs(args) do
+      if commands.enabled(registry[key:match("^%S+")]) then
+        H.ok(built[key], key .. ": the route is built")
+      end
+    end
+
+    -- A token beyond a route's slots still reaches the dispatcher, which ignores what it does not read.
+    H.ok(built["messages show"], "fixture: messages show is a built route")
+    local orig_dispatch, reached = commands.dispatch, nil
+    -- A test double over a module field: replacing it is the point of the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    commands.dispatch = function(fargs)
+      reached = fargs
+    end
+    local ran, run_err = pcall(vim.cmd, "Debug messages show foo")
+    commands.dispatch = orig_dispatch
+    H.ok(ran, "a stray token does not fail the command: " .. tostring(run_err))
+    H.eq(
+      table.concat(reached or {}, " "),
+      "messages show foo",
+      "a stray token is dispatched as typed"
+    )
+
     -- A lib.nvim older than `help.undocumented` cannot answer the question; that is a missing
     -- feature of the dependency, not a defect of this plugin.
-    local composer = require("lib.nvim.bindings.usercmd.composer")
     if type(composer.help.undocumented) ~= "function" then
       return
     end
