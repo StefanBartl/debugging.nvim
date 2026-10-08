@@ -139,6 +139,26 @@ local function sanitize(user_opts)
   return clean, issues
 end
 
+---@internal
+---`views.keymaps = false` is the conventional "none of these" spelling (REL-20);
+---write it as the group table (`{ enable = false }`, `true` -> `{}`) the rest of
+---the code reads, without touching the caller's table.
+---@param user_opts table
+---@return table
+local function spell_out_switches(user_opts)
+  local views = user_opts.views
+  if type(views) ~= "table" then
+    return user_opts
+  end
+  local out = vim.deepcopy(user_opts)
+  for _, key in ipairs({ "keymaps", "autocmds" }) do
+    if type(views[key]) == "boolean" then
+      out.views[key] = require("lib.nvim.normalize").normalize_switch_group(views[key])
+    end
+  end
+  return out
+end
+
 ---Merge user options over the defaults and store the result.
 --- Back-compat: a bare `all = true` activates every feature category.
 ---
@@ -151,6 +171,7 @@ function M.setup(user_opts)
     user_opts = {}
   end
 
+  user_opts = spell_out_switches(user_opts)
   local clean, issues = sanitize(user_opts)
   _issues = issues
   if #issues > 0 then
