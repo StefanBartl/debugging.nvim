@@ -99,6 +99,22 @@ return function(H)
   )
   H.match(config.issues()[1], "option 'views' must be a table", "config: type mismatch recorded")
 
+  -- `views.keymaps = false` / `views.autocmds = false` mean { enable = false }
+  -- (REL-20); `true` keeps the defaults; the caller's table is not touched.
+  local given = { views = { keymaps = false, autocmds = true } }
+  config.setup(given)
+  H.eq(config.get().views.keymaps.enable, false, "config: keymaps = false switches the keymaps off")
+  H.eq(config.get().views.autocmds.enable, true, "config: autocmds = true keeps the defaults")
+  H.eq(config.get().views.keymaps.prefix, "<lt>", "config: the switch keeps the other defaults")
+  H.eq(given.views.keymaps, false, "config: the caller's table is left as written")
+  H.eq(#config.issues(), 0, "config: a boolean switch group is no issue")
+
+  -- End to end: with the switch off, the bindings register no keymap at all.
+  require("debugging.views").setup(config.get().views)
+  local before = #vim.api.nvim_get_keymap("n")
+  require("debugging.bindings").setup(config.get())
+  H.eq(#vim.api.nvim_get_keymap("n"), before, "config: keymaps = false registers no keymap")
+
   -- A clean setup() reports no issues.
   config.setup({ features = { views = false } })
   H.eq(#config.issues(), 0, "config: valid setup() reports no issues")

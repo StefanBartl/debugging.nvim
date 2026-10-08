@@ -74,6 +74,8 @@ require("debugging").setup({ all = true })
 
 ## Views keymaps
 
+`views.keymaps = false` switches all of them off (the same as `{ enable = false }`); `true` keeps the defaults. `views.autocmds` takes the same boolean.
+
 `views.keymaps` takes more than `enable` and `prefix`. Every key is declared
 through `lib.nvim`'s keymap registry under an action name, and any of those
 names can be given a different `lhs` — one string, a list of them, or `false`
