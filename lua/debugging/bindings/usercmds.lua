@@ -12,8 +12,9 @@
 --- Every route's `run` bypasses composer's bound ctx.args/ctx.pos and calls
 --- the unmodified `commands.dispatch(ctx.raw.fargs)` (ctx.raw is the same
 --- `.fargs`-shaped opts table the old `nvim_create_user_command` callback
---- received) -- the per-route `args` schema below exists purely to drive
---- <Tab> completion; dispatch/feature-gating/error messages are unchanged.
+--- received) -- the per-route `args` schema (`debugging.command_args`) exists
+--- purely to drive <Tab> completion and the option float; dispatch/feature-
+--- gating/error messages are unchanged.
 ---
 --- Only categories enabled by the resolved config get a route, snapshotted
 --- at setup() time. Tradeoff: typing a DISABLED category's exact name now
@@ -28,6 +29,9 @@ local M = {}
 -- Dynamic completion for the two free-form autocmds sub-actions -- resolves
 -- fresh each call since discovered autocmd sources can change.
 composer.register_type("DBG_AUTOCMD_EXPR", {
+  -- Shown for an argument of this type without a text of its own (`autocmds all`);
+  -- `autocmds sources` words its own, with all of its keys.
+  desc = "key=value options such as event= root= refresh=",
   validate = function(raw)
     return true, raw, nil
   end,
@@ -37,26 +41,23 @@ composer.register_type("DBG_AUTOCMD_EXPR", {
 })
 
 ---@internal
----Actions whose single argument is a concrete handle or path, and the
----composer argtype that knows how to complete it.
----
---- Everything else keeps the generic `STRING` slot: `proc` ids and
---- `performance startup` take values this plugin does not enumerate, so a
---- completer would have nothing true to offer.
----@type table<string, table<string, string>>
-local HANDLE_ARG = {
-  report = { win = "WINDOW" },
-  inspect = { buffer = "BUFFER", window = "WINDOW" },
-  -- `:Debug keylogger start [path]` writes a file, so file completion is the
-  -- right one even though the file does not exist yet -- it completes the
-  -- directory part on the way there.
-  keylogger = { start = "PATH" },
-}
-
----@internal
 --- One-line text per route (`"<category> <action>"`), for the composer option float.
 ---@type table<string, string>
 local descs = require("debugging.command_descs")
+
+---@internal
+--- The positional arguments per route, with the text of each for the option float. A route not listed there takes
+--- no argument and gets no slot.
+---@type table<string, Lib.UserCmd.Composer.ArgSpec[]>
+local arg_specs = require("debugging.command_args")
+
+---@internal
+---The argument slots of a route: a copy of its entry in `command_args`, or nil when it takes none.
+---@param key string  `"<category> <action>"`, or `"<category>"` for a free-form category
+---@return Lib.UserCmd.Composer.ArgSpec[]|nil
+local function args_of(key)
+  return arg_specs[key] and vim.deepcopy(arg_specs[key]) or nil
+end
 
 ---@internal
 ---Build one composer route per enabled category/action, all dispatching
@@ -72,49 +73,20 @@ local function build_routes(commands)
   for category, entry in pairs(commands.registry()) do
     if commands.enabled(entry) then
       if entry.run.__default then
-        -- Free-form categories (dump, health): :Debug {category} [arg]
+        -- Free-form categories (dump, health): :Debug {category}, no action
         routes[#routes + 1] = {
           path = { category },
           desc = descs[category],
-          args = { { name = "arg", type = "STRING", optional = true } },
+          args = args_of(category),
           run = dispatch_route,
         }
       else
         for _, action in ipairs(entry.actions) do
-          local args
-          if category == "autocmds" and action == "runtime" then
-            args = {
-              { name = "event", type = "STRING", optional = true },
-              { name = "pattern", type = "STRING", optional = true },
-            }
-          elseif category == "autocmds" and (action == "sources" or action == "all") then
-            args = { { name = "expr", type = "DBG_AUTOCMD_EXPR", optional = true } }
-          elseif category == "indent" and action == "treesitter" then
-            args = {
-              { name = "enable", type = "STRING", optional = true, values = { "true", "false" } },
-            }
-          elseif HANDLE_ARG[category] and HANDLE_ARG[category][action] then
-            -- Handle-taking actions. These used to share the generic STRING
-            -- slot below, which completed nothing -- and a window or buffer id
-            -- is unguessable, so the only way to supply one was to run
-            -- `:echo win_getid()` first. That is exactly the friction
-            -- completion exists to remove.
-            args = {
-              { name = "arg", type = HANDLE_ARG[category][action], optional = true },
-            }
-          else
-            -- Covers zero-arg actions (extra token harmlessly falls into
-            -- ctx.rest/dispatch re-parses it) and the remaining
-            -- single-handle-id actions (proc start/stop/status/log/watch,
-            -- performance startup) -- <Tab> completion beyond this one slot
-            -- matches the original, which also offered nothing past the first
-            -- arg for these.
-            args = { { name = "arg", type = "STRING", optional = true } }
-          end
+          local key = category .. " " .. action
           routes[#routes + 1] = {
             path = { category, action },
-            desc = descs[category .. " " .. action],
-            args = args,
+            desc = descs[key],
+            args = args_of(key),
             run = dispatch_route,
           }
         end
