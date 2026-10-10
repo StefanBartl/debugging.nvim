@@ -53,12 +53,25 @@ local function level_matches(levels, level)
   return false
 end
 
+---Render one entry as display lines. `content` may hold embedded newlines
+---(error texts, stack traces), which the viewer rejects, so split it; only
+---the first line carries the age prefix, the rest is indented under it.
 ---@internal
 ---@param entry table
----@return string
-local function fallback_line(entry)
+---@return string[]
+local function fallback_lines(entry)
   local delta_s = math.max(0, (vim.uv.hrtime() / 1e6 - (entry.time_ms or 0)) / 1000)
-  return ("[%ds ago] %s"):format(math.floor(delta_s), tostring(entry.content or ""))
+  local prefix = ("[%ds ago] "):format(math.floor(delta_s))
+  local parts = vim.split(tostring(entry.content or ""), "\r?\n")
+  while #parts > 1 and parts[#parts] == "" do
+    parts[#parts] = nil
+  end
+  local indent = (" "):rep(#prefix)
+  local out = {}
+  for i, part in ipairs(parts) do
+    out[i] = (i == 1 and prefix or indent) .. part
+  end
+  return out
 end
 
 ---Open (or focus, if already open) the recent-messages popup for `filter`.
@@ -89,7 +102,7 @@ function M.show(filter)
   if not ok_kit or type(kit.message_log) ~= "function" then
     local lines = {}
     for _, entry in ipairs(entries) do
-      lines[#lines + 1] = fallback_line(entry)
+      vim.list_extend(lines, fallback_lines(entry))
     end
     if #lines == 0 then
       lines = { "(no messages)" }
