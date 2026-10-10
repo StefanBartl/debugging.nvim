@@ -116,6 +116,7 @@ return function(H)
         { content = "a\nb", level = 2, time_ms = now_ms },
         { content = "c\r\nd\r\ne", level = 2, time_ms = now_ms },
         { content = "f\n", level = 2, time_ms = now_ms },
+        { content = "p\rq", level = 2, time_ms = now_ms },
       }
       local fake_messages = package.loaded["lib.nvim.messages"]
       local orig_snapshot = fake_messages.snapshot
@@ -124,13 +125,17 @@ return function(H)
       end
       require("debugging.views.recent").show("all")
       ok(dumped ~= nil, "multiline: show_lines is reached without error")
-      eq(#dumped.lines, 6, "multiline: 2 + 3 + 1 lines (CRLF split, trailing newline dropped)")
+      eq(
+        #dumped.lines,
+        7,
+        "multiline: 2 + 3 + 1 + 1 lines (CRLF split, trailing LF dropped, lone CR removed)"
+      )
       for _, line in ipairs(dumped.lines) do
         ok(not line:find("[\r\n]"), "multiline: no line holds a newline")
       end
       ok(dumped.lines[1]:find("^%[%ds ago%] a$") ~= nil, "multiline: age prefix on the first line")
       ok(dumped.lines[2]:find("^%s+b$") ~= nil, "multiline: continuation line is indented")
-      eq(dumped.opts.height, 6, "multiline: height follows the split line count")
+      eq(dumped.opts.height, 7, "multiline: height follows the split line count")
       fake_messages.snapshot = orig_snapshot
       package.loaded["lib.nvim.output.viewer"] = orig_viewer
     end

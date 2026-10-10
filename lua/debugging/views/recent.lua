@@ -69,7 +69,8 @@ local function fallback_lines(entry)
   local indent = (" "):rep(#prefix)
   local out = {}
   for i, part in ipairs(parts) do
-    out[i] = (i == 1 and prefix or indent) .. part
+    -- A stray CR (progress output that redraws a line) would render as ^M.
+    out[i] = (i == 1 and prefix or indent) .. part:gsub("\r", "")
   end
   return out
 end
