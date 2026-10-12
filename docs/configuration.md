@@ -120,12 +120,19 @@ require("debugging").setup({
   views = {
     recent = {
       window_s = 10,            -- seconds of history shown on open; <C-j> / + adds that much older history (quiet stretches are skipped)
+      min_entries = 5,          -- but never fewer than the newest N on open, however old (0 = strictly window_s)
       order = "newest_last",    -- or "newest_first"
       collapsed_default = false, -- start in first-line-only mode
     },
   },
 })
 ```
+
+What the popup can show is what `lib.nvim.messages` records: everything Neovim keeps in
+`:messages` (`:echomsg`, `print()`, `:write`, errors incl. `E…` messages), the shell output of
+`:!cmd`, and everything sent through `lib.nvim.notify`. Not recorded: a plain `:echo`
+(Neovim does not keep it either) and a plain `vim.notify` while Noice owns it. Errors only
+show under `<e` (and `<n`), never under `<m`.
 
 `messages` filters to non-error entries, `noice_all` is unfiltered, `noice_errors`
 shows only errors — three views over the same live store, not three separate

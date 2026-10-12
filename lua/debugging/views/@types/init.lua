@@ -30,6 +30,7 @@
 
 ---@class Dbg.Views.Recent
 ---@field window_s? integer   Seconds of history shown on open (default 10); <C-j> / + adds that much older history each time (quiet stretches are skipped)
+---@field min_entries? integer  Show at least this many of the newest entries on open even if older than `window_s` (default 5; 0 = strictly `window_s`)
 ---@field order? "newest_last"|"newest_first"  Default "newest_last"
 ---@field collapsed_default? boolean  Start with first-line-only rendering
 

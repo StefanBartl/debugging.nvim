@@ -90,6 +90,7 @@ local DEFAULTS = {
     -- when ui.nvim is installed, a static lib.nvim.output.viewer dump otherwise).
     recent = {
       window_s = 10, -- seconds of history shown on open; <C-j> / + adds that much older history
+      min_entries = 5, -- ...but never fewer than this many entries on open, however old (0 = strictly window_s)
       order = "newest_last", -- or "newest_first"
       collapsed_default = false,
     },

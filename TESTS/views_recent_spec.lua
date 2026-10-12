@@ -38,7 +38,12 @@ return function(H)
     local orig_views = package.loaded["debugging.views"]
     package.loaded["debugging.views"] = {
       get_recent_config = function()
-        return { window_s = 10, order = "newest_last", collapsed_default = false }
+        return {
+          window_s = 10,
+          min_entries = 0, -- strictly window_s here; the top-up has its own block below
+          order = "newest_last",
+          collapsed_default = false,
+        }
       end,
     }
 
@@ -347,6 +352,39 @@ return function(H)
         "every older entry was reachable, oldest first"
       )
       eq(pages, 2, "the 50 s gap cost no empty page: 60-62 s, then the ancient one")
+
+      -- min_entries: a popup opened after a quiet minute still shows the newest few.
+      package.loaded["debugging.views"].get_recent_config = function()
+        return { window_s = 10, min_entries = 5, order = "newest_last", collapsed_default = false }
+      end
+      pcall(vim.api.nvim_win_close, fake_winid, true)
+      fake_winid = vim.api.nvim_open_win(fake_bufnr, false, {
+        relative = "editor",
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 3,
+      })
+      require("debugging.views.recent").show("all")
+      local topped = {}
+      for _, e in ipairs(open_opts.entries) do
+        topped[#topped + 1] = e.content
+      end
+      eq(
+        table.concat(topped, ","),
+        "61,60,4,3,2",
+        "the 5 newest, although only 3 are within window_s"
+      )
+      local page = open_opts.load_more("older")
+      local first = {}
+      for _, e in ipairs(page) do
+        first[#first + 1] = e.content
+      end
+      ok(
+        table.concat(first, ","):find("62", 1, true) ~= nil,
+        "paging continues before the topped-up entries"
+      )
+      eq(#open_opts.entries, 5, "the entries handed over are not mutated by paging")
 
       -- An empty ring offers no "more above" hint at all.
       ring = {}

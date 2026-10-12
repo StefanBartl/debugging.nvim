@@ -98,6 +98,16 @@ function M.show(filter)
 
   local loaded_since_ms = (vim.uv.hrtime() / 1e6) - (window_s * 1000)
   local entries = messages.snapshot({ since_ms = loaded_since_ms, levels = levels })
+  -- A quiet minute must not open an empty popup (the command that was just run is
+  -- "not in there"): top up to the newest `min_entries`, however old, and page from there.
+  local min_entries = cfg.min_entries or 5
+  if #entries < min_entries then
+    local all = messages.snapshot({ levels = levels })
+    if #all > #entries then
+      entries = vim.list_slice(all, math.max(1, #all - min_entries + 1))
+      loaded_since_ms = entries[1].time_ms
+    end
+  end
 
   local ok_kit, kit = pcall(require, "ui.kit")
   if not ok_kit or type(kit.message_log) ~= "function" then
