@@ -29,7 +29,7 @@
 -- recent.lua
 
 ---@class Dbg.Views.Recent
----@field window_s? integer   Seconds of history shown on open (default 10); <C-j> extends this by the same amount each time
+---@field window_s? integer   Seconds of history shown on open (default 10); <C-j> / + adds that much older history each time (quiet stretches are skipped)
 ---@field order? "newest_last"|"newest_first"  Default "newest_last"
 ---@field collapsed_default? boolean  Start with first-line-only rendering
 
