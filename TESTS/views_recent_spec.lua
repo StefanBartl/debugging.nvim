@@ -273,6 +273,91 @@ return function(H)
       package.loaded["ui.kit"] = nil
     end
 
+    -- ============================== paging across a quiet stretch (stubbed kit)
+    -- A gap longer than window_s between two messages used to make the first
+    -- load_more("older") come back empty, which the popup reads as "nothing
+    -- left" -- the older history stayed out of reach for good.
+    do
+      vim.cmd("only")
+      local fake_bufnr = vim.api.nvim_create_buf(false, true)
+      local fake_winid = vim.api.nvim_open_win(fake_bufnr, false, {
+        relative = "editor",
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 3,
+      })
+      local now_ms = vim.uv.hrtime() / 1e6
+      -- seconds ago -> a ring entry; 3 recent, then a 50 s gap, then 3 old, then 1 ancient
+      local ring = {}
+      for _, ago in ipairs({ 300, 62, 61, 60, 4, 3, 2 }) do
+        ring[#ring + 1] = {
+          time_ms = now_ms - ago * 1000,
+          level = vim.log.levels.INFO,
+          content = tostring(ago),
+        }
+      end
+      local paging_messages = package.loaded["lib.nvim.messages"]
+      local orig_snapshot = paging_messages.snapshot
+      paging_messages.snapshot = function(opts)
+        local out = {}
+        for _, e in ipairs(ring) do
+          if
+            (not opts.since_ms or e.time_ms >= opts.since_ms)
+            and (not opts.until_ms or e.time_ms <= opts.until_ms)
+          then
+            out[#out + 1] = e
+          end
+        end
+        return out
+      end
+
+      local open_opts
+      package.loaded["ui.kit"] = {
+        message_log = function(opts)
+          open_opts = opts
+          return {
+            surf = { winid = fake_winid, bufnr = fake_bufnr },
+            append = function() end,
+            on_close = function() end,
+          }
+        end,
+      }
+      require("debugging.views.recent").show("all")
+
+      eq(#open_opts.entries, 3, "the popup opens with the last window_s only")
+      eq(open_opts.has_more_older, true, "older entries exist: the hint is offered")
+
+      local contents = {}
+      local pages = 0
+      while true do
+        local page = open_opts.load_more("older")
+        if #page == 0 then
+          break
+        end
+        pages = pages + 1
+        for i = #page, 1, -1 do
+          table.insert(contents, 1, page[i].content)
+        end
+        ok(pages < 10, "paging terminates")
+      end
+      eq(
+        table.concat(contents, ","),
+        "300,62,61,60",
+        "every older entry was reachable, oldest first"
+      )
+      eq(pages, 2, "the 50 s gap cost no empty page: 60-62 s, then the ancient one")
+
+      -- An empty ring offers no "more above" hint at all.
+      ring = {}
+      require("debugging.views.recent").show("error")
+      eq(#open_opts.entries, 0, "empty ring: nothing to show")
+      eq(open_opts.has_more_older, false, "empty ring: no hint for history that does not exist")
+      pcall(vim.api.nvim_win_close, fake_winid, true)
+      paging_messages.snapshot = orig_snapshot
+      package.loaded["ui.kit"] = nil
+    end
+
     package.loaded["lib.nvim.messages"] = orig_messages
     package.loaded["debugging.views"] = orig_views
     package.loaded["debugging.views.recent"] = nil

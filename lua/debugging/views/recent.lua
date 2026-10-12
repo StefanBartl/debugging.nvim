@@ -123,16 +123,36 @@ function M.show(filter)
     return
   end
 
+  ---Everything older than what is loaded so far, oldest first.
+  ---@return table[]
+  local function older_than_loaded()
+    return messages.snapshot({ until_ms = loaded_since_ms - 0.001, levels = levels })
+  end
+
   local handle = kit.message_log({
     title = FILTER_TITLE[filter],
     entries = entries,
     order = cfg.order or "newest_last",
     collapsed_default = cfg.collapsed_default == true,
+    -- No "more above" hint when the ring holds nothing older to begin with.
+    has_more_older = #older_than_loaded() > 0,
     load_more = function(direction)
       if direction ~= "older" then
         return {}
       end
-      local new_since = loaded_since_ms - (window_s * 1000)
+      -- An empty return tells the popup there is nothing left, for good. A quiet
+      -- stretch longer than `window_s` between two messages must therefore not
+      -- end the paging: skip the gap, so the page is one `window_s` ending at
+      -- the newest older entry.
+      local older_all = older_than_loaded()
+      if #older_all == 0 then
+        return {}
+      end
+      local newest_older_ms = older_all[#older_all].time_ms
+      local new_since = loaded_since_ms - window_s * 1000
+      if newest_older_ms < new_since then
+        new_since = newest_older_ms - window_s * 1000
+      end
       local older = messages.snapshot({
         since_ms = new_since,
         until_ms = loaded_since_ms - 0.001,

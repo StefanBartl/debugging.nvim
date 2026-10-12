@@ -89,7 +89,7 @@ local DEFAULTS = {
     -- The <m>/<n>/<e> recent-messages popup (lib.nvim.messages + ui.kit.message_log
     -- when ui.nvim is installed, a static lib.nvim.output.viewer dump otherwise).
     recent = {
-      window_s = 10, -- seconds of history shown on open; <C-j> extends by the same amount
+      window_s = 10, -- seconds of history shown on open; <C-j> / + adds that much older history
       order = "newest_last", -- or "newest_first"
       collapsed_default = false,
     },

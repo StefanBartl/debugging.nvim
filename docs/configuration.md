@@ -119,7 +119,7 @@ is installed, a static one-shot dump (`lib.nvim.output.viewer`) otherwise.
 require("debugging").setup({
   views = {
     recent = {
-      window_s = 10,            -- seconds of history shown on open; <C-j> extends by the same amount
+      window_s = 10,            -- seconds of history shown on open; <C-j> / + adds that much older history (quiet stretches are skipped)
       order = "newest_last",    -- or "newest_first"
       collapsed_default = false, -- start in first-line-only mode
     },
@@ -129,8 +129,28 @@ require("debugging").setup({
 
 `messages` filters to non-error entries, `noice_all` is unfiltered, `noice_errors`
 shows only errors — three views over the same live store, not three separate
-logs. In-popup keys (pagination, collapse, `?` cheatsheet) are documented on
-`ui.kit.message_log` itself, in [ui.nvim's README](https://github.com/StefanBartl/ui.nvim/blob/main/lua/ui/kit/README.md#message-log-paginated-time-ordered-entry-list).
+logs.
+
+### Keys inside the popup
+
+Press `?` in the popup for this list as a cheatsheet (it opens over the popup,
+`q` / `<Esc>` closes the sheet and returns to the log). The keys belong to
+`ui.kit.message_log` ([ui.nvim's README](https://github.com/StefanBartl/ui.nvim/blob/main/lua/ui/kit/README.md#message-log-paginated-time-ordered-entry-list)).
+
+| Key | Does |
+| --- | --- |
+| `<CR>`, `<Tab>`, `za` | expand / collapse the entry under the cursor (`▸` folded, `▾` open) |
+| `zo` / `zc` | expand / collapse the entry under the cursor |
+| `<C-l>`, `zR` | expand all entries |
+| `<C-h>`, `<BS>`, `zM` | collapse all entries (first line only) |
+| `<C-e>` | flip between all expanded / all collapsed |
+| `<C-j>`, `+` | load older history (another `window_s` seconds; skips quiet stretches) |
+| `<C-k>`, `-` | load newer entries |
+| `?`, `g?` | cheatsheet |
+| `q`, `<Esc>` | close |
+
+The cursor stays on the entry you are reading when entries are expanded or
+older ones are loaded; a cursor on the newest entry follows the live feed.
 
 ## Validation
 
