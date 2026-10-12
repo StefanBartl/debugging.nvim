@@ -380,10 +380,17 @@ return function(H)
       for _, e in ipairs(page) do
         first[#first + 1] = e.content
       end
-      ok(
-        table.concat(first, ","):find("62", 1, true) ~= nil,
-        "paging continues before the topped-up entries"
+      eq(
+        table.concat(first, ","),
+        "62",
+        "paging continues exactly before the topped-up entries, no duplicates"
       )
+      local second = {}
+      for _, e in ipairs(open_opts.load_more("older")) do
+        second[#second + 1] = e.content
+      end
+      eq(table.concat(second, ","), "300", "the ancient entry follows, once")
+      eq(#open_opts.load_more("older"), 0, "then the ring is exhausted")
       eq(#open_opts.entries, 5, "the entries handed over are not mutated by paging")
 
       -- An empty ring offers no "more above" hint at all.
