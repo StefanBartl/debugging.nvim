@@ -31,6 +31,7 @@ local DEFAULT_TIMINGS = {
 ---@type Dbg.Views.Recent
 local DEFAULT_RECENT = {
   window_s = 10,
+  min_entries = 5,
   order = "newest_last",
   collapsed_default = false,
 }
