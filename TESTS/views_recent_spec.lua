@@ -267,7 +267,14 @@ return function(H)
       open_opts.load_more("newer")
       eq(#snapshot_calls, before, "load_more('newer') does not query the store")
       open_opts.load_more("older")
-      eq(#snapshot_calls, before + 1, "load_more('older') queries for an earlier window")
+      -- The ring is empty here, so the has-older probe is the only query: it must ask for
+      -- entries BEFORE what is loaded, with this view's level filter (a call count alone
+      -- would be satisfied by any query at all).
+      eq(#snapshot_calls, before + 1, "load_more('older') queries once for an earlier window")
+      local probe = snapshot_calls[#snapshot_calls]
+      ok(probe.until_ms ~= nil, "the probe is bounded above by what is loaded")
+      ok(probe.since_ms == nil, "and open below: everything older")
+      eq(probe.levels[1], vim.log.levels.ERROR, "with the view's own level filter")
 
       -- on_close unsubscribes.
       ok(close_cb ~= nil, "on_close callback was registered")
@@ -400,6 +407,60 @@ return function(H)
       eq(open_opts.has_more_older, false, "empty ring: no hint for history that does not exist")
       pcall(vim.api.nvim_win_close, fake_winid, true)
       paging_messages.snapshot = orig_snapshot
+      package.loaded["ui.kit"] = nil
+    end
+
+    -- ============== messages stored while the popup is being built (stubbed kit)
+    -- The subscription is made before the snapshot, so an entry stored while the float
+    -- opens is neither lost nor shown twice.
+    do
+      vim.cmd("only")
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local winid = vim.api.nvim_open_win(bufnr, false, {
+        relative = "editor",
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 3,
+      })
+      local fake_messages = package.loaded["lib.nvim.messages"]
+      local orig_snapshot = fake_messages.snapshot
+      local dup = { time_ms = 5, level = vim.log.levels.ERROR, content = "in the snapshot" }
+      fake_messages.snapshot = function()
+        return { vim.deepcopy(dup) }
+      end
+      local appended = {}
+      package.loaded["ui.kit"] = {
+        message_log = function()
+          -- Stored while the window opens: one the snapshot already has, one new, one
+          -- of another level that this view filters out.
+          listener(dup)
+          listener({ time_ms = 6, level = vim.log.levels.ERROR, content = "during build" })
+          listener({ time_ms = 7, level = vim.log.levels.INFO, content = "wrong level" })
+          return {
+            surf = { winid = winid, bufnr = bufnr },
+            append = function(_, list)
+              for _, e in ipairs(list) do
+                appended[#appended + 1] = e.content
+              end
+            end,
+            on_close = function() end,
+          }
+        end,
+      }
+      -- The error view: the tag of the non_error view is still on a real window from the
+      -- window-tag-reuse block above.
+      require("debugging.views.recent").show("error")
+      eq(
+        table.concat(appended, ","),
+        "during build",
+        "late entry shown once, duplicate and filtered one not"
+      )
+      listener({ time_ms = 8, level = vim.log.levels.ERROR, content = "live" })
+      eq(appended[#appended], "live", "afterwards the feed is live")
+
+      pcall(vim.api.nvim_win_close, winid, true)
+      fake_messages.snapshot = orig_snapshot
       package.loaded["ui.kit"] = nil
     end
 

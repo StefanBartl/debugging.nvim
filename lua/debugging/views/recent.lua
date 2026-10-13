@@ -96,6 +96,28 @@ function M.show(filter)
   local levels = FILTER_LEVELS[filter]
   local window_s = cfg.window_s or 10
 
+  local ok_kit, kit = pcall(require, "ui.kit")
+  local has_kit = ok_kit and type(kit.message_log) == "function"
+
+  -- Subscribe BEFORE the snapshot: whatever is stored while the popup is being built (an
+  -- autocmd that fires when the float opens, say) would otherwise be in neither. Entries
+  -- park in `pending` until the handle exists; the ones the snapshot already holds are dropped.
+  local handle
+  local pending = {}
+  local subscription
+  if has_kit then
+    subscription = messages.on_message(function(entry)
+      if not level_matches(levels, entry.level) then
+        return
+      end
+      if handle then
+        handle:append({ entry })
+      else
+        pending[#pending + 1] = entry
+      end
+    end)
+  end
+
   local loaded_since_ms = (vim.uv.hrtime() / 1e6) - (window_s * 1000)
   local entries = messages.snapshot({ since_ms = loaded_since_ms, levels = levels })
   -- A quiet minute must not open an empty popup (the command that was just run is
@@ -109,8 +131,7 @@ function M.show(filter)
     end
   end
 
-  local ok_kit, kit = pcall(require, "ui.kit")
-  if not ok_kit or type(kit.message_log) ~= "function" then
+  if not has_kit then
     local lines = {}
     for _, entry in ipairs(entries) do
       vim.list_extend(lines, fallback_lines(entry))
@@ -139,7 +160,7 @@ function M.show(filter)
     return messages.snapshot({ until_ms = loaded_since_ms - 0.001, levels = levels })
   end
 
-  local handle = kit.message_log({
+  handle = kit.message_log({
     title = FILTER_TITLE[filter],
     entries = entries,
     order = cfg.order or "newest_last",
@@ -173,20 +194,30 @@ function M.show(filter)
     end,
   })
   if not handle then
+    messages.off_message(subscription)
     return
   end
 
   window_tag.set(handle.surf.winid, tag, handle.surf.bufnr)
-
-  local unsubscribe
-  unsubscribe = messages.on_message(function(entry)
-    if level_matches(levels, entry.level) then
-      handle:append({ entry })
-    end
-  end)
   handle:on_close(function()
-    messages.off_message(unsubscribe)
+    messages.off_message(subscription)
   end)
+
+  -- What arrived while the popup was being built, minus what the snapshot already had.
+  local have = {}
+  for _, e in ipairs(entries) do
+    have[("%s|%s"):format(e.time_ms, e.content)] = true
+  end
+  local late = {}
+  for _, e in ipairs(pending) do
+    if not have[("%s|%s"):format(e.time_ms, e.content)] then
+      late[#late + 1] = e
+    end
+  end
+  pending = {}
+  if #late > 0 then
+    handle:append(late)
+  end
 end
 
 return M
