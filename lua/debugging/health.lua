@@ -114,6 +114,14 @@ function M.check()
     vim.health.info("which-key not installed (optional)")
   end
 
+  if pcall(require, "gitsuite") then
+    vim.health.ok("gitsuite found: buffer report flags unresolved merge-conflict markers")
+  else
+    vim.health.info(
+      "gitsuite not installed: buffer report skips the merge-conflict marker warning (optional)"
+    )
+  end
+
   -- ── Write permissions ─────────────────────────────────────────────────────
   local state_dir = vim.fn.stdpath("state") .. "/debug_views"
   if pcall(vim.fn.mkdir, state_dir, "p") then
