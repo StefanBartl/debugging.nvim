@@ -26,7 +26,11 @@ return {
     process_net = "error",
   },
   -- The keymaps live under views: `views.keymaps = false` (same as `{ enable = false }`) registers none.
-  conformance = { keymaps_off = { views = { keymaps = false } } },
+  conformance = {
+    -- gated: a failed check makes `scripts/test.sh conformance` exit 1
+    gate = true,
+    keymaps_off = { views = { keymaps = false } },
+  },
   -- Nothing legitimate needs an allowlist: no spec spawns a foreign executable or opens a socket,
   -- and writes below the child's own stdpath() sandbox are not findings.
   guard_allow = { fs = {}, spawn = {}, network = {} },
