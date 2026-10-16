@@ -28,6 +28,65 @@ local function fallback_check_require(mod, label, level, advice)
   end
 end
 
+---Report the `ext_messages` logger's attach state from `lib.nvim.messages.status()`, telling apart WHY it
+---is (not) attached so the hint matches the cause: `renderer_override = false` (off by choice), noice loaded
+---but not running, a renderer present without an attached logger (setup() not called), or no renderer at all.
+---`vim.health.info()` takes only a message (no advice argument, unlike warn/error): every hint for an info
+---entry is part of its text, or it would be dropped silently.
+---@param status table `lib.nvim.messages.status()` (`attached`, `renderer`, `renderer_override`, `noice_loaded`, `count`)
+---@return nil
+local function report_attach_state(status)
+  local stored = tonumber(status.count) or 0
+  if status.attached then
+    if status.renderer ~= nil then
+      vim.health.ok(
+        ("ext_messages logger attached (renderer: %s, %d entries stored)"):format(
+          tostring(status.renderer),
+          stored
+        )
+      )
+    else
+      vim.health.info(
+        ("ext_messages logger attached, but no renderer keeps it (%d entries stored): "):format(
+          stored
+        )
+          .. "it detaches on the next renderer check (noice stopped, or renderer_override changed)"
+      )
+    end
+    return
+  end
+
+  local prefix = "ext_messages logger not attached (the popup holds only lib.nvim.notify entries, "
+    .. "no :echo / :write / Lua error messages): "
+  if status.renderer_override == false then
+    vim.health.info(
+      prefix
+        .. "off by choice, setup({ renderer_override = false }); "
+        .. "set renderer_override = true (or leave it nil with noice running) to record them"
+    )
+  elseif status.renderer ~= nil then
+    vim.health.info(
+      prefix
+        .. ("a renderer is there (%s) but nothing attached the logger; "):format(
+          tostring(status.renderer)
+        )
+        .. "call require('lib.nvim.messages').setup() in the host config"
+    )
+  elseif status.noice_loaded then
+    vim.health.info(
+      prefix
+        .. "noice is loaded but not running (e.g. :Noice disable); "
+        .. "the feed attaches again once noice runs, or with setup({ renderer_override = true })"
+    )
+  else
+    vim.health.info(
+      prefix
+        .. "no renderer; call require('lib.nvim.messages').setup() in the host config "
+        .. "with noice running, or setup({ renderer_override = true })"
+    )
+  end
+end
+
 ---Report what the recent-messages popup (`<lt>m/n/e`) needs and how it will behave: whether
 ---`lib.nvim.messages` loads, whether `ui.kit.message_log` makes it live and paginated (else a static
 ---dump), and whether the `ext_messages` logger is attached right now (`lib.nvim.messages.status()`).
@@ -63,23 +122,7 @@ local function check_recent_popup(check_require)
     vim.health.warn("lib.nvim.messages.status() failed: " .. tostring(status))
     return
   end
-  if status.attached then
-    vim.health.ok(
-      ("ext_messages logger attached (renderer: %s, %d entries stored)"):format(
-        tostring(status.renderer),
-        tonumber(status.count) or 0
-      )
-    )
-  else
-    vim.health.info(
-      "ext_messages logger not attached: the popup holds only lib.nvim.notify entries, "
-        .. "no :echo / :write / Lua error messages",
-      {
-        "Call require('lib.nvim.messages').setup() in the host config",
-        "The feed attaches only with a renderer: noice running, or setup({ renderer_override = true })",
-      }
-    )
-  end
+  report_attach_state(status)
 end
 
 ---Run every :checkhealth debugging section.
@@ -156,7 +199,17 @@ function M.check()
     vim.health.info("nvim-treesitter not installed (optional)")
   end
 
-  check_recent_popup(check_require)
+  -- Not `pcall(require, "noice")`: loading noice here (without its setup) would make the "recent popup"
+  -- section below report "noice is loaded but not running" for a noice this very check just loaded.
+  if package.loaded["noice"] ~= nil then
+    vim.health.ok("noice loaded (views capture reads the Noice history first)")
+  elseif vim.api.nvim_get_runtime_file("lua/noice/init.lua", false)[1] then
+    vim.health.ok(
+      "noice installed, not loaded yet (views capture reads the Noice history once it is)"
+    )
+  else
+    vim.health.info("noice not installed: views capture falls back to :messages (optional)")
+  end
 
   if pcall(require, "which-key") then
     vim.health.ok("which-key present (views keymap group label)")
@@ -182,6 +235,12 @@ function M.check()
       { "Check write permissions on stdpath('state')" }
     )
   end
+
+  -- ── recent-messages popup ─────────────────────────────────────────────────
+  -- Its own vim.health.start(): called only right before the next section starts, so it never swallows
+  -- entries that belong to "externals" (it once sat mid-section and took which-key, gitsuite and the
+  -- write-permission check with it).
+  check_recent_popup(check_require)
 
   -- ── module_reload ─────────────────────────────────────────────────────────
   vim.health.start("debugging: module_reload")

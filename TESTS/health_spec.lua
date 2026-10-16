@@ -5,8 +5,10 @@
 -- every branch would mock every external it probes without asserting
 -- anything about this plugin's own logic.
 --
--- Scenarios 1 and 2 pin two real crashes found in a 2026-09-18 re-audit; scenarios 3 to 7 pin the
--- "recent popup" section (its requirements and the logger attach state).
+-- Scenarios 1 and 2 pin two real crashes found in a 2026-09-18 re-audit; scenarios 3 to 12 pin the
+-- "recent popup" section (its requirements, the logger attach state and its cause, and which
+-- entries the section holds); 13 to 15 the externals noice line. Every popup run also checks that
+-- no info() entry carries an advice argument (Neovim's info() drops it).
 
 ---Run `body` with `vim.health.{start,ok,warn,error,info}` captured into a
 ---list instead of printed, and `require` swapped for `stub_require` for the
@@ -162,16 +164,54 @@ return function(H)
       local health = orig_require("debugging.health")
       local ok_check, err_check = pcall(health.check)
       H.ok(ok_check, "check(): must not crash -- got: " .. tostring(err_check))
+      -- Neovim's `vim.health.info(msg)` takes ONE argument: an advice list passed to it is dropped
+      -- without a trace in real :checkhealth output, while this capture stub would keep it. So no info
+      -- entry may carry advice; its hint belongs in the message text.
+      for _, entry in ipairs(seen) do
+        if entry.level == "info" and entry.advice ~= nil then
+          H.ok(false, "info() called with an advice argument (dropped by Neovim): " .. entry.msg)
+        end
+      end
       body(seen)
     end)
   end
 
-  -- 3: live popup, logger attached.
-  with_popup_stubs({ message_log = function() end }, {
+  ---The section (`vim.health.start()` title) an entry was reported under.
+  ---@param seen {level: string, msg: string, advice: any}[]
+  ---@param target {level: string, msg: string, advice: any}|nil
+  ---@return string|nil
+  local function section_of(seen, target)
+    local current = nil ---@type string|nil
+    for _, entry in ipairs(seen) do
+      if entry.level == "start" then
+        current = entry.msg
+      elseif entry == target then
+        return current
+      end
+    end
+    return nil
+  end
+
+  ---@param seen {level: string, msg: string, advice: any}[]
+  ---@param pattern string
+  ---@return {level: string, msg: string, advice: any}|nil
+  local function find_any(seen, pattern)
+    for _, entry in ipairs(seen) do
+      if entry.level ~= "start" and entry.msg:find(pattern, 1, true) then
+        return entry
+      end
+    end
+    return nil
+  end
+
+  local attached_noice = {
     status = function()
       return { attached = true, renderer = "noice", count = 7 }
     end,
-  }, function(seen)
+  }
+
+  -- 3: live popup, logger attached.
+  with_popup_stubs({ message_log = function() end }, attached_noice, function(seen)
     H.ok(
       find(seen, "ok", "popup is live and paginated"),
       "recent popup: ui.kit.message_log -> live ok"
@@ -186,18 +226,26 @@ return function(H)
     )
   end)
 
-  -- 4: static popup, logger not attached: info with advice, never an error.
+  -- 4: static popup, logger not attached and no renderer at all: info whose TEXT carries the hint
+  -- (setup + renderer) -- info() has no advice argument -- never an error.
   with_popup_stubs(nil, {
     status = function()
-      return { attached = false, renderer = nil, count = 0 }
+      return { attached = false, renderer = nil, count = 0, noice_loaded = false }
     end,
   }, function(seen)
     H.ok(find(seen, "info", "static dump"), "recent popup: no ui.kit -> info about the static dump")
     local detached = find(seen, "info", "logger not attached")
     H.ok(detached, "recent popup: detached logger -> info")
     H.ok(
-      detached and type(detached.advice) == "table" and #detached.advice >= 1,
-      "recent popup: detached logger carries advice (setup + renderer)"
+      detached
+        and detached.msg:find("no renderer;", 1, true)
+        and detached.msg:find("require('lib.nvim.messages').setup()", 1, true)
+        and detached.msg:find("renderer_override = true", 1, true),
+      "recent popup: detached logger without a renderer names setup() and the renderer in its text"
+    )
+    H.ok(
+      not find(seen, "error", "logger"),
+      "recent popup: a detached logger is never reported as an error"
     )
     H.ok(
       not find(seen, "ok", "popup is live and paginated"),
@@ -223,6 +271,12 @@ return function(H)
       not find(seen, "ok", "logger attached"),
       "recent popup: no attach report without lib.nvim.messages"
     )
+    -- The early return: without it the require error STRING flows on, has no `status` and is
+    -- misreported as "an older lib.nvim without status()".
+    H.ok(
+      not find_any(seen, "has no status()") and not find_any(seen, "status() failed"),
+      "recent popup: lib.nvim.messages missing -> no further status probing"
+    )
   end)
 
   -- 7: status() throwing degrades to a warning, not a crashed :checkhealth.
@@ -234,6 +288,161 @@ return function(H)
     H.ok(
       find(seen, "warn", "status() failed"),
       "recent popup: a throwing status() -> warn instead of an uncaught error"
+    )
+  end)
+
+  -- 8: section membership. "debugging: recent popup" holds only the popup's own entries; which-key,
+  -- gitsuite, noice and the debug_views write check stay under "debugging: externals" (the popup
+  -- section once started mid-externals and swallowed them).
+  with_popup_stubs({ message_log = function() end }, attached_noice, function(seen)
+    local popup_section = "debugging: recent popup"
+    for _, pattern in ipairs({
+      "recent popup: message store",
+      "popup is live and paginated",
+      "logger attached (renderer: noice",
+    }) do
+      local entry = find_any(seen, pattern)
+      H.ok(entry, "sections: popup entry reported: " .. pattern)
+      H.eq(
+        section_of(seen, entry),
+        popup_section,
+        "sections: '" .. pattern .. "' in the popup section"
+      )
+    end
+    -- "views capture": the externals noice line ("noice" alone also matches the popup's attach line).
+    for _, pattern in ipairs({
+      "which-key",
+      "gitsuite",
+      "debug_views",
+      "views capture",
+      "nvim-treesitter",
+    }) do
+      local entry = find_any(seen, pattern)
+      H.ok(entry, "sections: externals entry reported: " .. pattern)
+      H.eq(
+        section_of(seen, entry),
+        "debugging: externals",
+        "sections: '" .. pattern .. "' stays in the externals section"
+      )
+    end
+    for _, entry in ipairs(seen) do
+      if entry.level ~= "start" and section_of(seen, entry) == popup_section then
+        H.ok(
+          entry.msg:find("popup", 1, true) or entry.msg:find("ext_messages", 1, true),
+          "sections: only popup entries in the popup section, got: " .. entry.msg
+        )
+      end
+    end
+  end)
+
+  -- 9..12: the attach state's cause picks the hint (status() fields renderer, renderer_override,
+  -- noice_loaded), so the text never says "call setup()" when setup() already decided otherwise.
+  -- 9: attached, but no renderer keeps it (it detaches on the next check): no "renderer: nil".
+  with_popup_stubs(nil, {
+    status = function()
+      return { attached = true, renderer = nil, count = 3, noice_loaded = false }
+    end,
+  }, function(seen)
+    H.ok(
+      find(seen, "info", "no renderer keeps it (3 entries stored)"),
+      "attach: attached without a renderer -> info that it detaches"
+    )
+    H.ok(not find_any(seen, "renderer: nil"), "attach: never prints 'renderer: nil'")
+  end)
+
+  -- 10: renderer_override = false: off by choice, setup() already ran.
+  with_popup_stubs(nil, {
+    status = function()
+      return { attached = false, renderer = nil, renderer_override = false, noice_loaded = true }
+    end,
+  }, function(seen)
+    local entry = find(seen, "info", "logger not attached")
+    H.ok(
+      entry and entry.msg:find("off by choice", 1, true),
+      "attach: renderer_override = false -> 'off by choice'"
+    )
+    H.ok(
+      entry and not entry.msg:find("setup() in the host config", 1, true),
+      "attach: renderer_override = false -> no 'call setup()' hint"
+    )
+  end)
+
+  -- 11: a renderer is available but nothing attached: setup() was not called.
+  with_popup_stubs(nil, {
+    status = function()
+      return { attached = false, renderer = "noice", noice_loaded = true }
+    end,
+  }, function(seen)
+    local entry = find(seen, "info", "logger not attached")
+    H.ok(
+      entry
+        and entry.msg:find("a renderer is there (noice)", 1, true)
+        and entry.msg:find("setup() in the host config", 1, true),
+      "attach: renderer present, not attached -> 'call setup()'"
+    )
+  end)
+
+  -- 12: noice loaded but not running (`:Noice disable`).
+  with_popup_stubs(nil, {
+    status = function()
+      return { attached = false, renderer = nil, noice_loaded = true }
+    end,
+  }, function(seen)
+    local entry = find(seen, "info", "logger not attached")
+    H.ok(
+      entry and entry.msg:find("noice is loaded but not running", 1, true),
+      "attach: noice loaded, not running -> says so"
+    )
+  end)
+
+  -- 13..15: the externals noice line (views capture reads the Noice history first). Probed WITHOUT
+  -- `require("noice")`: loading noice from :checkhealth would make the popup section report a noice
+  -- "loaded but not running" that this very check loaded.
+  ---@param loaded any `package.loaded["noice"]` for the run
+  ---@param on_rtp boolean whether `lua/noice/init.lua` is found on the runtimepath
+  ---@param body fun(seen: {level: string, msg: string, advice: any}[], required: boolean)
+  local function with_noice(loaded, on_rtp, body)
+    local orig_loaded, orig_preload = package.loaded["noice"], package.preload["noice"]
+    local orig_rtf = vim.api.nvim_get_runtime_file
+    local required = false
+    package.loaded["noice"] = loaded
+    package.preload["noice"] = function()
+      required = true
+      return {}
+    end
+    vim.api.nvim_get_runtime_file = function(name, all)
+      if name == "lua/noice/init.lua" then
+        return on_rtp and { "/fake/lua/noice/init.lua" } or {}
+      end
+      return orig_rtf(name, all)
+    end
+    local ok, err = pcall(with_popup_stubs, nil, attached_noice, function(seen)
+      body(seen, required)
+    end)
+    vim.api.nvim_get_runtime_file = orig_rtf
+    package.loaded["noice"] = orig_loaded
+    package.preload["noice"] = orig_preload
+    if not ok then
+      error(err, 0)
+    end
+  end
+
+  -- 13: noice already loaded.
+  with_noice({}, false, function(seen)
+    H.ok(find(seen, "ok", "noice loaded (views capture"), "noice: loaded -> ok")
+  end)
+
+  -- 14: noice installed but not loaded: reported, and the check does not load it.
+  with_noice(nil, true, function(seen, required)
+    H.ok(find(seen, "ok", "noice installed, not loaded yet"), "noice: on the rtp -> ok, not loaded")
+    H.ok(not required, "noice: the health check must not require() noice")
+  end)
+
+  -- 15: noice not installed: optional info about the :messages fallback.
+  with_noice(nil, false, function(seen)
+    H.ok(
+      find(seen, "info", "noice not installed: views capture falls back to :messages"),
+      "noice: missing -> info about the :messages fallback"
     )
   end)
 
