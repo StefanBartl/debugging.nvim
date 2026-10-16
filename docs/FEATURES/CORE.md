@@ -74,7 +74,9 @@ config that gets required and set up from more than one place stays safe.
 
 One `vim.health.start()` section per concern: the plugin's own load state,
 every `lib.nvim` module it depends on, external tools (clipboard provider,
-nvim-treesitter, noice.nvim, which-key), write permissions for the state
+nvim-treesitter, which-key), the recent-messages popup (message store, whether
+`ui.kit.message_log` makes it live, whether the `ext_messages` logger is attached),
+write permissions for the state
 directory, `vim.loader` for `module reload`, the Lua Tree-sitter parser for the
 `autocmds sources` audit, `vim.v.progpath` for the startup benchmark, whether
 the injectable Neo-tree bridge targets resolve, and the bundled watcher script
