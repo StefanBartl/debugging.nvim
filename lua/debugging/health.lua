@@ -28,6 +28,60 @@ local function fallback_check_require(mod, label, level, advice)
   end
 end
 
+---Report what the recent-messages popup (`<lt>m/n/e`) needs and how it will behave: whether
+---`lib.nvim.messages` loads, whether `ui.kit.message_log` makes it live and paginated (else a static
+---dump), and whether the `ext_messages` logger is attached right now (`lib.nvim.messages.status()`).
+---@param check_require fun(mod: string, label: string, level: "error"|"warn"|"info", advice?: string[])
+---@return nil
+local function check_recent_popup(check_require)
+  vim.health.start("debugging: recent popup")
+  check_require("lib.nvim.messages", "recent popup: message store", "error", {
+    'Install "StefanBartl/lib.nvim" (the popup reads its entries from lib.nvim.messages)',
+  })
+
+  local ok_kit, kit = pcall(require, "ui.kit")
+  if ok_kit and type(kit) == "table" and type(kit.message_log) == "function" then
+    vim.health.ok("ui.kit.message_log present: the popup is live and paginated")
+  else
+    vim.health.info("ui.kit.message_log not available: the popup shows a static dump (optional)")
+  end
+
+  local ok_messages, messages = pcall(require, "lib.nvim.messages")
+  if not ok_messages or type(messages) ~= "table" then
+    return
+  end
+  if type(messages.status) ~= "function" then
+    vim.health.info(
+      "lib.nvim.messages has no status() (older lib.nvim): attach state unknown; "
+        .. "the ext_messages feed needs a running renderer (noice or renderer_override)"
+    )
+    return
+  end
+
+  local ok_status, status = pcall(messages.status)
+  if not ok_status or type(status) ~= "table" then
+    vim.health.warn("lib.nvim.messages.status() failed: " .. tostring(status))
+    return
+  end
+  if status.attached then
+    vim.health.ok(
+      ("ext_messages logger attached (renderer: %s, %d entries stored)"):format(
+        tostring(status.renderer),
+        tonumber(status.count) or 0
+      )
+    )
+  else
+    vim.health.info(
+      "ext_messages logger not attached: the popup holds only lib.nvim.notify entries, "
+        .. "no :echo / :write / Lua error messages",
+      {
+        "Call require('lib.nvim.messages').setup() in the host config",
+        "The feed attaches only with a renderer: noice running, or setup({ renderer_override = true })",
+      }
+    )
+  end
+end
+
 ---Run every :checkhealth debugging section.
 ---@return nil
 function M.check()
@@ -102,11 +156,7 @@ function M.check()
     vim.health.info("nvim-treesitter not installed (optional)")
   end
 
-  if pcall(require, "noice") then
-    vim.health.ok("noice present (views: Noice all/errors)")
-  else
-    vim.health.info("noice not installed — Noice views fall back to :messages")
-  end
+  check_recent_popup(check_require)
 
   if pcall(require, "which-key") then
     vim.health.ok("which-key present (views keymap group label)")

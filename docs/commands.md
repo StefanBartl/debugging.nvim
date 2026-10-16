@@ -100,6 +100,7 @@ by the active config appear (e.g. `neotree` is opt-in — see `features.neotree`
 ```
 
 Verifies Neovim version, the lib.nvim modules each feature relies on, clipboard
-providers, optional Tree-sitter / Noice, write permissions, the opt-in
+providers, optional Tree-sitter, the recent-messages popup (live or static, logger
+attached or not), write permissions, the opt-in
 Neo-tree bridge, and whether neotest (and how many adapters) is there for
 `:Debug neotest`.
