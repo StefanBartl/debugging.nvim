@@ -15,7 +15,7 @@ arguments, defaults, event names — see [commands.md](../commands.md),
 
 | Category | Does |
 | --- | --- |
-| **Views** | Auto-refreshing `:messages` and Noice windows, captured to a file or the clipboard |
+| **Views** | A popup of the recent messages (all / non-error / errors), plus the `:messages` history captured to a file or the clipboard |
 | **Autocmds** | The live registry, a Tree-sitter audit of the source, and a combined view of where the two disagree |
 | **Inspection** | Buffer, window and tab reports and inspectors, cursor state, recursive Lua value dumps |
 | **UI freezes** | A blocking-call tracer with Lua tracebacks, plus an external process-tree watcher on Windows |
@@ -36,7 +36,7 @@ and only the third view — the diff — makes that visible.
 | Page | What it covers |
 |---|---|
 | [CORE.md](CORE.md) | The unified `:Debug` command, its two-level completion, the feature flags and config system behind it, and `:checkhealth debugging`. |
-| [VIEWS.md](VIEWS.md) | Auto-refreshing `:messages` and Noice windows, capturing them to a file or the clipboard, and the keymaps that drive both. |
+| [VIEWS.md](VIEWS.md) | The recent-messages popup (live with ui.nvim, a static snapshot without), capturing `:messages` to a file or the clipboard, and the keymaps that drive both. |
 | [AUTOCMDS.md](AUTOCMDS.md) | The three views on autocommands — live, static source audit, and the combined diff that shows where they disagree. |
 | [TOOLS.md](TOOLS.md) | The single-purpose categories: reports, inspectors, keylogger, indent and markdown diagnostics, module reload, startup benchmark, neotest diagnostics, Neo-tree bridge. |
 | [PROC.md](PROC.md) | Diagnosing a UI freeze: the in-process call tracer, the external process-tree watcher, and what neither of them can see. |

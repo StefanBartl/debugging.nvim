@@ -134,6 +134,13 @@ What the popup can show is what `lib.nvim.messages` records: everything Neovim k
 (Neovim does not keep it either) and a plain `vim.notify` while Noice owns it. Errors only
 show under `<e` (and `<n`), never under `<m`.
 
+That list assumes `lib.nvim.messages` has attached its `ext_messages` logger, which it does
+only while a renderer runs (noice, or `setup({ renderer_override = true })`) and only after
+the host config called `require("lib.nvim.messages").setup()`. debugging.nvim does not make
+that call. Without it the popup holds only what went through `lib.nvim.notify` — no `:write`,
+no Lua errors. See [installation.md](installation.md#what-feeds-the-recent-messages-popup);
+`:checkhealth debugging` tells which case applies.
+
 `messages` filters to non-error entries, `noice_all` is unfiltered, `noice_errors`
 shows only errors — three views over the same live store, not three separate
 logs.

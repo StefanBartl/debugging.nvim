@@ -1,30 +1,64 @@
 # Views
 
-`:Debug messages` and `:Debug noice` — auto-refreshing scratch windows over
-Neovim's own message history, plus the capture actions that get that history
-out of the editor and into an issue or a chat.
+`:Debug messages` and `:Debug noice` — a popup over the messages Neovim
+showed recently, plus the capture actions that get the `:messages` history out
+of the editor and into an issue or a chat.
 
-## Auto-refreshing message and Noice views
+## Recent-messages popup
 
-Scratch windows for `:messages` and, when [noice.nvim] is installed, its
-message history. Each window carries a tag; re-entering it (`WinEnter`) or
-bringing its buffer back into a window (`BufWinEnter`) re-runs the underlying
-command and rewrites the buffer, so a view left open in a split keeps showing
-current output instead of a frozen snapshot from when it was opened.
+`<lt>m`, `<lt>n` and `<lt>e` (and `:Debug messages show`, `:Debug noice
+all|errors`) open one popup over one store, with three filters:
 
-`q` and `<Esc>` close a view window — bound per buffer through a `FileType`
-autocmd rather than globally, so neither key changes meaning anywhere else.
+| Key | Usercmd | Filter |
+| --- | --- | --- |
+| `<lt>m` | `:Debug messages show` | non-error entries (trace … warn) |
+| `<lt>n` | `:Debug noice all` | everything |
+| `<lt>e` | `:Debug noice errors` | errors only |
 
-- **Module:** `views/display.lua` (`show_command_output`, `refresh_log_view`,
-  `clear_all`), `views/init.lua`
-- **Config:** `opts.features.views`, `opts.views.autocmds`,
-  `opts.views.timings`
+The `noice` category and the `noice_all` / `noice_errors` keymap names are
+kept from the time these keys opened `:Noice` windows; Noice itself is not
+needed for the popup. Pressing a key whose popup is already open focuses it
+instead of opening a second one; `<lt>x` / `:Debug messages clear` closes all
+three.
+
+The entries come from [lib.nvim]'s `lib.nvim.messages` store. On open the
+popup shows the last `views.recent.window_s` seconds, topped up to at least
+`views.recent.min_entries` entries however old they are, so a quiet minute
+does not open an empty popup.
+
+How it renders depends on [ui.nvim]:
+
+- **With ui.nvim** (`ui.kit.message_log`): live and paginated. New messages
+  that match the filter are appended while the popup is open, older history
+  loads one `window_s` page at a time (quiet stretches are skipped), entries
+  fold to their first line. The keys inside the popup are listed in
+  [configuration.md](../configuration.md#keys-inside-the-popup) and under `?`.
+- **Without ui.nvim**: a static snapshot in a `lib.nvim.output.viewer`
+  window, one notification says so. Multi-line entries (error texts, stack
+  traces) are split; the `[Ns ago]` age stands on the first line only.
+
+What the store holds depends on the host config, not on this plugin:
+everything sent through `lib.nvim.notify` always, every other message
+(`:echomsg`, `:write`, Lua and `E…` errors, `:!cmd` output) only while
+`lib.nvim.messages` has its `ext_messages` logger attached — which needs a
+running renderer (noice) and a `require("lib.nvim.messages").setup()` call.
+See [installation.md](../installation.md#what-feeds-the-recent-messages-popup);
+`:checkhealth debugging` reports the current state in its "recent popup"
+section.
+
+- **Module:** `views/recent.lua` (`show`), `views/init.lua`
+  (`messages_show`, `noice_all`, `noice_errors`, `windows_clear`),
+  `views/display.lua` (`clear_all`)
+- **Config:** `opts.features.views`, `opts.views.recent` (`window_s`,
+  `min_entries`, `order`, `collapsed_default`) — see
+  [configuration.md](../configuration.md#recent-messages-popup)
 - **Usercmds:** `:Debug messages show|clear`, `:Debug noice all|errors` — see
   [BINDINGS.md](../BINDINGS.md#user-commands)
-- **Autocmds:** `WinEnter` / `BufWinEnter` auto-refresh, `FileType`
-  close-window binding — see [BINDINGS.md](../BINDINGS.md#autocommands)
+- **Keymaps:** `<lt>m` / `<lt>n` / `<lt>e` / `<lt>x` — see
+  [BINDINGS.md](../BINDINGS.md#default-keymaps)
 
-[noice.nvim]: https://github.com/folke/noice.nvim
+[lib.nvim]: https://github.com/StefanBartl/lib.nvim
+[ui.nvim]: https://github.com/StefanBartl/ui.nvim
 
 ## Capture to file, to clipboard, or both
 
@@ -61,14 +95,9 @@ declaration, if it is installed.
 - **Keymaps:** `<lt>m` / `<lt>n` / `<lt>e` / `<lt>c` / `<lt>f` / `<lt>y` /
   `<lt>x` — see [BINDINGS.md](../BINDINGS.md#default-keymaps)
 
-## Timing budget for slow sources
+## Older view options
 
-A view opens a command's window, waits for it to render, then reads it back.
-How long to wait is configurable per source, because the answer depends on the
-machine: too short and the view reports "no output" for a command that was
-merely still rendering.
-
-- **Module:** `views/display.lua`, `views/init.lua`
-- **Config:** `opts.views.timings.delay_messages_ms`, `.delay_noice_ms`,
-  `.retry_delay_ms`, `.attempts`, `.capture_timeout_ms` — see
-  [configuration.md](../configuration.md)
+`opts.views.timings` and `opts.views.autocmds.auto_refresh` date from the
+command-output windows the popup replaced (they waited for `:messages` /
+`:Noice` to render and re-ran them on `WinEnter`). They are still accepted
+without a warning, but the recent-messages popup reads none of them.

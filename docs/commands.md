@@ -8,8 +8,8 @@ prose, with the reasoning behind each part.
 
 | Category | Actions | What it does |
 |---|---|---|
-| `messages` | `show` · `capture` · `clear` | Show / capture `:messages` (file + clipboard) / clear debug windows |
-| `noice` | `all` · `errors` | Show all Noice messages / only errors |
+| `messages` | `show` · `capture` · `clear` | Recent-messages popup, non-error entries / capture `:messages` (file + clipboard) / close debug windows |
+| `noice` | `all` · `errors` | Recent-messages popup, unfiltered / errors only (the name is kept for compatibility; Noice is not required) |
 | `report` | `buf` · `tab` · `win [id]` | Print buffer / tab / window reports to `:messages` |
 | `autocmds` | `runtime [event] [pat]` · `sources [args]` · `all [args]` | Live `nvim_get_autocmds` view · static source-code audit · combined sources-vs-runtime view |
 | `inspect` | `buffer [bufnr]` · `window [winid]` · `tab [tabnr]` | Inspect buffer / window / tab scoped options and state |
@@ -29,9 +29,9 @@ prose, with the reasoning behind each part.
 
 ```
 :Debug                          " overview of enabled categories
-:Debug messages show            " open the :messages window
+:Debug messages show            " recent-messages popup, non-error entries
 :Debug messages capture         " capture :messages to file + clipboard
-:Debug noice errors             " show Noice errors
+:Debug noice errors             " recent-messages popup, errors only
 :Debug report buf               " buffer report
 :Debug report win 1000          " window report for window 1000 (<Tab> lists open window ids)
 :Debug autocmds runtime BufEnter *   " live autocmds for an event/pattern

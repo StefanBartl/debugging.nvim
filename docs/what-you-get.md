@@ -6,8 +6,8 @@ worth knowing on day one:
 | Command | Does |
 | --- | --- |
 | `:Debug` | Overview of the categories your setup has enabled |
-| `:Debug messages show` | An auto-refreshing `:messages` window you can leave open |
-| `:Debug messages capture` | The same content to a file and the clipboard |
+| `:Debug messages show` | A popup of the recent messages (`<lt>m`; `<lt>e` for errors only), live with ui.nvim |
+| `:Debug messages capture` | The `:messages` history to a file and the clipboard |
 | `:Debug autocmds runtime BufEnter *` | The live registry, for one event and pattern |
 | `:Debug autocmds all` | Registry versus what the source claims to register, plus the diff |
 | `:Debug report buf` | Every buffer, with its options and state |

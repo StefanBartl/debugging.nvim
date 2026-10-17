@@ -39,7 +39,7 @@ require("debugging").setup({})
 | Path | Contains |
 | --- | --- |
 | `lua/debugging/bindings/` | The `:Debug` dispatcher, its route tree and completion |
-| `lua/debugging/views/` | Auto-refreshing message and Noice windows |
+| `lua/debugging/views/` | The recent-messages popup and the `:messages` capture |
 | `lua/debugging/autocmds/` | The live registry reader, the Tree-sitter source audit, and the diff |
 | `lua/debugging/actions/` | Reports and inspectors for buffers, windows, tabs, cursor state |
 | `lua/debugging/tools/` | Process tracing, startup benchmark, module reload |

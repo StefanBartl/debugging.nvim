@@ -9,7 +9,7 @@ Ask `:Debug` what it can do — the completion is the catalogue:
 Then pick a category and an action:
 
 ```vim
-:Debug messages show       " the :messages window, auto-refreshing
+:Debug messages show       " popup of the recent messages (live with ui.nvim)
 :Debug autocmds all        " combined sources-vs-runtime view, and the diff
 :Debug report buf          " buffer report
 :Debug proc start 200      " log every system()/jobstart call over 200ms
