@@ -22,7 +22,7 @@ lua/debugging/
                                 through lib.nvim's keymap registry, which also
                                 supplies the optional which-key group label)
     autocmds.lua                views subsystem auto-refresh + close-window autocmds
-  views/                      messages/Noice capture, display; timings/keymap/autocmd config
+  views/                      recent-messages popup (recent.lua), :messages capture, window close; keymap/autocmd config
   actions/                    action logic invoked by the :Debug dispatcher
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
     module_reload.lua         reload Lua module of the current buffer

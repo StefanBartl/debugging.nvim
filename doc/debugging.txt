@@ -21,7 +21,8 @@ CONTENTS                                                    *debugging-contents*
 1. INTRODUCTION                                                *debugging-intro*
 
 debugging.nvim provides one `:Debug {category} {action}` command that groups
-every debugging tool: message/Noice views, buffer/tab/window reports, autocmd
+every debugging tool: a recent-messages popup and :messages capture,
+buffer/tab/window reports, autocmd
 inspection (runtime, a Tree-sitter static source audit, and a combined
 sources-vs-runtime view), buffer/window/tab/cursor/variable inspection, a
 terminal keylogger, indent diagnostics, markdown inline-highlight debugging,
@@ -35,7 +36,9 @@ Depends on lib.nvim (a deliberate shared dependency).
 
   - Neovim 0.9 or later
   - lib.nvim
-  - Optional: clipboard provider (messages capture), noice.nvim (noice views),
+  - Optional: ui.nvim (makes the recent-messages popup live and paginated;
+    without it the popup is a static snapshot), clipboard provider (messages
+    capture), noice.nvim (feeds the popup, see |debugging-recent|),
     Tree-sitter (markdown / indent diagnostics), which-key.nvim (groups the
     views keymap prefix)
 
@@ -123,8 +126,10 @@ neotree ~
   — so the bridge works without the private `config.neotree.*` layout.
 
 views ~
-  Keymaps (default prefix "<lt>"), auto-refresh autocmds, capture timings and
-  output directory for the message/Noice views.
+  Keymaps (default prefix "<lt>"), the recent-messages popup (`recent`, see
+  |debugging-recent|) and the capture output directory. `autocmds.auto_refresh`
+  and `timings` date from the older command-output windows; the popup reads
+  neither.
 
 command ~
   Name of the unified user command. Default: "Debug".
@@ -157,13 +162,31 @@ an error/notification.
 5.1 Categories                                            *debugging-categories*
 
 messages ~
-  `show`     Open the :messages window.
+  `show`     Recent-messages popup, non-error entries (<lt>m).
   `capture`  Capture :messages to a file and the clipboard.
-  `clear`    Close all debug windows.
+  `clear`    Close all debug windows (<lt>x).
 
 noice ~
-  `all`      Show all Noice messages.
-  `errors`   Show Noice errors.
+  `all`      Recent-messages popup, unfiltered (<lt>n).
+  `errors`   Recent-messages popup, errors only (<lt>e).
+  The category keeps its old name for compatibility; Noice is not required.
+
+Recent-messages popup                                        *debugging-recent*
+  One popup over the `lib.nvim.messages` store, three filters (non-error /
+  all / error). It opens on the last `views.recent.window_s` seconds, topped
+  up to `views.recent.min_entries` entries. With ui.nvim
+  (`ui.kit.message_log`) it is live and paginated (`?` lists its keys);
+  without it, a static snapshot. A key whose popup is already open focuses
+  it.
+
+  The store records everything sent through `lib.nvim.notify`. Other
+  messages (`:echomsg`, `:write`, Lua and E… errors, `:!cmd` output) are
+  recorded only while `lib.nvim.messages` has its `ext_messages` logger
+  attached: that needs a running renderer (noice, or
+  `renderer_override = true` when something else draws messages) and a call
+  in the host config, which debugging.nvim does not make: >lua
+    require("lib.nvim.messages").setup({})  -- after noice is set up
+<  `:checkhealth debugging` (section "recent popup") reports the state.
 
 report ~
   `buf`      Buffer report to :messages.
@@ -339,8 +362,10 @@ same ground there.
 <
 
 Checks Neovim version, lib.nvim modules per feature, clipboard providers,
-optional Tree-sitter / Noice / which-key, write permissions, vim.loader
-availability (module_reload), the opt-in Neo-tree bridge, and (proc_trace)
+optional Tree-sitter / Noice / which-key, write permissions, the
+recent-messages popup (live or static, logger attached or not and why not),
+vim.loader availability (module_reload), the opt-in Neo-tree bridge, and
+(proc_trace)
 the bundled watcher script + PowerShell availability on Windows.
 
 ==============================================================================
@@ -364,7 +389,8 @@ the bundled watcher script + PowerShell availability on Windows.
                                 through lib.nvim's keymap registry, which also
                                 supplies the optional which-key group label)
       autocmds.lua              views subsystem auto-refresh + close-window autocmds
-    views/                    messages/Noice capture, display; timings/keymap/autocmd config
+    views/                    recent-messages popup (recent.lua), :messages capture,
+                              window close; keymap/autocmd config
     actions/reports.lua           buf/tab/win reports
     actions/module_reload.lua     reload Lua module of current buffer
     actions/neotree_safety.lua    opt-in Neo-tree bridge (pcall-guarded)

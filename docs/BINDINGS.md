@@ -46,8 +46,8 @@ by `config.features.*`.
 | command | desc |
 | --- | --- |
 | `:Debug` | Overview of enabled categories |
-| `:Debug messages show\|capture\|clear` | Show / capture (file+clipboard) / clear `:messages` views |
-| `:Debug noice all\|errors` | Show all Noice messages / only errors |
+| `:Debug messages show\|capture\|clear` | Recent-messages popup, non-error entries (same as `<lt>m`) / capture `:messages` (file+clipboard) / close debug windows |
+| `:Debug noice all\|errors` | Recent-messages popup, unfiltered / errors only (same as `<lt>n` / `<lt>e`; the category keeps its old name, Noice is not required) |
 | `:Debug report buf\|tab\|win [id]` | Buffer / tab / window report to `:messages` |
 | `:Debug autocmds runtime [event] [pat]` | Live `nvim_get_autocmds()` view |
 | `:Debug autocmds sources [event=][sort=][impl=][summary=][freq=][root=][refresh=][qf=]` | Static source-code audit of `nvim_create_autocmd` call sites (Tree-sitter parser with text fallback; cached per root; `refresh=true` forces a rescan; `qf=true` sends `path:line` to the quickfix list) |

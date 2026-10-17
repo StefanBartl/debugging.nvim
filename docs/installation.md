@@ -4,12 +4,42 @@
 
 - Neovim 0.9+
 - [lib.nvim](https://github.com/StefanBartl/lib.nvim)
-- Optional: a clipboard provider (for `messages capture`), `noice.nvim` (for
-  `noice` views), Tree-sitter (markdown / indent diagnostics), `which-key.nvim`
-  (groups the views keymap prefix), PowerShell (`pwsh` or `powershell.exe`, for
-  `proc watch` — Windows only), [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim)
-  (`:Debug report buf` warns when the current buffer still has unresolved
-  merge-conflict markers)
+- Optional: [ui.nvim](https://github.com/StefanBartl/ui.nvim) (makes the
+  recent-messages popup behind `<lt>m` / `<lt>n` / `<lt>e` live and paginated;
+  without it the popup is a static snapshot), a clipboard provider (for
+  `messages capture`), `noice.nvim` (feeds the recent-messages popup, see
+  below, and is read first by `messages capture`), Tree-sitter (markdown /
+  indent diagnostics), `which-key.nvim` (groups the views keymap prefix),
+  PowerShell (`pwsh` or `powershell.exe`, for `proc watch` — Windows only),
+  [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim) (`:Debug report
+  buf` warns when the current buffer still has unresolved merge-conflict
+  markers)
+
+## What feeds the recent-messages popup
+
+The popup shows what `lib.nvim.messages` has recorded. It has two feeds:
+
+- everything sent through `lib.nvim.notify` — always recorded, no setup needed;
+- every other message Neovim shows (`:echomsg`, `print()`, `:write`, Lua and
+  `E…` errors, `:!cmd` output) — recorded only while `lib.nvim.messages` has
+  attached its `ext_messages` logger.
+
+The logger attaches only while a message renderer is running, because as the
+only `ext_messages` listener it would take message and cmdline drawing away
+from the terminal UI. debugging.nvim does not attach it for you: the message
+store is shared with other plugins, so the policy belongs to your config. Call
+`setup` once noice is running:
+
+```lua
+-- e.g. in noice.nvim's own `config` function, after require("noice").setup(...)
+require("lib.nvim.messages").setup({})
+require("lib.nvim.messages").wrap_noice()  -- optional: follow :Noice enable/disable
+```
+
+Use `setup({ renderer_override = true })` only if something other than noice
+draws `ext_messages`. Without noice and without that call the popup still
+works, but holds only the `lib.nvim.notify` entries. `:checkhealth debugging`
+reports which case applies (section "recent popup").
 
 ## Installation
 
