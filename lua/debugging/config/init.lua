@@ -8,13 +8,6 @@ local DEFAULTS = require("debugging.config.DEFAULTS")
 
 local M = {}
 
----@type Dbg.Config|nil
-local _active = nil
-
----What the last `setup()` had to ignore, for `:checkhealth`.
----@type string[]
-local _issues = {}
-
 ---Keys `setup()` accepts, recursively. `true` means "leaf -- any value of the
 ---right shape goes"; a nested table names that option group's own accepted
 ---keys, walked to whatever depth the group actually has, so a typo inside a
@@ -166,7 +159,52 @@ local function spell_out_switches(user_opts)
   return out
 end
 
----Merge user options over the defaults and store the result.
+--- To the schema that `lib.lua.config` infers from `DEFAULTS`, the option groups `KNOWN` names are
+--- open (`sanitize` walks them to whatever depth they have); an unknown top-level key is caught
+--- there as well.
+local ANY = "boolean|number|string|table|function"
+---@type table<string, string|table>
+local SCHEMA = {}
+for key, known in pairs(KNOWN) do
+  SCHEMA[key] = type(known) == "table" and { "table" } or ANY
+end
+
+-- Set by the normalize hook of the current `setup()`, read by its resolve hook.
+local want_all = false
+
+local cfg = require("lib.lua.config").new(DEFAULTS, {
+  name = "debugging",
+  schema = SCHEMA,
+  -- polymorphic: a module name or an already-loaded module table, which must stay that very table
+  opaque = { "neotree.quarantine", "neotree.safety" },
+  normalize = function(opts, issues)
+    -- Back-compat: a bare `all = true` activates every feature category (it is reported as an
+    -- unknown key as well, which it always was, but it still counts).
+    want_all = opts.all == true
+    local spelled = spell_out_switches(opts)
+    local clean, found = sanitize(spelled)
+    for key in pairs(opts) do
+      opts[key] = nil
+    end
+    for key, value in pairs(clean) do
+      opts[key] = value
+    end
+    vim.list_extend(issues, found)
+  end,
+  resolve = function(current)
+    if want_all then
+      for k in pairs(current.features) do
+        current.features[k] = true
+      end
+    end
+  end,
+  notify = function(message)
+    require("lib.nvim.notify").create("[debugging]").warn(message)
+  end,
+})
+
+---Merge user options over the defaults and store the result. Every call
+---starts from `DEFAULTS`.
 --- Back-compat: a bare `all = true` activates every feature category.
 ---
 --- Unknown keys and mistyped option tables are reported once here and again
@@ -174,38 +212,15 @@ end
 ---@param user_opts? Dbg.Config|table
 ---@return Dbg.Config
 function M.setup(user_opts)
-  if type(user_opts) ~= "table" then
-    user_opts = {}
-  end
-
-  user_opts = spell_out_switches(user_opts)
-  local clean, issues = sanitize(user_opts)
-  _issues = issues
-  if #issues > 0 then
-    require("lib.nvim.notify")
-      .create("[debugging]")
-      .warn("ignored config: " .. table.concat(issues, "; "))
-  end
-
-  local merged = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), clean)
-
-  if user_opts.all == true then
-    for k in pairs(merged.features) do
-      merged.features[k] = true
-    end
-  end
-
-  _active = merged
-  return _active
+  want_all = false
+  cfg.setup(type(user_opts) == "table" and user_opts or nil)
+  return cfg.get()
 end
 
 ---Return the active config, initializing it from DEFAULTS if setup() hasn't run yet.
 ---@return Dbg.Config
 function M.get()
-  if _active == nil then
-    _active = vim.deepcopy(DEFAULTS)
-  end
-  return _active
+  return cfg.get()
 end
 
 ---What the last `setup()` ignored: unknown keys and option tables of the
@@ -213,7 +228,7 @@ end
 ---accepted.
 ---@return string[]
 function M.issues()
-  return vim.list_extend({}, _issues)
+  return cfg.issues()
 end
 
 return M
