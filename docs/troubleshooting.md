@@ -9,7 +9,7 @@ Two complementary layers:
 
 1. **`proc start` / `stop` / `status` / `log`** — wraps `vim.fn.system`,
    `vim.fn.systemlist`, `vim.system`, and `vim.fn.jobstart` (via
-   [`lib.nvim.system.proc_trace`](https://github.com/StefanBartl/lib.nvim/blob/main/lua/lib/nvim/system/README.md#libnvimsystemproc_trace))
+   [`lib.nvim.system.proc_trace`](https://github.com/WKDSteve/lib.nvim/blob/main/lua/lib/nvim/system/README.md#libnvimsystemproc_trace))
    to log each call's duration, with a full Lua stack traceback for calls at
    or above a threshold (default 200ms) — so you see not just *that* something
    was slow, but *which plugin/config line* triggered it.

@@ -50,16 +50,16 @@ Depends on lib.nvim (a deliberate shared dependency).
 
 lazy.nvim: >lua
   {
-    "StefanBartl/debugging.nvim",
+    "WKDSteve/debugging.nvim",
     cmd = "Debug",
-    dependencies = { "StefanBartl/lib.nvim" },
+    dependencies = { "WKDSteve/lib.nvim" },
     opts = {},
   }
 <
 packer.nvim: >lua
   use({
-    "StefanBartl/debugging.nvim",
-    requires = { "StefanBartl/lib.nvim" },
+    "WKDSteve/debugging.nvim",
+    requires = { "WKDSteve/lib.nvim" },
     cmd = "Debug",
     config = function()
       require("debugging").setup({})

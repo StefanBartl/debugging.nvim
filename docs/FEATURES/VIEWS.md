@@ -57,8 +57,8 @@ section.
 - **Keymaps:** `<lt>m` / `<lt>n` / `<lt>e` / `<lt>x` — see
   [BINDINGS.md](../BINDINGS.md#default-keymaps)
 
-[lib.nvim]: https://github.com/StefanBartl/lib.nvim
-[ui.nvim]: https://github.com/StefanBartl/ui.nvim
+[lib.nvim]: https://github.com/WKDSteve/lib.nvim
+[ui.nvim]: https://github.com/WKDSteve/ui.nvim
 
 ## Capture to file, to clipboard, or both
 

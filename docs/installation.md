@@ -3,15 +3,15 @@
 ## Requirements
 
 - Neovim 0.9+
-- [lib.nvim](https://github.com/StefanBartl/lib.nvim)
-- Optional: [ui.nvim](https://github.com/StefanBartl/ui.nvim) (makes the
+- [lib.nvim](https://github.com/WKDSteve/lib.nvim)
+- Optional: [ui.nvim](https://github.com/WKDSteve/ui.nvim) (makes the
   recent-messages popup behind `<lt>m` / `<lt>n` / `<lt>e` live and paginated;
   without it the popup is a static snapshot), a clipboard provider (for
   `messages capture`), `noice.nvim` (feeds the recent-messages popup, see
   below, and is read first by `messages capture`), Tree-sitter (markdown /
   indent diagnostics), `which-key.nvim` (groups the views keymap prefix),
   PowerShell (`pwsh` or `powershell.exe`, for `proc watch` — Windows only),
-  [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim) (`:Debug report
+  [gitsuite.nvim](https://github.com/WKDSteve/gitsuite.nvim) (`:Debug report
   buf` warns when the current buffer still has unresolved merge-conflict
   markers)
 
@@ -50,9 +50,9 @@ no `event` or `lazy = false` needed.
 
 ```lua
 {
-  "StefanBartl/debugging.nvim",
+  "WKDSteve/debugging.nvim",
   cmd = "Debug",
-  dependencies = { "StefanBartl/lib.nvim" },
+  dependencies = { "WKDSteve/lib.nvim" },
   opts = {},
 }
 ```
@@ -61,8 +61,8 @@ no `event` or `lazy = false` needed.
 
 ```lua
 use({
-  "StefanBartl/debugging.nvim",
-  requires = { "StefanBartl/lib.nvim" },
+  "WKDSteve/debugging.nvim",
+  requires = { "WKDSteve/lib.nvim" },
   cmd = "Debug",
   config = function()
     require("debugging").setup({})
@@ -83,8 +83,8 @@ trigger as well, or load the plugin on `VeryLazy`:
 
 ```lua
 {
-  "StefanBartl/debugging.nvim",
-  dependencies = { "StefanBartl/lib.nvim" },
+  "WKDSteve/debugging.nvim",
+  dependencies = { "WKDSteve/lib.nvim" },
   cmd = "Debug",
   keys = { "<lt>m", "<lt>n", "<lt>e", "<lt>c", "<lt>f", "<lt>y", "<lt>x" },
   opts = {},

@@ -19,7 +19,7 @@ event names once typed far enough (`event=Buf<Tab>` → `event=BufAdd
 event=BufEnter …`).
 
 The `:Debug` command is built with
-[`lib.nvim.bindings.usercmd.composer`](https://github.com/StefanBartl/lib.nvim).
+[`lib.nvim.bindings.usercmd.composer`](https://github.com/WKDSteve/lib.nvim).
 Handle arguments use the composer's typed slots: `report win`,
 `inspect buffer` and `inspect window` complete against live window/buffer ids,
 and `keylogger start [file]` gets path completion (the file need not exist yet
@@ -95,7 +95,7 @@ Notifications, the scratch and float window helpers, buffer/window/tab report
 utilities, filesystem writes, path normalization, the recursive directory
 walker, the in-memory scan cache, the keymap and autocmd registries, and the
 `proc_trace` wrapper all come from
-[`lib.nvim`](https://github.com/StefanBartl/lib.nvim) rather than being
+[`lib.nvim`](https://github.com/WKDSteve/lib.nvim) rather than being
 hand-rolled per feature — the same modules the health check's "lib.nvim"
 section verifies are present.
 

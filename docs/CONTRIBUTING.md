@@ -1,7 +1,7 @@
 # Contributing to debugging.nvim
 
 Thank you for your interest! Bugs, ideas and questions are welcome in the
-[issue tracker](https://github.com/StefanBartl/debugging.nvim/issues); pull
+[issue tracker](https://github.com/WKDSteve/debugging.nvim/issues); pull
 requests very welcome.
 
 ## Getting the repository into a session
@@ -68,7 +68,7 @@ require("debugging").setup({})
 ## Tests
 
 `TESTS/` is a headless suite on its own `TESTS/harness.lua`, run by
-[testing.nvim](https://github.com/StefanBartl/testing.nvim) via
+[testing.nvim](https://github.com/WKDSteve/testing.nvim) via
 `bash scripts/test.sh` (see `TESTS/README.md`). [GitHub Actions](../.github/workflows/ci.yml) runs it on
 every push and PR to `main`.
 

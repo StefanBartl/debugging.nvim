@@ -95,7 +95,7 @@ end
 local function check_recent_popup(check_require)
   vim.health.start("debugging: recent popup")
   check_require("lib.nvim.messages", "recent popup: message store", "error", {
-    'Install "StefanBartl/lib.nvim" (the popup reads its entries from lib.nvim.messages)',
+    'Install "WKDSteve/lib.nvim" (the popup reads its entries from lib.nvim.messages)',
   })
 
   local ok_kit, kit = pcall(require, "ui.kit")
@@ -162,7 +162,7 @@ function M.check()
     "lib.nvim.bindings.usercmd.composer",
     ":Debug command layer",
     "error",
-    { 'Install "StefanBartl/lib.nvim"' }
+    { 'Install "WKDSteve/lib.nvim"' }
   )
   check_require("lib.nvim.notify", "notify", "warn")
   check_require("lib.nvim.buf_win_tab.buffer_utils", "reports: buffer_utils", "warn")

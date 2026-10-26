@@ -17,11 +17,11 @@
 [![Neovim](https://img.shields.io/badge/Neovim-0.9%2B-57A143?logo=neovim&logoColor=white)](https://neovim.io)
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
 ![Status](https://img.shields.io/badge/status-beta-orange)
-[![CI](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/debugging.nvim/actions/workflows/ci.yml)
+[![CI](https://github.com/WKDSteve/debugging.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/WKDSteve/debugging.nvim/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
-[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/debugging/)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://wkdsteve.github.io/wkd/p/debugging/)
 
-> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/debugging/) on the site.
+> Part of the [wkd](https://wkdsteve.github.io/wkd/) family — see this plugin's [page](https://wkdsteve.github.io/wkd/p/debugging/) on the site.
 
 One `:Debug {category} {action}` command for every Neovim debugging tool.
 
@@ -59,7 +59,7 @@ each page answers.
 - [Health check](docs/commands.md#health-check) — what `:checkhealth debugging` reports.
 - [Architecture](docs/architecture.md) — module layout and the dispatcher's shape.
 - [Contributing](docs/CONTRIBUTING.md) — ground rules and project layout.
-- [Feedback](https://github.com/StefanBartl/debugging.nvim/issues) — bug reports, feature requests, and open-ended questions.
+- [Feedback](https://github.com/WKDSteve/debugging.nvim/issues) — bug reports, feature requests, and open-ended questions.
 
 `:help debugging` is the same reference inside the editor.
 

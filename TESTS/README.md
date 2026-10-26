@@ -18,12 +18,12 @@ bash scripts/test.sh --file config   # only spec files whose name contains "conf
 bash scripts/test.sh --json ir.json  # also write the machine-readable result
 ```
 
-The suite is run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+The suite is run by [testing.nvim](https://github.com/WKDSteve/testing.nvim)
 (configured in `.testing.lua`, dialect `h`: the specs run on `TESTS/harness.lua`).
 It prints one line per spec and exits non-zero if any spec failed
 (`DEBUGGING_TESTS_OK` on success).
 
-[lib.nvim](https://github.com/StefanBartl/lib.nvim) is a hard dependency —
+[lib.nvim](https://github.com/WKDSteve/lib.nvim) is a hard dependency —
 every module requires `lib.nvim.notify` at load time. `scripts/test.sh` looks
 for it (and for testing.nvim) in `$LIB_NVIM_DIR` / `$TESTING_NVIM_DIR`, then
 `.deps/<name>`, then `../<name>`, then the lazy.nvim install dir, and exits 1

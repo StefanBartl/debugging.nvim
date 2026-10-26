@@ -111,8 +111,8 @@ action, like any other unknown option (see [Validation](#validation)).
 
 `views.recent` configures what `messages`/`noice_all`/`noice_errors` (the
 `<m`/`<n`/`<e` keys) actually open: a popup backed by
-[lib.nvim.messages](https://github.com/StefanBartl/lib.nvim), live and
-paginated via `ui.kit.message_log` when [ui.nvim](https://github.com/StefanBartl/ui.nvim)
+[lib.nvim.messages](https://github.com/WKDSteve/lib.nvim), live and
+paginated via `ui.kit.message_log` when [ui.nvim](https://github.com/WKDSteve/ui.nvim)
 is installed, a static one-shot dump (`lib.nvim.output.viewer`) otherwise.
 
 ```lua
@@ -149,7 +149,7 @@ logs.
 
 Press `?` in the popup for this list as a cheatsheet (it opens over the popup,
 `q` / `<Esc>` closes the sheet and returns to the log). The keys belong to
-`ui.kit.message_log` ([ui.nvim's README](https://github.com/StefanBartl/ui.nvim/blob/main/lua/ui/kit/README.md#message-log-paginated-time-ordered-entry-list)).
+`ui.kit.message_log` ([ui.nvim's README](https://github.com/WKDSteve/ui.nvim/blob/main/lua/ui/kit/README.md#message-log-paginated-time-ordered-entry-list)).
 
 | Key | Does |
 | --- | --- |
