@@ -119,12 +119,10 @@ justify changing without the author's input:
   triggers it (every keymap and `debug_helper.test_capture()` requests at
   least one sink), but a direct Lua call asking for neither would see
   `ok = false` alongside real `content`.
-- **`views/init.lua`'s `M.setup()` accumulates rather than resets.** Unlike
-  `config/init.lua`'s `setup()` (a fresh `vim.deepcopy(DEFAULTS)` merge every
-  call), `views.setup()` merges each call's `keymaps`/`recent`
-  onto whatever state already exists. Harmless today because
-  `debugging.init`'s one-shot guard means the real path only calls it once,
-  but worth knowing before that guard changes.
+- **`views/init.lua`'s `M.setup()` resets keymaps/recent on every call.**
+  Like `config/init.lua`'s `setup()`, it rebuilds `keymaps` and `recent` from
+  their defaults each time; only `capture.base_dir` (module state on
+  `views.capture`) persists across calls.
 
 ### Deliberately left untested
 

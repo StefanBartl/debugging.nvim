@@ -54,8 +54,8 @@ the only place that registers a user command. lib.nvim provides notify,
 behind `autocmds sources`), `cache.memory` (the TTL cache behind the same
 scan), `window.*` (`make_scratch`/`open_scratch_split`/`tag` back the float
 overview, report scratch buffers, and window-tag lookup), `cross`, `lazy`,
-`normalize`, `system.proc_trace`, and the `autocmd`/`usercmd` registration
-wrappers (which pcall their callbacks and report failures).
+`normalize`, `system.proc_trace`, and the `usercmd` registration
+wrapper (which pcalls its callback and reports failures).
 
 Tests live in [TESTS](../TESTS/README.md) and cover the parts where a silent
 wrong answer is plausible — the config merge, the `autocmds sources` text

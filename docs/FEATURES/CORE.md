@@ -93,7 +93,7 @@ warning.
 
 Notifications, the scratch and float window helpers, buffer/window/tab report
 utilities, filesystem writes, path normalization, the recursive directory
-walker, the in-memory scan cache, the keymap and autocmd registries, and the
+walker, the in-memory scan cache, the keymap registry, and the
 `proc_trace` wrapper all come from
 [`lib.nvim`](https://github.com/WKDSteve/lib.nvim) rather than being
 hand-rolled per feature — the same modules the health check's "lib.nvim"

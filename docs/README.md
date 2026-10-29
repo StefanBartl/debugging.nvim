@@ -20,7 +20,7 @@ The [repository README](../README.md) is the short version; this is the index.
 | [commands.md](commands.md) | What does each `:Debug {category} {action}` do, with which arguments? |
 | [what-you-get.md](what-you-get.md) | Which commands matter on day one, with the defaults enabled? |
 | [configuration.md](configuration.md) | Which `setup()` options exist, and what are their defaults? |
-| [BINDINGS.md](BINDINGS.md) | Every keymap, user command, and autocommand at a glance. |
+| [BINDINGS.md](BINDINGS.md) | Every keymap and user command at a glance. |
 
 ## When something is wrong
 

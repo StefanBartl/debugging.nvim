@@ -26,13 +26,6 @@ function M.find_window_by_tag(tag)
   return window_tag.find(tag)
 end
 
----Get the view tag attached to a window, if any.
----@param win integer
----@return string|nil
-function M.get_window_tag(win)
-  return window_tag.get(win)
-end
-
 ---Clear all debug windows.
 ---@return nil
 function M.clear_all()

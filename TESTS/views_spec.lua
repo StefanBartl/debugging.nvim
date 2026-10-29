@@ -73,12 +73,7 @@ return function(H)
         tagged_win,
         "display.find_window_by_tag: finds it"
       )
-      H.eq(
-        display.get_window_tag(tagged_win),
-        "recent_messages",
-        "display.get_window_tag: reads it back"
-      )
-      H.eq(display.get_window_tag(other_win), nil, "display.get_window_tag: untagged window is nil")
+      H.eq(display.get_window_tag, nil, "display: get_window_tag is gone")
 
       H.eq(display.refresh_log_view, nil, "display: refresh_log_view is gone")
 

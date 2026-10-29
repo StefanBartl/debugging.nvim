@@ -4,7 +4,7 @@
 --- paginated, collapsible popup) when ui.nvim is installed, falls back to a
 --- static `lib.nvim.output.viewer` dump otherwise. Owns no window-tracking
 --- of its own beyond `lib.nvim.window.tag` -- the same primitive
---- `debugging.views.display` already uses for the older command-output views.
+--- `debugging.views.display` uses to find and close these windows.
 
 local window_tag = require("lib.nvim.window").tag
 local notify = require("lib.nvim.notify").create("[debugging.views.recent]")

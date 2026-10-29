@@ -16,5 +16,4 @@ worth knowing on day one:
 | `:Debug module reload` | Reload the current buffer's Lua module without restarting |
 | `:Debug health` | `:checkhealth debugging` |
 
-The full two-level surface is [commands.md](commands.md); every key and
-autocommand is in the [bindings cheatsheet](BINDINGS.md).
+The full two-level surface is [commands.md](commands.md); every key is in the [bindings cheatsheet](BINDINGS.md).

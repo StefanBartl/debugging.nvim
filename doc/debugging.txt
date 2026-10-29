@@ -370,7 +370,7 @@ the bundled watcher script + PowerShell availability on Windows.
 ==============================================================================
 9. ARCHITECTURE                                        *debugging-architecture*
 
-  docs/BINDINGS.md           Cheatsheet: every keymap, :Debug action, autocmd
+  docs/BINDINGS.md           Cheatsheet: every keymap and :Debug action
   scripts/watch-nvim-procs.ps1  Bundled external process-tree watcher (Windows)
   plugin/debugging.lua        Load guard
   lua/debugging/
@@ -382,14 +382,13 @@ the bundled watcher script + PowerShell availability on Windows.
     health.lua                checkhealth provider
     bindings/                 Every user-facing trigger — registration only
       @types/init.lua           Dbg.ActionFn, Dbg.Bindings.RegistryEntry
-      init.lua                  orchestrates usercmds/keymaps/autocmds
+      init.lua                  orchestrates usercmds/keymaps
       usercmds.lua              registers the single :Debug user command
       keymaps.lua               views subsystem normal-mode keymaps (declared
                                 through lib.nvim's keymap registry, which also
                                 supplies the optional which-key group label)
-      autocmds.lua              views subsystem auto-refresh + close-window autocmds
     views/                    recent-messages popup (recent.lua), :messages capture,
-                              window close; keymap/autocmd config
+                              window close; keymap config
     actions/reports.lua           buf/tab/win reports
     actions/module_reload.lua     reload Lua module of current buffer
     actions/neotree_safety.lua    opt-in Neo-tree bridge (pcall-guarded)

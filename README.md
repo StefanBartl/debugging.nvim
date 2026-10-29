@@ -48,7 +48,7 @@ each page answers.
 - [What you get with the defaults](docs/what-you-get.md) — the commands that matter on day one.
 - [All options](docs/configuration.md) — every `setup()` option and its default.
 - [Command reference](docs/commands.md) — every category and action, with completion behaviour.
-- [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command and autocommand in one table.
+- [Bindings cheatsheet](docs/BINDINGS.md) — every keymap and user command in one table.
 
 ### The Rest
 
