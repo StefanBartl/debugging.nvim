@@ -16,13 +16,12 @@ lua/debugging/
   health.lua                  :checkhealth debugging
   bindings/                   Every user-facing trigger — registration only
     @types/init.lua             Dbg.ActionFn, Dbg.Bindings.RegistryEntry
-    init.lua                    orchestrates usercmds/keymaps/autocmds
+    init.lua                    orchestrates usercmds/keymaps
     usercmds.lua                registers the single :Debug user command
     keymaps.lua                 views subsystem normal-mode keymaps (declared
                                 through lib.nvim's keymap registry, which also
                                 supplies the optional which-key group label)
-    autocmds.lua                views subsystem auto-refresh + close-window autocmds
-  views/                      recent-messages popup (recent.lua), :messages capture, window close; keymap/autocmd config
+  views/                      recent-messages popup (recent.lua), :messages capture, window close; keymap/recent config
   actions/                    action logic invoked by the :Debug dispatcher
     reports.lua               buf/tab/win reports (lib.nvim.buf_win_tab.*)
     module_reload.lua         reload Lua module of the current buffer
@@ -57,11 +56,6 @@ scan), `window.*` (`make_scratch`/`open_scratch_split`/`tag` back the float
 overview, report scratch buffers, and window-tag lookup), `cross`, `lazy`,
 `normalize`, `system.proc_trace`, and the `autocmd`/`usercmd` registration
 wrappers (which pcall their callbacks and report failures).
-
-The augroup in `bindings/autocmds.lua` is created directly rather than through
-`lib.nvim.bindings.autocmd.group()`: that helper caches groups by name and skips the
-clear on later calls, which would stack duplicate autocmds every time `setup()`
-runs.
 
 Tests live in [TESTS](../TESTS/README.md) and cover the parts where a silent
 wrong answer is plausible — the config merge, the `autocmds sources` text

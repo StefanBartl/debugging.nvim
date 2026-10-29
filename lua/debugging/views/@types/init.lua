@@ -11,21 +11,6 @@
 ---@field output_dir? string|nil   Target directory when `save_file` is set
 
 -- #####################################################################
--- display.lua
-
----@class Dbg.Views.DisplayOpts
----@field tag? string                 Window tag used to find/reuse the view
----@field cmd? string                 Command whose output is displayed
----@field attempts? integer|nil       Retries before giving up on the source
----@field retry_delay_ms? integer|nil Delay between those retries
----@field auto_bottom? boolean|nil    Keep the cursor pinned to the last line
-
----@class Dbg.Views.WindowRegistry
----@field messages? integer|nil      Window id of the :messages view
----@field noice_all? integer|nil     Window id of the Noice "all" view
----@field noice_errors? integer|nil  Window id of the Noice error view
-
--- #####################################################################
 -- recent.lua
 
 ---@class Dbg.Views.Recent
@@ -41,20 +26,5 @@
 ---@field enable? boolean
 ---@field prefix? string  # default lhs prefix for every key below, e.g. "<leader>d"
 ---@field [string] string|string[]|false  # per-action override: an lhs, several, or false to drop it
-
----@class Dbg.Views.Autocmds
----@field enable? boolean
----@field group_name? string
----@field auto_refresh? boolean
-
--- #####################################################################
--- display.lua + init.lua (shared timing budget)
-
----@class Dbg.Views.Timings
----@field delay_messages_ms? integer  Wait before reading :messages output
----@field delay_noice_ms? integer     Wait before reading Noice output
----@field retry_delay_ms? integer     Delay between retries
----@field attempts? integer           Retry count
----@field capture_timeout_ms? integer Wait for the window a command opens to appear (default 500)
 
 return {}

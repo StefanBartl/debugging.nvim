@@ -1,8 +1,8 @@
 ---@module 'debugging.views'
 --- Unified debug views: :messages / Noice with capture, display, windows.
 ---
---- setup() resolves timings + keymap/autocmd config for the views subsystem.
---- The actual keymaps/autocmds/which-key labels are wired by
+--- setup() resolves the keymap/recent/capture config for the views subsystem.
+--- The actual keymaps are wired by
 --- `debugging.bindings` (see lua/debugging/bindings/); this module exposes
 --- the resolved config via getters plus the plain action functions invoked
 --- by the central `:Debug` dispatcher.
@@ -15,19 +15,6 @@ local display = require("debugging.views.display")
 
 local M = {}
 
----@type Dbg.Views.Timings
-local DEFAULT_TIMINGS = {
-  delay_messages_ms = 30,
-  delay_noice_ms = 50,
-  retry_delay_ms = 60,
-  attempts = 3,
-  -- How long to wait for the window a command opens (:messages, Noice) to
-  -- actually appear. Too short on a slow machine and the view reports "no
-  -- output" for a command that was merely still rendering -- which is why it
-  -- belongs here with the other timings rather than in display.lua.
-  capture_timeout_ms = 500,
-}
-
 ---@type Dbg.Views.Recent
 local DEFAULT_RECENT = {
   window_s = 10,
@@ -36,40 +23,22 @@ local DEFAULT_RECENT = {
   collapsed_default = false,
 }
 
----@type Dbg.Views.Timings  Resolved timings, shared with the action functions.
-local _timings = vim.tbl_extend("force", {}, DEFAULT_TIMINGS)
-
 ---@type Dbg.Views.Keymaps
 local _keymaps_cfg = { enable = true, prefix = "<lt>" }
-
----@type Dbg.Views.Autocmds
-local _autocmds_cfg = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true }
 
 ---@type Dbg.Views.Recent
 local _recent_cfg = vim.tbl_extend("force", {}, DEFAULT_RECENT)
 
----Resolve timings + keymap/autocmd config for the views subsystem.
+---Resolve the keymap/recent/capture config for the views subsystem.
 ---@param opts Dbg.Views.Modules|nil
 ---@return nil
 function M.setup(opts)
   opts = opts or {}
 
-  -- Merge into a fresh copy of the defaults, not the live `_timings` table --
-  -- otherwise a value only ever accumulates: a later setup({}) would leave
-  -- whatever the previous call set instead of resetting it, unlike the two
-  -- sibling assignments below.
-  _timings = vim.tbl_extend("force", {}, DEFAULT_TIMINGS, opts.timings or {})
-
   _keymaps_cfg = vim.tbl_extend("force", {
     enable = true,
     prefix = "<lt>",
   }, opts.keymaps or {})
-
-  _autocmds_cfg = vim.tbl_extend("force", {
-    enable = true,
-    group_name = "DebugViewsAuto",
-    auto_refresh = true,
-  }, opts.autocmds or {})
 
   _recent_cfg = vim.tbl_extend("force", {}, DEFAULT_RECENT, opts.recent or {})
 
@@ -78,22 +47,10 @@ function M.setup(opts)
   end
 end
 
----Get the resolved timings config.
----@return Dbg.Views.Timings
-function M.get_timings()
-  return _timings
-end
-
 ---Get the resolved keymaps config.
 ---@return Dbg.Views.Keymaps
 function M.get_keymaps_config()
   return _keymaps_cfg
-end
-
----Get the resolved autocmds config.
----@return Dbg.Views.Autocmds
-function M.get_autocmds_config()
-  return _autocmds_cfg
 end
 
 ---Get the resolved recent-messages-popup config.

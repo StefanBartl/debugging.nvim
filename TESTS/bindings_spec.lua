@@ -1,8 +1,9 @@
 -- TESTS/bindings_spec.lua
 -- Covers `debugging.bindings.*`: the top-level orchestrator's features.views
 -- gate, the views keymaps' action wiring (driven end to end through a real
--- lib.nvim.bindings.keymap registration), the views autocmds' enable gate
--- and its FileType close-on-`q` behaviour, and the one bit of
+-- lib.nvim.bindings.keymap registration), the proof that the retired views
+-- autocmds (WinEnter/BufWinEnter refresh, FileType close) are really gone,
+-- and the one bit of
 -- `bindings.usercmds` not already exercised by handle_args_spec.lua: the
 -- DBG_AUTOCMD_EXPR composer argtype actually delegating to the sources
 -- completer through the real `:Debug` command.
@@ -27,34 +28,22 @@ return function(H)
       local orig_usercmds = package.loaded["debugging.bindings.usercmds"]
       local orig_views = package.loaded["debugging.views"]
       local orig_keymaps = package.loaded["debugging.bindings.keymaps"]
-      local orig_autocmds = package.loaded["debugging.bindings.autocmds"]
 
-      local usercmds_calls, views_calls, keymaps_calls, autocmds_calls = 0, 0, 0, 0
+      local usercmds_calls, views_calls, keymaps_calls = 0, 0, 0
       package.loaded["debugging.bindings.usercmds"] = {
         setup = function()
           usercmds_calls = usercmds_calls + 1
         end,
       }
       package.loaded["debugging.views"] = {
-        get_timings = function()
-          views_calls = views_calls + 1
-          return {}
-        end,
         get_keymaps_config = function()
-          return { enable = true }
-        end,
-        get_autocmds_config = function()
+          views_calls = views_calls + 1
           return { enable = true }
         end,
       }
       package.loaded["debugging.bindings.keymaps"] = {
         setup = function()
           keymaps_calls = keymaps_calls + 1
-        end,
-      }
-      package.loaded["debugging.bindings.autocmds"] = {
-        setup = function()
-          autocmds_calls = autocmds_calls + 1
         end,
       }
       package.loaded["debugging.bindings"] = nil
@@ -66,12 +55,10 @@ return function(H)
 
       bindings.setup({ features = { views = true } })
       H.eq(keymaps_calls, 1, "bindings.setup: features.views=true wires up keymaps")
-      H.eq(autocmds_calls, 1, "bindings.setup: features.views=true wires up autocmds")
 
       package.loaded["debugging.bindings.usercmds"] = orig_usercmds
       package.loaded["debugging.views"] = orig_views
       package.loaded["debugging.bindings.keymaps"] = orig_keymaps
-      package.loaded["debugging.bindings.autocmds"] = orig_autocmds
       package.loaded["debugging.bindings"] = nil
       require("debugging.bindings") -- restore the real module
     end
@@ -145,124 +132,60 @@ return function(H)
 
     -- ================================================================ autocmds
 
+    -- The views subsystem used to register WinEnter/BufWinEnter (refresh a
+    -- tagged window) and FileType messages/noice (bind q) autocmds in a
+    -- `DebugViewsAuto` augroup. All of it was dead (nothing produces those
+    -- tags or filetypes any more) and was removed outright: the plugin owns
+    -- no autocmd now, and the options that configured them are unknown keys.
     do
-      local bindings_autocmds = require("debugging.bindings.autocmds")
-      local timings = { attempts = 1, retry_delay_ms = 10 }
+      local views = require("debugging.views")
+      local display = require("debugging.views.display")
 
-      -- enable = false: no augroup is created at all.
-      local disabled_ok = pcall(
-        bindings_autocmds.setup,
-        { enable = false, group_name = "DebuggingBindingsSpecOff" },
-        timings
-      )
-      H.ok(disabled_ok, "bindings.autocmds.setup: enable=false does not error")
-      local group_missing_ok =
-        pcall(vim.api.nvim_get_autocmds, { group = "DebuggingBindingsSpecOff" })
-      H.ok(not group_missing_ok, "bindings.autocmds.setup: enable=false creates no augroup")
+      views.setup({})
+      local cfg = require("debugging.config").get()
+      require("debugging.bindings").setup(cfg)
+      require("debugging.bindings").setup(cfg) -- idempotent
 
-      ---@param cmds table[]
-      ---@return table<string, integer>
-      local function count_by_event(cmds)
-        local counts = {}
-        for _, c in ipairs(cmds) do
-          counts[c.event] = (counts[c.event] or 0) + 1
-        end
-        return counts
-      end
+      local group_ok = pcall(vim.api.nvim_get_autocmds, { group = "DebugViewsAuto" })
+      H.ok(not group_ok, "bindings.setup: no DebugViewsAuto augroup is created")
 
-      -- enable = true, auto_refresh = false: only the FileType close-on-q
-      -- autocmd -- registered with a 2-element pattern list, which
-      -- nvim_get_autocmds reports as one row per pattern, hence ">= 1"
-      -- rather than an exact count tied to that implementation detail.
-      bindings_autocmds.setup(
-        { enable = true, auto_refresh = false, group_name = "DebuggingBindingsSpecA" },
-        timings
-      )
-      local a_counts =
-        count_by_event(vim.api.nvim_get_autocmds({ group = "DebuggingBindingsSpecA" }))
       H.ok(
-        (a_counts.FileType or 0) >= 1,
-        "bindings.autocmds.setup: auto_refresh=false registers the FileType autocmd"
+        not pcall(require, "debugging.bindings.autocmds"),
+        "bindings: the autocmds module no longer exists"
       )
-      H.eq(a_counts.WinEnter, nil, "bindings.autocmds.setup: auto_refresh=false skips WinEnter")
-      H.eq(
-        a_counts.BufWinEnter,
-        nil,
-        "bindings.autocmds.setup: auto_refresh=false skips BufWinEnter"
+      H.ok(
+        not pcall(require, "debugging.views.utils"),
+        "views: the utils module (is_target_view) no longer exists"
       )
+      H.eq(display.refresh_log_view, nil, "display: refresh_log_view is gone")
+      H.eq(views.get_autocmds_config, nil, "views: get_autocmds_config is gone")
+      H.eq(views.get_timings, nil, "views: get_timings is gone")
 
-      -- The FileType autocmd calls lib.nvim.window.nice_quit, which does not
-      -- close the window itself -- it *binds* q/<Esc> (buffer-local, Normal
-      -- mode) to close it. So the observable effect is a new buffer-local
-      -- keymap, not an immediate close.
+      -- A `messages` buffer is no longer a debug view: no buffer-local `q`.
       vim.cmd("vsplit")
-      local win = vim.api.nvim_get_current_win()
-      local buf = vim.api.nvim_win_get_buf(win)
+      local buf = vim.api.nvim_win_get_buf(vim.api.nvim_get_current_win())
       vim.bo[buf].filetype = "messages"
-
-      local function has_close_keymap()
-        for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, "n")) do
-          if m.lhs == "q" then
-            return true
-          end
-        end
-        return false
+      local has_q = false
+      for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, "n")) do
+        has_q = has_q or m.lhs == "q"
       end
-      H.ok(
-        has_close_keymap(),
-        "bindings.autocmds: FileType=messages binds a buffer-local 'q' to close"
-      )
+      H.ok(not has_q, "bindings: FileType=messages no longer binds a close keymap")
 
-      -- Pressing it actually closes the window (nice_quit's real job).
-      local wins_before = #vim.api.nvim_list_wins()
-      vim.api.nvim_set_current_win(win)
-      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("q", true, false, true), "x", false)
-      H.eq(
-        #vim.api.nvim_list_wins(),
-        wins_before - 1,
-        "bindings.autocmds: pressing 'q' closes the window"
-      )
-
-      -- enable = true, auto_refresh = true: WinEnter + BufWinEnter + FileType.
-      bindings_autocmds.setup(
-        { enable = true, auto_refresh = true, group_name = "DebuggingBindingsSpecB" },
-        timings
-      )
-      local b_counts =
-        count_by_event(vim.api.nvim_get_autocmds({ group = "DebuggingBindingsSpecB" }))
-      H.eq(b_counts.WinEnter, 1, "bindings.autocmds.setup: auto_refresh=true registers WinEnter")
-      H.eq(
-        b_counts.BufWinEnter,
-        1,
-        "bindings.autocmds.setup: auto_refresh=true registers BufWinEnter"
-      )
-      H.ok(
-        (b_counts.FileType or 0) >= 1,
-        "bindings.autocmds.setup: auto_refresh=true also keeps FileType"
-      )
-
-      -- Re-running setup() with the same group clears rather than stacks.
-      bindings_autocmds.setup(
-        { enable = true, auto_refresh = true, group_name = "DebuggingBindingsSpecB" },
-        timings
-      )
-      local b_counts_again =
-        count_by_event(vim.api.nvim_get_autocmds({ group = "DebuggingBindingsSpecB" }))
-      H.eq_list(
-        { b_counts_again.WinEnter, b_counts_again.BufWinEnter },
-        { b_counts.WinEnter, b_counts.BufWinEnter },
-        "bindings.autocmds.setup: re-running setup() does not stack duplicate autocmds"
-      )
-
-      -- Entering the (untagged) window fires WinEnter harmlessly (no tag ->
-      -- early return, no display.refresh_log_view / real ':messages' call).
+      -- Entering a tagged window must not schedule anything: no WinEnter
+      -- autocmd of this plugin is left, so no 30 ms timer is started.
+      local timers = 0
+      local orig_defer = vim.defer_fn
+      vim.defer_fn = function(...)
+        timers = timers + 1
+        return orig_defer(...)
+      end
+      require("lib.nvim.window").tag.set(vim.api.nvim_get_current_win(), "recent_messages")
       vim.cmd("vsplit")
-      local enter_ok = pcall(vim.cmd, "wincmd p")
-      H.ok(enter_ok, "bindings.autocmds: WinEnter on an untagged window is a harmless no-op")
+      vim.cmd("wincmd p")
+      vim.cmd("wincmd p")
+      vim.defer_fn = orig_defer
+      H.eq(timers, 0, "bindings: entering a tagged window schedules no refresh")
       vim.cmd("only")
-
-      pcall(vim.api.nvim_del_augroup_by_name, "DebuggingBindingsSpecA")
-      pcall(vim.api.nvim_del_augroup_by_name, "DebuggingBindingsSpecB")
     end
 
     -- =============================================================== usercmds

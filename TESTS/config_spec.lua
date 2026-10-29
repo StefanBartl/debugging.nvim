@@ -55,37 +55,70 @@ return function(H)
 
   -- A misspelled key nested one level in is dropped the same way; the rest of
   -- that table's keys still apply.
-  config.setup({ views = { timing = { attempts = 5 }, capture = false } })
+  config.setup({ views = { recen = { window_s = 5 }, capture = false } })
   H.eq(
-    config.get().views.timings.attempts,
-    DEFAULTS.views.timings.attempts,
+    config.get().views.recent.window_s,
+    DEFAULTS.views.recent.window_s,
     "config: typo'd nested key does not apply"
   )
   H.eq(config.get().views.capture, false, "config: sibling key in the same table still applies")
-  H.match(config.issues()[1], "unknown option 'views.timing'", "config: nested issue is prefixed")
+  H.match(config.issues()[1], "unknown option 'views.recen'", "config: nested issue is prefixed")
+  H.match(
+    config.issues()[1],
+    "did you mean 'views.recent'",
+    "config: nested issue hints the nearest known key"
+  )
 
   -- A misspelled key nested two levels in (inside an option group that is
-  -- itself nested, e.g. views.timings.*) is caught the same way, not merged
+  -- itself nested, e.g. views.recent.*) is caught the same way, not merged
   -- in as a dead field beside the untouched default (ERR-50).
-  config.setup({ views = { timings = { attempt = 5 } } })
+  config.setup({ views = { recent = { window = 5 } } })
   H.eq(
-    config.get().views.timings.attempts,
-    DEFAULTS.views.timings.attempts,
+    config.get().views.recent.window_s,
+    DEFAULTS.views.recent.window_s,
     "config: typo'd twice-nested key does not apply"
   )
   H.ok(
-    config.get().views.timings.attempt == nil,
+    config.get().views.recent.window == nil,
     "config: typo'd twice-nested key is not silently carried into the active config"
   )
   H.match(
     config.issues()[1],
-    "unknown option 'views.timings.attempt'",
+    "unknown option 'views.recent.window'",
     "config: twice-nested issue carries the full dotted path"
   )
   H.match(
     config.issues()[1],
-    "did you mean 'views.timings.attempts'",
+    "did you mean 'views.recent.window_s'",
     "config: twice-nested issue hints the nearest known key"
+  )
+
+  -- The retired dead-refresh options are unknown keys now (no tolerance
+  -- period): each is reported and dropped, and none is a default any more.
+  H.eq(DEFAULTS.views.timings, nil, "config: views.timings is no default any more")
+  H.eq(DEFAULTS.views.autocmds, nil, "config: views.autocmds is no default any more")
+  config.setup({
+    views = {
+      autocmds = { enable = true, group_name = "X", auto_refresh = true },
+      timings = {
+        delay_messages_ms = 1,
+        delay_noice_ms = 2,
+        retry_delay_ms = 3,
+        attempts = 4,
+        capture_timeout_ms = 5,
+      },
+    },
+  })
+  local retired = table.concat(config.issues(), "\n")
+  H.match(retired, "unknown option 'views.autocmds'", "config: views.autocmds is reported unknown")
+  H.match(retired, "unknown option 'views.timings'", "config: views.timings is reported unknown")
+  H.eq(config.get().views.autocmds, nil, "config: views.autocmds is not carried into the config")
+  H.eq(config.get().views.timings, nil, "config: views.timings is not carried into the config")
+  config.setup({ views = { autocmds = false } })
+  H.match(
+    config.issues()[1],
+    "unknown option 'views.autocmds'",
+    "config: autocmds = false is unknown too"
   )
 
   -- An option table given as the wrong type falls back to its default
@@ -99,12 +132,13 @@ return function(H)
   )
   H.match(config.issues()[1], "option 'views' must be a table", "config: type mismatch recorded")
 
-  -- `views.keymaps = false` / `views.autocmds = false` mean { enable = false }
-  -- (REL-20); `true` keeps the defaults; the caller's table is not touched.
-  local given = { views = { keymaps = false, autocmds = true } }
+  -- `views.keymaps = false` means { enable = false } (REL-20); `true` keeps
+  -- the defaults; the caller's table is not touched.
+  config.setup({ views = { keymaps = true } })
+  H.eq(config.get().views.keymaps.enable, true, "config: keymaps = true keeps the defaults")
+  local given = { views = { keymaps = false } }
   config.setup(given)
   H.eq(config.get().views.keymaps.enable, false, "config: keymaps = false switches the keymaps off")
-  H.eq(config.get().views.autocmds.enable, true, "config: autocmds = true keeps the defaults")
   H.eq(config.get().views.keymaps.prefix, "<lt>", "config: the switch keeps the other defaults")
   H.eq(given.views.keymaps, false, "config: the caller's table is left as written")
   H.eq(#config.issues(), 0, "config: a boolean switch group is no issue")

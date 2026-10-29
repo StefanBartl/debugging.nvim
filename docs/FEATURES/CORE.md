@@ -99,11 +99,4 @@ walker, the in-memory scan cache, the keymap and autocmd registries, and the
 hand-rolled per feature — the same modules the health check's "lib.nvim"
 section verifies are present.
 
-One deliberate exception: the views augroup is created directly via
-`nvim_create_augroup(..., { clear = true })` rather than through
-`lib.nvim.bindings.autocmd.group()`. That helper caches groups by name and
-skips the clear on later calls, which would stack duplicate autocmds every time
-`setup()` re-runs.
-
-- **Module:** `bindings/autocmds.lua`, and see
-  [architecture.md](../architecture.md) for the full list of borrowed modules
+- **Module:** see [architecture.md](../architecture.md) for the full list of borrowed modules

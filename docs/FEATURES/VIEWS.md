@@ -95,9 +95,13 @@ declaration, if it is installed.
 - **Keymaps:** `<lt>m` / `<lt>n` / `<lt>e` / `<lt>c` / `<lt>f` / `<lt>y` /
   `<lt>x` — see [BINDINGS.md](../BINDINGS.md#default-keymaps)
 
-## Older view options
+## Removed view options
 
-`opts.views.timings` and `opts.views.autocmds.auto_refresh` date from the
-command-output windows the popup replaced (they waited for `:messages` /
-`:Noice` to render and re-ran them on `WinEnter`). They are still accepted
-without a warning, but the recent-messages popup reads none of them.
+`opts.views.timings` (`delay_messages_ms`, `delay_noice_ms`, `retry_delay_ms`,
+`attempts`, `capture_timeout_ms`) and `opts.views.autocmds` (`enable`,
+`group_name`, `auto_refresh`) belonged to the command-output windows the popup
+replaced (they waited for `:messages` / `:Noice` to render and re-ran them on
+`WinEnter`). Nothing reads them any more, and the plugin registers no
+autocommand: they were removed without a grace period, so a config that still
+sets one gets the "unknown option" warning at `setup()` (and under
+`:checkhealth debugging`) and the key is ignored. Delete it from your config.

@@ -1,8 +1,6 @@
 -- TESTS/views_spec.lua
 -- Covers `debugging.views` (the setup()/getter merge logic, not the
--- command-executing action functions -- see TESTS/README.md), `views.utils`
--- (now just `is_target_view` -- the window focus/scroll primitives it used
--- to duplicate moved to lib.nvim.window.focus_helpers, tested there),
+-- command-executing action functions -- see TESTS/README.md),
 -- `views.display`'s `clear_all` and tag-lookup wrappers, and
 -- `views.capture.clipboard` (stubbed against a fake
 -- `lib.nvim.cross.copy_to_clipboard`).
@@ -16,26 +14,10 @@ return function(H)
     do
       local views = require("debugging.views")
 
-      local baseline = vim.deepcopy(views.get_timings())
-
-      views.setup({ timings = { delay_messages_ms = 12345 } })
-      H.eq(views.get_timings().delay_messages_ms, 12345, "views.setup: timings key is overridden")
-      H.eq(
-        views.get_timings().delay_noice_ms,
-        baseline.delay_noice_ms,
-        "views.setup: sibling timing keys are preserved"
-      )
-
-      -- A second call with no `timings` key resets to the hardcoded defaults,
-      -- the same as the sibling _keymaps_cfg/_autocmds_cfg assignments below:
-      -- setup() merges into a fresh defaults copy, not the live table, so an
-      -- override never survives past the call that didn't repeat it.
-      views.setup({})
-      H.eq(
-        views.get_timings().delay_messages_ms,
-        baseline.delay_messages_ms,
-        "views.setup: repeated calls reset to hardcoded defaults, matching keymaps/autocmds"
-      )
+      -- The tag-refresh machinery (timings, autocmds config) was removed:
+      -- views neither resolves nor exposes either any more.
+      H.eq(views.get_timings, nil, "views: get_timings is gone")
+      H.eq(views.get_autocmds_config, nil, "views: get_autocmds_config is gone")
 
       views.setup({ keymaps = { prefix = "<Space>d" } })
       H.eq(
@@ -74,34 +56,6 @@ return function(H)
       capture.base_dir = orig_base_dir
     end
 
-    -- ===================================================================== utils
-
-    do
-      local utils = require("debugging.views.utils")
-
-      H.eq(utils.is_target_view(999999), false, "utils.is_target_view: invalid buffer is false")
-
-      local msg_buf = H.scratch("views_utils_messages.spec")
-      vim.bo[msg_buf].filetype = "messages"
-      H.eq(utils.is_target_view(msg_buf), true, "utils.is_target_view: filetype=messages matches")
-
-      local noice_buf = H.scratch("views_utils_noice.spec")
-      vim.bo[noice_buf].filetype = "noice"
-      H.eq(
-        utils.is_target_view(noice_buf),
-        true,
-        "utils.is_target_view: filetype=noice with buftype nofile/empty matches"
-      )
-
-      local other_buf = H.scratch("views_utils_other.spec")
-      vim.bo[other_buf].filetype = "lua"
-      H.eq(
-        utils.is_target_view(other_buf),
-        false,
-        "utils.is_target_view: an unrelated filetype is false"
-      )
-    end
-
     -- =================================================================== display
 
     do
@@ -125,6 +79,8 @@ return function(H)
         "display.get_window_tag: reads it back"
       )
       H.eq(display.get_window_tag(other_win), nil, "display.get_window_tag: untagged window is nil")
+
+      H.eq(display.refresh_log_view, nil, "display: refresh_log_view is gone")
 
       display.clear_all()
       H.eq(

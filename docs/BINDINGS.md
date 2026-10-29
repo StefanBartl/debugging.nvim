@@ -1,11 +1,10 @@
 # debugging.nvim — Binding Cheatsheet
 
-Every keymap, user command, and autocommand `debugging.nvim` defines. Kept in
+Every keymap and user command `debugging.nvim` defines. Kept in
 sync with:
 
 - keymaps  — `lua/debugging/bindings/keymaps.lua`
 - commands — `lua/debugging/bindings/usercmds.lua` (registration) + `lua/debugging/commands.lua` (dispatch/completion logic)
-- autocmds — `lua/debugging/bindings/autocmds.lua`
 
 ## Default Keymaps
 
@@ -32,11 +31,7 @@ not user-configurable: one inside the bare `:Debug` overview float
 (`config.overview == "float"`, the default), and one built into the
 `messages`/`noice_all`/`noice_errors` popup itself — `ui.kit.surface`'s own
 `nice_quit` (ui.nvim installed) or `ui.kit.viewer`'s (the fallback dump, via
-`lib.nvim.output.viewer`), not the `FileType` autocmd below: that autocmd's
-`messages`/`noice` filetype pattern predates `views.recent` and no longer
-matches anything these three keys open (left in place, harmless, same
-reasoning as `views/display.lua`'s own now-unreachable tag branches — see
-that module's doc comment).
+`lib.nvim.output.viewer`).
 
 ## User Commands
 
@@ -72,12 +67,9 @@ by `config.features.*`.
 
 ## Autocommands
 
-Registered by `bindings.setup()` into the `config.views.autocmds.group_name`
-augroup (default `DebugViewsAuto`), plus the `FileType` close-window
-autocmd.
-
-| event | group | pattern | desc |
-| --- | --- | --- | --- |
-| `WinEnter` | `DebugViewsAuto` | `*` | Auto-refresh an open debug view when re-entering its window |
-| `BufWinEnter` | `DebugViewsAuto` | `*` | Auto-refresh an open debug view when its buffer re-enters a window |
-| `FileType` | `DebugViewsAuto` | `messages/noice` | Bind `q` / `<Esc>` to close the debug window |
+None. `debugging.nvim` registers no autocommand of its own: the old
+`DebugViewsAuto` group (`WinEnter`/`BufWinEnter` auto-refresh of a debug view,
+`FileType messages/noice` close keymap) re-ran commands that no window of this
+plugin uses any more and was removed together with its `views.autocmds` and
+`views.timings` options. `:Debug autocmds` only *inspects* the autocommands of
+other plugins.

@@ -96,11 +96,10 @@ packer.nvim: >lua
       -- one key per action is also accepted: messages = "<F12>", capture = { "<F9>", "..." },
       -- clear = false (names: docs/configuration.md, "Views keymaps")
       keymaps  = { enable = true, prefix = "<lt>" },
-      autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-      timings  = { delay_messages_ms = 30, delay_noice_ms = 50, retry_delay_ms = 60, attempts = 3,
-                   capture_timeout_ms = 500 },
       capture  = true,
       output_dir = nil,
+      recent   = { window_s = 10, min_entries = 5, order = "newest_last",
+                   collapsed_default = false },
     },
     command = "Debug",
     overview = "float",   -- how `:Debug` (no args) renders: "float" or "notify"
@@ -127,9 +126,9 @@ neotree ~
 
 views ~
   Keymaps (default prefix "<lt>"), the recent-messages popup (`recent`, see
-  |debugging-recent|) and the capture output directory. `autocmds.auto_refresh`
-  and `timings` date from the older command-output windows; the popup reads
-  neither.
+  |debugging-recent|) and the capture output directory. The old `autocmds`
+  and `timings` options are gone (nothing read them); setting one is reported
+  as an unknown option and ignored.
 
 command ~
   Name of the unified user command. Default: "Debug".

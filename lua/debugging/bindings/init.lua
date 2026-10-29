@@ -1,10 +1,10 @@
 ---@module 'debugging.bindings'
---- Orchestrates debugging.nvim's bindings: usercmds, keymaps, autocmds, which-key.
+--- Orchestrates debugging.nvim's bindings: usercmds and keymaps.
 ---
 --- Single entry point for every user-facing trigger. The `:Debug` user
---- command is always registered; the views keymaps/autocmds/which-key label
---- are only wired when `features.views` is active, using the config already
---- resolved by `debugging.views.setup()`.
+--- command is always registered; the views keymaps are only wired when
+--- `features.views` is active, using the config already resolved by
+--- `debugging.views.setup()`. The plugin owns no autocmds of its own.
 
 local M = {}
 
@@ -18,17 +18,10 @@ function M.setup(cfg)
     return
   end
 
-  local views = require("debugging.views")
-  local timings = views.get_timings()
-  local km = views.get_keymaps_config()
-  local ac = views.get_autocmds_config()
+  local km = require("debugging.views").get_keymaps_config()
 
   if km.enable then
     require("debugging.bindings.keymaps").setup(km)
-  end
-
-  if ac.enable then
-    require("debugging.bindings.autocmds").setup(ac, timings)
   end
 end
 

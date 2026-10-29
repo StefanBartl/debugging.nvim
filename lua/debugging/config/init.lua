@@ -11,7 +11,7 @@ local M = {}
 ---Keys `setup()` accepts, recursively. `true` means "leaf -- any value of the
 ---right shape goes"; a nested table names that option group's own accepted
 ---keys, walked to whatever depth the group actually has, so a typo inside a
----nested table (e.g. `views.timings.attempt`) is caught exactly like a
+---nested table (e.g. `views.recent.window`) is caught exactly like a
 ---top-level one instead of vanishing into the merge unexamined.
 ---
 ---`neotree.quarantine`/`neotree.safety` and `neotest.markers`/
@@ -41,14 +41,6 @@ local KNOWN = {
   neotest = { output = true, markers = true, package_frameworks = true },
   views = {
     keymaps = { enable = true, prefix = true },
-    autocmds = { enable = true, group_name = true, auto_refresh = true },
-    timings = {
-      delay_messages_ms = true,
-      delay_noice_ms = true,
-      retry_delay_ms = true,
-      attempts = true,
-      capture_timeout_ms = true,
-    },
     capture = true,
     output_dir = true,
     recent = { window_s = true, min_entries = true, order = true, collapsed_default = true },
@@ -151,10 +143,8 @@ local function spell_out_switches(user_opts)
     return user_opts
   end
   local out = vim.deepcopy(user_opts)
-  for _, key in ipairs({ "keymaps", "autocmds" }) do
-    if type(views[key]) == "boolean" then
-      out.views[key] = require("lib.nvim.normalize").normalize_switch_group(views[key])
-    end
+  if type(views.keymaps) == "boolean" then
+    out.views.keymaps = require("lib.nvim.normalize").normalize_switch_group(views.keymaps)
   end
   return out
 end

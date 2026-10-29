@@ -70,20 +70,9 @@ local DEFAULTS = {
     package_frameworks = { "vitest", "jest", "mocha", "ava", "playwright", "cypress" },
   },
 
-  -- Views subsystem (keymaps, auto-refresh autocmds, capture).
+  -- Views subsystem (keymaps, recent-messages popup, capture).
   views = {
     keymaps = { enable = true, prefix = "<lt>" },
-    autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-    -- `capture_timeout_ms`: how long to wait for the window a command opens
-    -- (:messages, Noice) to appear. Too short on a slow machine and the view
-    -- reports "no output" for a command that was merely still rendering.
-    timings = {
-      delay_messages_ms = 30,
-      delay_noice_ms = 50,
-      retry_delay_ms = 60,
-      attempts = 3,
-      capture_timeout_ms = 500,
-    },
     capture = true,
     output_dir = nil, -- defaults to stdpath("config")/docs/debug_views inside capture
     -- The <m>/<n>/<e> recent-messages popup (lib.nvim.messages + ui.kit.message_log

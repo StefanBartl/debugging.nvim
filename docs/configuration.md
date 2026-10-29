@@ -50,19 +50,11 @@ require("debugging").setup({
   },
   views = {
     keymaps  = { enable = true, prefix = "<lt>" },
-    autocmds = { enable = true, group_name = "DebugViewsAuto", auto_refresh = true },
-    -- `capture_timeout_ms`: how long to wait for the window a command opens
-    -- (:messages, Noice) to appear. Too short on a slow machine and the view
-    -- reports "no output" for a command that was merely still rendering.
-    timings  = {
-      delay_messages_ms  = 30,
-      delay_noice_ms     = 50,
-      retry_delay_ms     = 60,
-      attempts           = 3,
-      capture_timeout_ms = 500,
-    },
     capture  = true,
     output_dir = nil,  -- default: stdpath("config")/docs/debug_views
+    recent   = {       -- the <lt>m / <lt>n / <lt>e popup, see "Recent-messages popup" below
+      window_s = 10, min_entries = 5, order = "newest_last", collapsed_default = false,
+    },
   },
   command = "Debug",   -- name of the single unified command
   overview = "float",  -- how `:Debug` (no args) renders: "float" or "notify"
@@ -74,7 +66,7 @@ require("debugging").setup({ all = true })
 
 ## Views keymaps
 
-`views.keymaps = false` switches all of them off (the same as `{ enable = false }`); `true` keeps the defaults. `views.autocmds` takes the same boolean.
+`views.keymaps = false` switches all of them off (the same as `{ enable = false }`); `true` keeps the defaults.
 
 `views.keymaps` takes more than `enable` and `prefix`. Every key is declared
 through `lib.nvim`'s keymap registry under an action name, and any of those
@@ -170,7 +162,7 @@ older ones are loaded; a cursor on the newest entry follows the live feed.
 
 Options are checked before they are merged. An unknown key — at the top
 level or inside `features`, `terminals`, `neotree`, `neotest`, `views` — is ignored
-with a warning that names the nearest known key (e.g. `views = { timing =
-{...} }` → "did you mean 'views.timings'?"), and an option table given as
+with a warning that names the nearest known key (e.g. `views = { recen =
+{...} }` → "did you mean 'views.recent'?"), and an option table given as
 something other than a table falls back to that table's default. Both are
 listed again under `:checkhealth debugging`.
