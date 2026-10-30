@@ -106,28 +106,39 @@ local function interesting_hl_groups()
 end
 
 --- Collect Treesitter info for buffer (best-effort).
+--- Uses only Neovim's core `vim.treesitter` API: nvim-treesitter's
+--- `parsers.has_parser` / `parsers.get_parser` are gone on its main branch,
+--- and the core API answers the same questions without the plugin.
 ---@internal
 ---@param bufnr number
----@return table
+---@return table info  -- filetype, lang, parsers_available, parsers_error?, has_parser, parser_attached
 local function collect_treesitter_info(bufnr)
   local info = {}
-  local ok_parsers, parsers = safe_call(function()
-    return require("nvim-treesitter.parsers")
-  end)
   info.filetype = vim.bo[bufnr].filetype
-  if not ok_parsers then
+  local language = vim.treesitter and vim.treesitter.language
+  if type(language) ~= "table" or type(language.add) ~= "function" then
     info.parsers_available = false
-    info.parsers_error = parsers
+    info.parsers_error = "vim.treesitter.language is not available"
+    info.has_parser = false
+    info.parser_attached = false
     return info
   end
-  local ok_has, has = safe_call(function()
-    return parsers.has_parser(info.filetype)
+  info.parsers_available = true
+
+  local ok_lang, lang = safe_call(function()
+    return language.get_lang(info.filetype)
   end)
-  info.has_parser = ok_has and has or false
-  local ok_getp, getp = safe_call(function()
-    return parsers.get_parser(bufnr)
-  end)
-  info.parser_attached = ok_getp and (getp ~= nil) or false
+  info.lang = (ok_lang and type(lang) == "string" and lang ~= "") and lang or info.filetype
+
+  -- `language.add` throws on 0.10 and returns nil, err on 0.11+ when the
+  -- parser is missing; `language.inspect` throws on any version unless the
+  -- language is loaded, so it is the version-independent probe.
+  pcall(language.add, info.lang)
+  info.has_parser = info.lang ~= "" and (pcall(language.inspect, info.lang)) or false
+
+  -- get_parser throws (<= 0.11) or returns nil (0.12+) when no parser exists.
+  local ok_getp, getp = pcall(vim.treesitter.get_parser, bufnr, info.lang)
+  info.parser_attached = (ok_getp and getp ~= nil) or false
   return info
 end
 
@@ -414,5 +425,11 @@ function M.open_log()
   end
   return true, M.out_path
 end
+
+--- Collectors behind `M.gather()`, exposed for `TESTS/markdown_spec.lua`.
+--- Not part of the public API; may change shape without notice.
+M._internal = {
+  collect_treesitter_info = collect_treesitter_info,
+}
 
 return M

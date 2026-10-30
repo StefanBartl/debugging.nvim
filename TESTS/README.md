@@ -45,7 +45,7 @@ naming all four places if one is missing.
 | `nvim_options_spec.lua`       | `nvim_options/indent_helpers.lua`: the option report and the treesitter-indent toggle (enable/disable/default).                                                                      |
 | `keylogger_spec.lua`          | `terminals/keylogger.lua`: logfile resolution precedence, the file lifecycle, start/stop guard warnings, the unopenable-logfile error path.                                          |
 | `tools_spec.lua`              | `tools/buffer_inspector/init.lua`, `tools/cursor/state.lua`, `tools/vardump/init.lua`, and `tools/proc_trace.lua`'s argument parsing (stubbed against a fake `proc_trace` tracer).    |
-| `markdown_spec.lua`           | `markdown/inline_debug.lua`: `gather()` end to end against a real buffer, `open_log()`, and a pinned regression for the mkdir/path bugs found while writing this suite.              |
+| `markdown_spec.lua`           | `markdown/inline_debug.lua`: `gather()` end to end against a real buffer, `open_log()`, a pinned regression for the mkdir/path bugs found while writing this suite, and the core `vim.treesitter` info without nvim-treesitter (plugin absent, a stubbed main-branch `nvim-treesitter.parsers` without `has_parser`/`get_parser`, an unknown filetype). |
 | `bindings_spec.lua`           | `bindings/init.lua`'s `features.views` gate, `bindings/keymaps.lua`'s action wiring (driven through a real `lib.nvim.bindings.keymap` registration), the proof that the retired views autocmds (WinEnter/BufWinEnter refresh, FileType close) are gone, and `bindings/usercmds.lua`'s `DBG_AUTOCMD_EXPR` argtype via the real `:Debug` command. |
 | `views_spec.lua`              | `views/init.lua`'s setup/getter merge logic, `views/display.lua`'s `clear_all`/tag lookups, `views/capture/clipboard/init.lua` (stubbed). |
 | `views_recent_spec.lua`       | `views/recent.lua`: filter -> `lib.nvim.messages.snapshot()` levels mapping (all/non_error/error), the real fallback branch (ui.kit genuinely absent from this suite's rtp) vs. a stubbed `ui.kit.message_log` path, window-tag reuse (focus instead of reopening), the live `on_message` listener respecting the filter, `load_more` wiring, and unsubscribe-on-close. Both `lib.nvim.messages` and `debugging.views` are stubbed -- their own logic has its own suites (lib.nvim, `views_spec.lua`). |
@@ -67,8 +67,9 @@ bridge, buf/tab/win reports), the tools layer (buffer/window/tab inspector,
 cursor state, vardump, proc_trace's argument parsing), the terminal keylogger,
 and the indent helpers.
 
-Three real bugs surfaced while writing this pass (two originally, one more
-in a 2026-09-18 re-audit), and all three are now fixed:
+Four real bugs surfaced (two while writing this pass, one more in a
+2026-09-18 re-audit, one from the 2026-10-30 nvim-treesitter API check), and
+all four are now fixed:
 
 - **Fixed: `markdown/inline_debug.lua`'s `M.gather()` could crash outright.**
   It called `vim.fn.mkdir(debugfolder)` without the `"p"` (parents) flag. On
@@ -102,6 +103,15 @@ in a 2026-09-18 re-audit), and all three are now fixed:
   to `vim.health.warn(...)` pointing back at the module-resolution error.
   `health_spec.lua` pins the fix with composer forced missing via a scoped
   `require` swap.
+- **Fixed (2026-10-30): `markdown/inline_debug.lua`'s Tree-sitter info
+  silently reported no parser.** `collect_treesitter_info` called
+  `nvim-treesitter.parsers.has_parser`/`get_parser`, which the
+  nvim-treesitter main-branch rewrite dropped, so `has_parser` and
+  `parser_attached` came back `false` even with a working markdown parser.
+  It now uses the core API (`vim.treesitter.language.get_lang`/`add`/
+  `inspect` and a `pcall`-guarded `vim.treesitter.get_parser`) and no longer
+  needs nvim-treesitter at all. `markdown_spec.lua` pins it: no plugin, a
+  stubbed main-branch `parsers` module, and an unknown filetype.
 
 A few more real quirks came up and are pinned as ordinary (non-`BUG:`)
 assertions, documenting behaviour that is surprising but not wrong enough to

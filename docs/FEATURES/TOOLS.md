@@ -64,7 +64,9 @@ Tree-sitter-driven indent on or restore `cindent`/`smartindent`.
 
 Gathers debug information for markdown inline highlighting — the extmark and
 syntax state behind rendered inline styling — and opens the most recent debug
-log.
+log. The Tree-sitter section of the log (language, parser installed, parser
+attached) comes from Neovim's core `vim.treesitter` API, so it works without
+nvim-treesitter.
 
 - **Module:** `markdown/inline_debug.lua`
 - **Config:** `opts.features.markdown`

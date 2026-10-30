@@ -194,9 +194,9 @@ function M.check()
   end
 
   if pcall(require, "nvim-treesitter") then
-    vim.health.ok("nvim-treesitter present (markdown / indent diagnostics)")
+    vim.health.ok("nvim-treesitter present (optional; diagnostics use core vim.treesitter)")
   else
-    vim.health.info("nvim-treesitter not installed (optional)")
+    vim.health.info("nvim-treesitter not installed (optional; diagnostics use core vim.treesitter)")
   end
 
   -- Not `pcall(require, "noice")`: loading noice here (without its setup) would make the "recent popup"

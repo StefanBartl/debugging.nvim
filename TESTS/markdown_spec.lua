@@ -57,10 +57,34 @@ return function(H)
       type(inline_debug.results.highlights) == "table",
       "gather: highlight probe table is present"
     )
-    H.ok(
-      inline_debug.results.treesitter.parsers_available == false,
-      "gather: nvim-treesitter is not installed in this suite -- parsers_available is false"
-    )
+    -- nvim-treesitter is not installed in this suite: the treesitter section
+    -- must still be filled from the core vim.treesitter API (Neovim bundles
+    -- the markdown parser).
+    local ts_info = inline_debug.results.treesitter
+    H.eq(ts_info.parsers_available, true, "gather: treesitter info works without nvim-treesitter")
+    H.eq(ts_info.filetype, "markdown", "gather: treesitter info has the filetype")
+    H.eq(ts_info.lang, "markdown", "gather: treesitter info resolves the language")
+    H.eq(ts_info.has_parser, true, "gather: bundled markdown parser is reported")
+    H.eq(ts_info.parser_attached, true, "gather: parser for the markdown buffer is reported")
+
+    -- nvim-treesitter's main-branch rewrite: `nvim-treesitter.parsers` loads but
+    -- has neither `has_parser` nor `get_parser`. The collector must not depend on it.
+    local collect = inline_debug._internal.collect_treesitter_info
+    local saved_parsers = package.loaded["nvim-treesitter.parsers"]
+    package.loaded["nvim-treesitter.parsers"] = { markdown = { install_info = {} } }
+    local stub_ok, stub_info = pcall(collect, buf)
+    package.loaded["nvim-treesitter.parsers"] = saved_parsers
+    H.ok(stub_ok, "treesitter info: does not raise with the new nvim-treesitter.parsers shape")
+    H.eq(stub_info.has_parser, true, "treesitter info: has_parser from core API, not the plugin")
+    H.eq(stub_info.parser_attached, true, "treesitter info: parser_attached from core API")
+
+    -- A filetype without any parser reports false instead of raising.
+    local plain = H.scratch("inline_debug_spec.nolang", "nosuchlang_dbgspec")
+    local none = collect(plain)
+    H.eq(none.parsers_available, true, "treesitter info: core API available")
+    H.eq(none.has_parser, false, "treesitter info: unknown language has no parser")
+    H.eq(none.parser_attached, false, "treesitter info: unknown language has no attached parser")
+    vim.api.nvim_set_current_buf(buf)
 
     -- open_log(): opens the just-written log in a new, readonly, wipe-on-hide tab.
     local tabs_before = #vim.api.nvim_list_tabpages()
