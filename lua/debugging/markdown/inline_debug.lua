@@ -105,13 +105,41 @@ local function interesting_hl_groups()
   }
 end
 
---- Collect Treesitter info for buffer (best-effort).
+--- The parser that highlights `bufnr`, read from the highlighter registry.
+--- Read-only on purpose: `vim.treesitter.get_parser()` creates a parser and
+--- attaches it to the buffer (`nvim_buf_attach`) when there is none, and with
+--- an explicit language it replaces the buffer's cached parser of another
+--- language -- a diagnosis would create the very state it reports. Read via
+--- `package.loaded`: indexing `vim.treesitter.highlighter` loads the module,
+--- and while it is not loaded no buffer has a highlighter.
+--- A parser attached only for folds or indent has no public read-only
+--- accessor, so it is not reported.
+---@internal
+---@param bufnr number
+---@return table|nil tree  -- the highlighter's LanguageTree, nil when none runs
+local function active_highlighter_tree(bufnr)
+  local highlighter = package.loaded["vim.treesitter.highlighter"]
+  if type(highlighter) ~= "table" or type(highlighter.active) ~= "table" then
+    return nil
+  end
+  local active = highlighter.active[bufnr]
+  if type(active) ~= "table" or type(active.tree) ~= "table" then
+    return nil
+  end
+  return active.tree
+end
+
+--- Collect Treesitter info for buffer (best-effort, read-only).
 --- Uses only Neovim's core `vim.treesitter` API: nvim-treesitter's
 --- `parsers.has_parser` / `parsers.get_parser` are gone on its main branch,
 --- and the core API answers the same questions without the plugin.
+--- `has_parser`: a parser for `lang` is installed and loads. `parser_attached`:
+--- Tree-sitter highlights the buffer; `attached_lang` is that parser's
+--- language (it can differ from `lang` when highlighting was started with an
+--- explicit language).
 ---@internal
 ---@param bufnr number
----@return table info  -- filetype, lang, parsers_available, parsers_error?, has_parser, parser_attached
+---@return table info  -- filetype, lang, parsers_available, parsers_error?, has_parser, parser_attached, attached_lang?
 local function collect_treesitter_info(bufnr)
   local info = {}
   info.filetype = vim.bo[bufnr].filetype
@@ -128,17 +156,31 @@ local function collect_treesitter_info(bufnr)
   local ok_lang, lang = safe_call(function()
     return language.get_lang(info.filetype)
   end)
-  info.lang = (ok_lang and type(lang) == "string" and lang ~= "") and lang or info.filetype
+  -- 0.9's get_lang() returns nil for a filetype nobody registered; 0.10+ falls
+  -- back to the filetype, and to the main part of a composite one
+  -- ("markdown.pandoc" -> "markdown"). Mirror that so every version probes
+  -- the same language.
+  if not (ok_lang and type(lang) == "string" and lang ~= "") then
+    lang = info.filetype:match("^[^.]*")
+  end
+  info.lang = lang
 
-  -- `language.add` throws on 0.10 and returns nil, err on 0.11+ when the
-  -- parser is missing; `language.inspect` throws on any version unless the
-  -- language is loaded, so it is the version-independent probe.
+  -- Loads the parser library if one is installed: process-wide and idempotent,
+  -- nothing is attached to the buffer. `language.add` throws on 0.9/0.10 and
+  -- returns nil, err on 0.11+ when the parser is missing; `language.inspect`
+  -- throws on every version unless the language is loaded, so it is the
+  -- version-independent probe.
   pcall(language.add, info.lang)
   info.has_parser = info.lang ~= "" and (pcall(language.inspect, info.lang)) or false
 
-  -- get_parser throws (<= 0.11) or returns nil (0.12+) when no parser exists.
-  local ok_getp, getp = pcall(vim.treesitter.get_parser, bufnr, info.lang)
-  info.parser_attached = (ok_getp and getp ~= nil) or false
+  local tree = active_highlighter_tree(bufnr)
+  info.parser_attached = tree ~= nil
+  if tree ~= nil then
+    local ok_tree_lang, tree_lang = pcall(function()
+      return tree:lang()
+    end)
+    info.attached_lang = ok_tree_lang and tree_lang or nil
+  end
   return info
 end
 

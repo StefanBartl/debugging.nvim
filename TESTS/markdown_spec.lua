@@ -22,6 +22,11 @@ return function(H)
   local ok, err = pcall(function()
     local buf = H.scratch("inline_debug_spec.md", "markdown")
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "# Title", "", "`inline code`" })
+    -- Neovim's markdown ftplugin starts Tree-sitter (0.10+); start it here where
+    -- it did not, so the attached-parser assertions below hold on every version.
+    if vim.treesitter.highlighter.active[buf] == nil then
+      vim.treesitter.start(buf, "markdown")
+    end
 
     local gathered_ok, out_path = inline_debug.gather()
     H.ok(gathered_ok, "gather: succeeds against a real markdown buffer")
@@ -66,6 +71,7 @@ return function(H)
     H.eq(ts_info.lang, "markdown", "gather: treesitter info resolves the language")
     H.eq(ts_info.has_parser, true, "gather: bundled markdown parser is reported")
     H.eq(ts_info.parser_attached, true, "gather: parser for the markdown buffer is reported")
+    H.eq(ts_info.attached_lang, "markdown", "gather: language of the attached parser is reported")
 
     -- nvim-treesitter's main-branch rewrite: `nvim-treesitter.parsers` loads but
     -- has neither `has_parser` nor `get_parser`. The collector must not depend on it.
@@ -84,6 +90,59 @@ return function(H)
     H.eq(none.parsers_available, true, "treesitter info: core API available")
     H.eq(none.has_parser, false, "treesitter info: unknown language has no parser")
     H.eq(none.parser_attached, false, "treesitter info: unknown language has no attached parser")
+
+    -- No filetype at all: no language, nothing to probe, nothing raised.
+    local empty = collect(H.scratch(nil, nil))
+    H.eq(empty.lang, "", "treesitter info: empty filetype has no language")
+    H.eq(empty.has_parser, false, "treesitter info: empty filetype has no parser")
+    H.eq(empty.parser_attached, false, "treesitter info: empty filetype has no attached parser")
+
+    -- The probe is read-only. `vim.treesitter.get_parser()` creates a parser and
+    -- attaches it to the buffer when there is none, and replaces a cached parser
+    -- of another language -- a diagnosis must not create the state it reports.
+    -- `c` is bundled, and its ftplugin does not start Tree-sitter.
+    local c_buf = H.scratch("inline_debug_spec.c", "c")
+    local lua_hl_buf = H.scratch("inline_debug_spec_lua_hl.c", "c")
+    vim.treesitter.start(lua_hl_buf, "lua")
+    local created = 0
+    local orig_create_parser = vim.treesitter._create_parser
+    vim.treesitter._create_parser = function(...)
+      created = created + 1
+      return orig_create_parser(...)
+    end
+    local c_ok, c_info = pcall(collect, c_buf)
+    local lua_hl_ok, lua_hl_info = pcall(collect, lua_hl_buf)
+    vim.treesitter._create_parser = orig_create_parser
+    H.ok(c_ok and lua_hl_ok, "treesitter info: read-only probe does not raise")
+    H.eq(created, 0, "treesitter info: probing creates no parser")
+    H.eq(c_info.has_parser, true, "treesitter info: bundled c parser is reported as installed")
+    H.eq(
+      c_info.parser_attached,
+      false,
+      "treesitter info: no parser while Tree-sitter is not running"
+    )
+    H.eq(c_info.attached_lang, nil, "treesitter info: no attached language without a parser")
+    H.eq(lua_hl_info.lang, "c", "treesitter info: language still follows the filetype")
+    H.eq(lua_hl_info.parser_attached, true, "treesitter info: running highlighter is reported")
+    H.eq(
+      lua_hl_info.attached_lang,
+      "lua",
+      "treesitter info: reports the language Tree-sitter actually runs, not the filetype's"
+    )
+
+    -- Neovim 0.9's get_lang() returns nil for a filetype nobody registered; 0.10+
+    -- falls back to the filetype, and to the main part of a composite one.
+    -- Simulated here: a composite filetype must still probe its main language.
+    local composite = H.scratch("inline_debug_spec.composite", "markdown.dbgspec")
+    local orig_get_lang = vim.treesitter.language.get_lang
+    vim.treesitter.language.get_lang = function()
+      return nil
+    end
+    local comp_ok, comp_info = pcall(collect, composite)
+    vim.treesitter.language.get_lang = orig_get_lang
+    H.ok(comp_ok, "treesitter info: probing without a registered language does not raise")
+    H.eq(comp_info.lang, "markdown", "treesitter info: composite filetype uses its main language")
+    H.eq(comp_info.has_parser, true, "treesitter info: composite filetype finds the main parser")
     vim.api.nvim_set_current_buf(buf)
 
     -- open_log(): opens the just-written log in a new, readonly, wipe-on-hide tab.

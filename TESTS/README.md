@@ -45,7 +45,7 @@ naming all four places if one is missing.
 | `nvim_options_spec.lua`       | `nvim_options/indent_helpers.lua`: the option report and the treesitter-indent toggle (enable/disable/default).                                                                      |
 | `keylogger_spec.lua`          | `terminals/keylogger.lua`: logfile resolution precedence, the file lifecycle, start/stop guard warnings, the unopenable-logfile error path.                                          |
 | `tools_spec.lua`              | `tools/buffer_inspector/init.lua`, `tools/cursor/state.lua`, `tools/vardump/init.lua`, and `tools/proc_trace.lua`'s argument parsing (stubbed against a fake `proc_trace` tracer).    |
-| `markdown_spec.lua`           | `markdown/inline_debug.lua`: `gather()` end to end against a real buffer, `open_log()`, a pinned regression for the mkdir/path bugs found while writing this suite, and the core `vim.treesitter` info without nvim-treesitter (plugin absent, a stubbed main-branch `nvim-treesitter.parsers` without `has_parser`/`get_parser`, an unknown filetype). |
+| `markdown_spec.lua`           | `markdown/inline_debug.lua`: `gather()` end to end against a real buffer, `open_log()`, a pinned regression for the mkdir/path bugs found while writing this suite, and the core `vim.treesitter` info without nvim-treesitter (plugin absent, a stubbed main-branch `nvim-treesitter.parsers` without `has_parser`/`get_parser`, an unknown and an empty filetype, a read-only probe that creates no parser -- spied on `vim.treesitter._create_parser` -- and reports the language a highlighter actually runs, and a composite filetype with 0.9's `get_lang()` simulated). |
 | `bindings_spec.lua`           | `bindings/init.lua`'s `features.views` gate, `bindings/keymaps.lua`'s action wiring (driven through a real `lib.nvim.bindings.keymap` registration), the proof that the retired views autocmds (WinEnter/BufWinEnter refresh, FileType close) are gone, and `bindings/usercmds.lua`'s `DBG_AUTOCMD_EXPR` argtype via the real `:Debug` command. |
 | `views_spec.lua`              | `views/init.lua`'s setup/getter merge logic, `views/display.lua`'s `clear_all`/tag lookups, `views/capture/clipboard/init.lua` (stubbed). |
 | `views_recent_spec.lua`       | `views/recent.lua`: filter -> `lib.nvim.messages.snapshot()` levels mapping (all/non_error/error), the real fallback branch (ui.kit genuinely absent from this suite's rtp) vs. a stubbed `ui.kit.message_log` path, window-tag reuse (focus instead of reopening), the live `on_message` listener respecting the filter, `load_more` wiring, and unsubscribe-on-close. Both `lib.nvim.messages` and `debugging.views` are stubbed -- their own logic has its own suites (lib.nvim, `views_spec.lua`). |
@@ -67,9 +67,9 @@ bridge, buf/tab/win reports), the tools layer (buffer/window/tab inspector,
 cursor state, vardump, proc_trace's argument parsing), the terminal keylogger,
 and the indent helpers.
 
-Four real bugs surfaced (two while writing this pass, one more in a
-2026-09-18 re-audit, one from the 2026-10-30 nvim-treesitter API check), and
-all four are now fixed:
+Five real bugs surfaced (two while writing this pass, one more in a
+2026-09-18 re-audit, two from the 2026-10-30 nvim-treesitter API check and
+its review), and all five are now fixed:
 
 - **Fixed: `markdown/inline_debug.lua`'s `M.gather()` could crash outright.**
   It called `vim.fn.mkdir(debugfolder)` without the `"p"` (parents) flag. On
@@ -109,9 +109,24 @@ all four are now fixed:
   nvim-treesitter main-branch rewrite dropped, so `has_parser` and
   `parser_attached` came back `false` even with a working markdown parser.
   It now uses the core API (`vim.treesitter.language.get_lang`/`add`/
-  `inspect` and a `pcall`-guarded `vim.treesitter.get_parser`) and no longer
-  needs nvim-treesitter at all. `markdown_spec.lua` pins it: no plugin, a
-  stubbed main-branch `parsers` module, and an unknown filetype.
+  `inspect`) and no longer needs nvim-treesitter at all. `markdown_spec.lua`
+  pins it: no plugin, a stubbed main-branch `parsers` module, and an unknown
+  filetype.
+- **Fixed (2026-10-30, review): the Tree-sitter info created the state it
+  reported.** The first core-API version probed `parser_attached` with
+  `vim.treesitter.get_parser()`, which creates a parser and attaches it to the
+  buffer (`nvim_buf_attach`) when there is none, and replaces a cached parser
+  of another language. So `parser_attached` was always equal to
+  `has_parser`, gathering left a parser on buffers where Tree-sitter never
+  ran, and a buffer highlighted with an explicit language lost its cached
+  parser. `parser_attached` is now read from the highlighter registry
+  (`vim.treesitter.highlighter.active`, via `package.loaded`) and the new
+  `attached_lang` names the language that actually runs. Also: a composite
+  filetype on 0.9 (whose `get_lang()` returns nil for unregistered
+  filetypes) now probes its main language, like 0.10+. `markdown_spec.lua`
+  pins both: no `_create_parser` call while probing, a `c` buffer without
+  Tree-sitter, a `c` buffer highlighted as `lua`, and a stubbed 0.9
+  `get_lang()`.
 
 A few more real quirks came up and are pinned as ordinary (non-`BUG:`)
 assertions, documenting behaviour that is surprising but not wrong enough to
