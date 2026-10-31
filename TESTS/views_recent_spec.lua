@@ -500,6 +500,15 @@ return function(H)
         "",
         "tag: a source the text already starts with is not repeated"
       )
+      eq(
+        recent.entry_tag({
+          level = vim.log.levels.INFO,
+          source = "gitsuite",
+          content = "[gitsuite] pushed",
+        }),
+        "",
+        "tag: a bare source the text starts with as [name] is not repeated (lib.nvim.notify)"
+      )
 
       eq(
         recent.format_content({ level = vim.log.levels.INFO, content = "short" }, 80),
@@ -550,6 +559,45 @@ return function(H)
       for _, row in ipairs(wide) do
         ok(strw(row) <= 12, "multibyte rows fit the width")
       end
+
+      -- The folded row the kit draws ("[time] header  … (+N more lines)" plus fold mark and
+      -- margin) must fit the window it can open (columns - 4), or it wraps onto a second
+      -- screen line and the last entry drops out of view.
+      local saved_columns = vim.o.columns
+      local e492 = "E492: Not an editor command: " .. table.concat(words, " ")
+      for _, columns in ipairs({ 80, 100 }) do
+        vim.o.columns = columns
+        for _, entry in ipairs({
+          { level = vim.log.levels.ERROR, kind = "emsg", content = e492 },
+          { level = vim.log.levels.ERROR, kind = "emsg", content = e492 .. "\nline 2\nline 3" },
+          { level = vim.log.levels.INFO, content = "short head\n" .. e492 },
+        }) do
+          local rows = vim.split(recent.format_content(entry, columns - 12), "\n", { plain = true })
+          local n = #rows - 1
+          local folded = ("[%s] %s"):format("12:34:56 59m ago", rows[1])
+            .. (n > 0 and ("  … (+%d more line%s)"):format(n, n == 1 and "" or "s") or "")
+          ok(
+            strw(folded) + 3 <= columns - 4,
+            ("columns=%d: folded row of %d cells fits the window"):format(columns, strw(folded) + 3)
+          )
+        end
+      end
+      vim.o.columns = saved_columns
+
+      -- A 64 KB single line (merged `:!cmd` output) must not freeze the popup.
+      local huge = ("abcdefg "):rep(8192)
+      local t0 = vim.uv.hrtime()
+      local huge_rows = recent.wrap_line(huge, 88)
+      local huge_ms = (vim.uv.hrtime() - t0) / 1e6
+      ok(huge_ms < 300, ("wrapping 64 KB takes %.0f ms"):format(huge_ms))
+      local huge_body = {}
+      for i, row in ipairs(huge_rows) do
+        if strw(row) > 88 then
+          ok(false, ("64 KB row %d is %d cells"):format(i, strw(row)))
+        end
+        huge_body[i] = vim.trim(row)
+      end
+      eq(table.concat(huge_body, " "), vim.trim(huge), "64 KB: nothing lost")
 
       -- The popup entry follows its store entry: a `:!cmd` entry that grows in place
       -- shows the new text on the next redraw; time and level pass through.
