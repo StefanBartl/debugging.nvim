@@ -441,7 +441,7 @@ return function(H)
             surf = { winid = winid, bufnr = bufnr },
             append = function(_, list)
               for _, e in ipairs(list) do
-                appended[#appended + 1] = e.content
+                appended[#appended + 1] = e.raw.content
               end
             end,
             on_close = function() end,
@@ -460,6 +460,153 @@ return function(H)
       eq(appended[#appended], "live", "afterwards the feed is live")
 
       pcall(vim.api.nvim_win_close, winid, true)
+      fake_messages.snapshot = orig_snapshot
+      package.loaded["ui.kit"] = nil
+    end
+
+    -- ================================== entry header, tag and wrapped body
+    -- A message wider than the float used to be one line the popup could neither show
+    -- in full nor unfold. Each entry is now a header line (tag + title cut to fit) with
+    -- the full text wrapped below it, which the kit folds with <CR>.
+    do
+      local recent = require("debugging.views.recent")
+      local strw = vim.fn.strdisplaywidth
+
+      eq(
+        recent.entry_tag({
+          level = vim.log.levels.ERROR,
+          kind = "emsg",
+          content = "E492: Not an editor command: foo",
+        }),
+        "ERROR E492 emsg",
+        "tag: level, Vim error code and kind"
+      )
+      eq(
+        recent.entry_tag({ level = vim.log.levels.INFO, kind = "notify", content = "plain" }),
+        "",
+        "tag: an INFO notify has nothing to say"
+      )
+      eq(
+        recent.entry_tag({ level = vim.log.levels.WARN, source = "[my.mod]", content = "x" }),
+        "WARN my.mod",
+        "tag: the source, without brackets"
+      )
+      eq(
+        recent.entry_tag({
+          level = vim.log.levels.INFO,
+          source = "[my.mod]",
+          content = "[my.mod] x",
+        }),
+        "",
+        "tag: a source the text already starts with is not repeated"
+      )
+
+      eq(
+        recent.format_content({ level = vim.log.levels.INFO, content = "short" }, 80),
+        "short",
+        "a short one-line message stays one line"
+      )
+
+      local words = {}
+      for i = 1, 60 do
+        words[i] = "word" .. i
+      end
+      local long = table.concat(words, " ")
+      local width = 60
+      local shown = vim.split(
+        recent.format_content({ level = vim.log.levels.ERROR, content = long }, width),
+        "\n",
+        { plain = true }
+      )
+      ok(#shown > 2, "a long one-line message gets a body to unfold")
+      ok(shown[1]:find("^%[ERROR%] word1 ") ~= nil, "header: tag, then the title")
+      ok(shown[1]:find("…$") ~= nil, "header: a cut title ends in an ellipsis")
+      ok(strw(shown[1]) <= width, "header fits the width")
+      local body = {}
+      for i = 2, #shown do
+        ok(strw(shown[i]) <= width, ("body row %d fits the width"):format(i))
+        body[#body + 1] = vim.trim(shown[i])
+      end
+      eq(table.concat(body, " "), long, "the body is the full text, nothing lost")
+
+      local multi = vim.split(
+        recent.format_content(
+          { level = vim.log.levels.INFO, content = "head\nline 2\r\nline 3\n" },
+          60
+        ),
+        "\n",
+        { plain = true }
+      )
+      eq(
+        table.concat(multi, "|"),
+        "head|line 2|line 3",
+        "multi-line: a short title is not repeated"
+      )
+
+      local hard = recent.wrap_line(("x"):rep(25), 10)
+      eq(#hard, 3, "a word longer than a row is cut hard")
+      eq(hard[2], "  " .. ("x"):rep(8), "continuation rows are indented")
+      local wide = recent.wrap_line(("äöü "):rep(10), 12)
+      for _, row in ipairs(wide) do
+        ok(strw(row) <= 12, "multibyte rows fit the width")
+      end
+
+      -- The popup entry follows its store entry: a `:!cmd` entry that grows in place
+      -- shows the new text on the next redraw; time and level pass through.
+      local raw = { time_ms = 42, level = vim.log.levels.INFO, content = "one" }
+      local shown_entry = recent.display_entry(raw)
+      eq(shown_entry.content, "one", "display entry: formatted content")
+      eq(shown_entry.time_ms, 42, "display entry: time passes through")
+      eq(shown_entry.raw, raw, "display entry: the store entry is reachable")
+      raw.content = "one\ntwo"
+      eq(shown_entry.content, "one\ntwo", "display entry: in-place growth is picked up")
+
+      local now = vim.uv.hrtime() / 1e6
+      local label = recent.format_time({ time_ms = now - 5000 }, now)
+      ok(label:find("^%d%d:%d%d:%d%d 5s ago$") ~= nil, "time: wall clock plus age, got " .. label)
+
+      -- Wired into the popup: entries formatted, wall-clock times, folded by default.
+      vim.cmd("only")
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local winid = vim.api.nvim_open_win(bufnr, false, {
+        relative = "editor",
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 3,
+      })
+      local fake_messages = package.loaded["lib.nvim.messages"]
+      local orig_snapshot = fake_messages.snapshot
+      fake_messages.snapshot = function(opts)
+        return opts.until_ms and {}
+          or { { time_ms = now, level = vim.log.levels.ERROR, content = long } }
+      end
+      local orig_cfg = package.loaded["debugging.views"].get_recent_config
+      package.loaded["debugging.views"].get_recent_config = function()
+        return { window_s = 10, min_entries = 0, wrap_width = 50 }
+      end
+      local open_opts
+      package.loaded["ui.kit"] = {
+        message_log = function(opts)
+          open_opts = opts
+          return {
+            surf = { winid = winid, bufnr = bufnr },
+            append = function() end,
+            on_close = function() end,
+          }
+        end,
+      }
+      recent.show("all")
+      eq(open_opts.collapsed_default, true, "folded by default")
+      eq(open_opts.format_entry_time, recent.format_time, "wall-clock time labels")
+      local rows = vim.split(open_opts.entries[1].content, "\n", { plain = true })
+      ok(#rows > 2, "the long entry reaches the kit as a header plus a body")
+      for _, row in ipairs(rows) do
+        ok(strw(row) <= 50, "every row fits views.recent.wrap_width")
+      end
+
+      pcall(vim.api.nvim_win_close, winid, true)
+      package.loaded["debugging.views"].get_recent_config = orig_cfg
       fake_messages.snapshot = orig_snapshot
       package.loaded["ui.kit"] = nil
     end

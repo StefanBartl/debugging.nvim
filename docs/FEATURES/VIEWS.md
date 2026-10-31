@@ -30,8 +30,10 @@ How it renders depends on [ui.nvim]:
 
 - **With ui.nvim** (`ui.kit.message_log`): live and paginated. New messages
   that match the filter are appended while the popup is open, older history
-  loads one `window_s` page at a time (quiet stretches are skipped), entries
-  fold to their first line. The keys inside the popup are listed in
+  loads one `window_s` page at a time (quiet stretches are skipped). Each
+  message is folded to one header line -- wall-clock time and age, a tag
+  (level, Vim error code like `E492`, kind, source) and the title cut to fit;
+  `<CR>` unfolds the full text, wrapped to `views.recent.wrap_width`. The keys inside the popup are listed in
   [configuration.md](../configuration.md#keys-inside-the-popup) and under `?`.
 - **Without ui.nvim**: a static snapshot in a `lib.nvim.output.viewer`
   window, one notification says so. Multi-line entries (error texts, stack
@@ -50,7 +52,7 @@ section.
   (`messages_show`, `noice_all`, `noice_errors`, `windows_clear`),
   `views/display.lua` (`clear_all`)
 - **Config:** `opts.features.views`, `opts.views.recent` (`window_s`,
-  `min_entries`, `order`, `collapsed_default`) — see
+  `min_entries`, `order`, `collapsed_default`, `wrap_width`) — see
   [configuration.md](../configuration.md#recent-messages-popup)
 - **Usercmds:** `:Debug messages show|clear`, `:Debug noice all|errors` — see
   [BINDINGS.md](../BINDINGS.md#user-commands)

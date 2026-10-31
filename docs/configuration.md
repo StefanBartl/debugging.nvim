@@ -53,7 +53,8 @@ require("debugging").setup({
     capture  = true,
     output_dir = nil,  -- default: stdpath("config")/docs/debug_views
     recent   = {       -- the <lt>m / <lt>n / <lt>e popup, see "Recent-messages popup" below
-      window_s = 10, min_entries = 5, order = "newest_last", collapsed_default = false,
+      window_s = 10, min_entries = 5, order = "newest_last", collapsed_default = true,
+      wrap_width = nil,
     },
   },
   command = "Debug",   -- name of the single unified command
@@ -114,7 +115,8 @@ require("debugging").setup({
       window_s = 10,            -- seconds of history shown on open; <C-j> / + adds that much older history (quiet stretches are skipped)
       min_entries = 5,          -- but never fewer than the newest N on open, however old (0 = strictly window_s)
       order = "newest_last",    -- or "newest_first"
-      collapsed_default = false, -- start in first-line-only mode
+      collapsed_default = true, -- every message folded to its header line; <CR> unfolds it
+      wrap_width = nil,         -- text width of an unfolded message (default: min(100, columns - 12), at least 30)
     },
   },
 })
@@ -145,15 +147,21 @@ Press `?` in the popup for this list as a cheatsheet (it opens over the popup,
 
 | Key | Does |
 | --- | --- |
-| `<CR>`, `<Tab>`, `za` | expand / collapse the entry under the cursor (`▸` folded, `▾` open) |
+| `<CR>`, `<Tab>`, `za` | expand / collapse the entry under the cursor (`▸` folded, `▾` open): the full message, wrapped to `wrap_width` |
 | `zo` / `zc` | expand / collapse the entry under the cursor |
 | `<C-l>`, `zR` | expand all entries |
 | `<C-h>`, `<BS>`, `zM` | collapse all entries (first line only) |
 | `<C-e>` | flip between all expanded / all collapsed |
 | `<C-j>`, `+` | load older history (another `window_s` seconds; skips quiet stretches) |
-| `<C-k>`, `-` | load newer entries |
+| `<C-k>`, `-` | load newer entries (does not yet drop loaded older history again) |
 | `?`, `g?` | cheatsheet |
 | `q`, `<Esc>` | close |
+
+Folded, a message is one header line: wall-clock time and age, a tag (level
+WARN/ERROR, the Vim error code such as `E492`, the message kind such as
+`lua_error` or `shell_err`, the `lib.nvim.notify` source) and the title (its
+first line, cut to fit). A message the header holds completely has nothing to
+unfold.
 
 The cursor stays on the entry you are reading when entries are expanded or
 older ones are loaded; a cursor on the newest entry follows the live feed.

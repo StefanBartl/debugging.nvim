@@ -2,7 +2,9 @@
 --- Thin dispatcher behind `<m`/`<n`/`<e` (messages/all/errors): pulls data
 --- from `lib.nvim.messages`, renders it via `ui.kit.message_log` (a live,
 --- paginated, collapsible popup) when ui.nvim is installed, falls back to a
---- static `lib.nvim.output.viewer` dump otherwise. Owns no window-tracking
+--- static `lib.nvim.output.viewer` dump otherwise. Each store entry reaches the
+--- popup as a header line (time, tag, title) over its full text wrapped to
+--- `views.recent.wrap_width`, which the popup folds. Owns no window-tracking
 --- of its own beyond `lib.nvim.window.tag` -- the same primitive
 --- `debugging.views.display` uses to find and close these windows.
 
@@ -75,6 +77,200 @@ local function fallback_lines(entry)
   return out
 end
 
+-- `kind`s that say nothing beyond "a message": left out of the tag.
+local PLAIN_KINDS = { [""] = true, notify = true, echo = true, echomsg = true, echoerr = true }
+
+local LEVEL_NAME = {
+  [vim.log.levels.WARN] = "WARN",
+  [vim.log.levels.ERROR] = "ERROR",
+}
+
+-- Cells the kit draws in front of an entry's first line: fold mark, "[HH:MM:SS Ns ago] ".
+local HEADER_PREFIX_W = 24
+
+---@internal
+---Text width the popup wraps message bodies to.
+---@return integer
+local function wrap_width()
+  local cfg = require("debugging.views").get_recent_config()
+  local w = tonumber(cfg.wrap_width) or math.min(100, vim.o.columns - 12)
+  return math.max(30, math.floor(w))
+end
+
+---@internal
+---The lines of a message as they are shown: CRLF split, a lone CR (a progress line redrawing
+---itself) keeps only what follows it, trailing empty lines dropped.
+---@param text string
+---@return string[]
+local function text_lines(text)
+  local lines = vim.split(text, "\n", { plain = true })
+  for i, line in ipairs(lines) do
+    if line:find("\r", 1, true) then
+      lines[i] = line:gsub("\r+$", ""):match("[^\r]*$")
+    end
+  end
+  while #lines > 1 and lines[#lines] == "" do
+    lines[#lines] = nil
+  end
+  return lines
+end
+
+---@internal
+---First `width` display cells of `s` (character-safe).
+---@param s string
+---@param width integer
+---@return string
+local function take_cells(s, width)
+  local nchars = vim.fn.strchars(s)
+  local lo, hi = 0, nchars
+  while lo < hi do
+    local mid = math.ceil((lo + hi) / 2)
+    if vim.fn.strdisplaywidth(vim.fn.strcharpart(s, 0, mid)) <= width then
+      lo = mid
+    else
+      hi = mid - 1
+    end
+  end
+  return vim.fn.strcharpart(s, 0, math.max(1, lo))
+end
+
+---Word-wrap one line to `width` display cells; words longer than a line are cut hard.
+---Continuation rows are indented by two spaces so they read apart from real line breaks.
+---@param line string
+---@param width integer
+---@return string[]
+function M.wrap_line(line, width)
+  local out = {}
+  local indent = ""
+  local rest = line
+  while vim.fn.strdisplaywidth(indent .. rest) > width do
+    local avail = width - #indent
+    local head = take_cells(rest, avail)
+    -- Break at the last blank inside the row, if there is one past its first quarter.
+    local cut = head:match("^.*()%s")
+    if cut and cut > math.floor(#head / 4) and cut <= #head then
+      head = rest:sub(1, cut - 1)
+    end
+    out[#out + 1] = indent .. head:gsub("%s+$", "")
+    rest = rest:sub(#head + 1):gsub("^%s+", "")
+    indent = "  "
+    if rest == "" then
+      return out
+    end
+  end
+  out[#out + 1] = indent .. rest:gsub("%s+$", "")
+  return out
+end
+
+---The tag of a message: level (WARN/ERROR), Vim error code (`E492`), kind and source.
+---@param entry table  # a `lib.nvim.messages` entry
+---@return string  # "" when there is nothing to say
+function M.entry_tag(entry)
+  local parts = {}
+  local level = LEVEL_NAME[entry.level]
+  if level then
+    parts[#parts + 1] = level
+  end
+  local text = tostring(entry.content or "")
+  local code = text:match("%f[%w](E%d+):")
+  if code then
+    parts[#parts + 1] = code
+  end
+  local kind = entry.kind
+  if type(kind) == "string" and not PLAIN_KINDS[kind] then
+    parts[#parts + 1] = kind
+  end
+  local source = type(entry.source) == "string" and vim.trim(entry.source) or ""
+  -- A notify prefix the text already starts with would only be said twice.
+  if source ~= "" and text:sub(1, #source) ~= source then
+    parts[#parts + 1] = (source:gsub("^%[(.*)%]$", "%1"))
+  end
+  return table.concat(parts, " ")
+end
+
+---What the popup shows for one message: a header line (tag + title, the title cut to fit the
+---window) and, when the header does not hold the whole message, the full text wrapped to
+---`width` below it -- the part `<CR>` folds and unfolds. Short one-line messages stay one line.
+---@param entry table  # a `lib.nvim.messages` entry
+---@param width integer
+---@return string
+function M.format_content(entry, width)
+  local lines = text_lines(tostring(entry.content or ""):gsub("%z", "\u{FFFD}"))
+  local first_idx = 1
+  while first_idx < #lines and vim.trim(lines[first_idx]) == "" do
+    first_idx = first_idx + 1
+  end
+  local title = vim.trim(lines[first_idx] or "")
+  local tag = M.entry_tag(entry)
+  local prefix = tag ~= "" and ("[" .. tag .. "] ") or ""
+  local title_w = math.max(10, width - HEADER_PREFIX_W - vim.fn.strdisplaywidth(prefix))
+  local cut = vim.fn.strdisplaywidth(title) > title_w
+  if cut then
+    title = take_cells(title, title_w - 1) .. "…"
+  end
+  local header = prefix .. title
+
+  local body_from = cut and first_idx or first_idx + 1
+  if body_from > #lines then
+    return header
+  end
+  local out = { header }
+  for i = body_from, #lines do
+    vim.list_extend(out, M.wrap_line(lines[i], width))
+  end
+  return table.concat(out, "\n")
+end
+
+---Wall-clock time of an entry ("HH:MM:SS Ns ago"); `time_ms` is the monotonic
+---`vim.uv.hrtime()` clock of `lib.nvim.messages`, `now_ms` the same clock.
+---@param entry table
+---@param now_ms number
+---@return string
+function M.format_time(entry, now_ms)
+  local time_ms = entry.time_ms or now_ms
+  local sec, usec = vim.uv.gettimeofday()
+  local wall_now_ms = sec * 1000 + usec / 1000
+  local wall_s = math.floor((wall_now_ms - (now_ms - time_ms)) / 1000)
+  local age_s = math.max(0, math.floor((now_ms - time_ms) / 1000))
+  local age = age_s < 60 and ("%ds"):format(age_s)
+    or age_s < 3600 and ("%dm"):format(math.floor(age_s / 60))
+    or ("%dh"):format(math.floor(age_s / 3600))
+  return ("%s %s ago"):format(os.date("%H:%M:%S", wall_s), age)
+end
+
+---A popup entry for a store entry: `content` is formatted on read (cached while text and
+---width stay the same), everything else is the store entry's own -- a `:!cmd` entry that
+---grows in place after it was shown shows the new output on the next redraw.
+---@param raw table  # a `lib.nvim.messages` entry
+---@return table
+function M.display_entry(raw)
+  local src, w, out
+  return setmetatable({ raw = raw }, {
+    __index = function(_, key)
+      if key ~= "content" then
+        return raw[key]
+      end
+      local width = wrap_width()
+      if raw.content ~= src or width ~= w then
+        src, w = raw.content, width
+        out = M.format_content(raw, width)
+      end
+      return out
+    end,
+  })
+end
+
+---@internal
+---@param list table[]
+---@return table[]
+local function display_entries(list)
+  local out = {}
+  for i, raw in ipairs(list) do
+    out[i] = M.display_entry(raw)
+  end
+  return out
+end
+
 ---Open (or focus, if already open) the recent-messages popup for `filter`.
 ---@param filter "all"|"non_error"|"error"
 ---@return nil
@@ -111,7 +307,7 @@ function M.show(filter)
         return
       end
       if handle then
-        handle:append({ entry })
+        handle:append({ M.display_entry(entry) })
       else
         pending[#pending + 1] = entry
       end
@@ -162,9 +358,10 @@ function M.show(filter)
 
   handle = kit.message_log({
     title = FILTER_TITLE[filter],
-    entries = entries,
+    entries = display_entries(entries),
+    format_entry_time = M.format_time,
     order = cfg.order or "newest_last",
-    collapsed_default = cfg.collapsed_default == true,
+    collapsed_default = cfg.collapsed_default ~= false,
     -- No "more above" hint when the ring holds nothing older to begin with.
     has_more_older = #older_than_loaded() > 0,
     load_more = function(direction)
@@ -190,7 +387,7 @@ function M.show(filter)
         levels = levels,
       })
       loaded_since_ms = new_since
-      return older
+      return display_entries(older)
     end,
   })
   if not handle then
@@ -216,7 +413,7 @@ function M.show(filter)
   end
   pending = {}
   if #late > 0 then
-    handle:append(late)
+    handle:append(display_entries(late))
   end
 end
 

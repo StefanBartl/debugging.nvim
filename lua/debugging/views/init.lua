@@ -20,7 +20,7 @@ local DEFAULT_RECENT = {
   window_s = 10,
   min_entries = 5,
   order = "newest_last",
-  collapsed_default = false,
+  collapsed_default = true,
 }
 
 ---@type Dbg.Views.Keymaps

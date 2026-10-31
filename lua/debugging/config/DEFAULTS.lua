@@ -81,7 +81,8 @@ local DEFAULTS = {
       window_s = 10, -- seconds of history shown on open; <C-j> / + adds that much older history
       min_entries = 5, -- ...but never fewer than this many entries on open, however old (0 = strictly window_s)
       order = "newest_last", -- or "newest_first"
-      collapsed_default = false,
+      collapsed_default = true, -- one header line per message; <CR> unfolds the full, wrapped text
+      wrap_width = nil, -- text width of an unfolded message (default: min(100, columns - 12))
     },
   },
 
