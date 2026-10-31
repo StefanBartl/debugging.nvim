@@ -89,6 +89,17 @@ local LEVEL_NAME = {
 local HEADER_PREFIX_W = 24
 
 ---@internal
+---Cells of the "  … (+N more lines)" marker the kit appends to a folded entry with `n` hidden lines.
+---@param n integer
+---@return integer
+local function suffix_width(n)
+  if n == 0 then
+    return 0
+  end
+  return vim.fn.strdisplaywidth(("  … (+%d more line%s)"):format(n, n == 1 and "" or "s"))
+end
+
+---@internal
 ---Text width the popup wraps message bodies to.
 ---@return integer
 local function wrap_width()
@@ -142,24 +153,30 @@ end
 function M.wrap_line(line, width)
   local out = {}
   local indent = ""
-  local rest = line
-  while vim.fn.strdisplaywidth(indent .. rest) > width do
-    local avail = width - #indent
-    local head = take_cells(rest, avail)
+  local pos, len = 1, #line
+  while true do
+    local avail = math.max(1, width - #indent)
+    -- Only the next `avail + 1` characters can matter for this row (a character is at least
+    -- one cell, and at most 4 bytes): measuring the whole rest per row made a 64 KB line
+    -- (merged `:!cmd` output) take about a second.
+    local chunk = vim.fn.strcharpart(line:sub(pos, pos + (avail + 1) * 4 - 1), 0, avail + 1)
+    if pos + #chunk > len and vim.fn.strdisplaywidth(chunk) <= avail then
+      out[#out + 1] = indent .. chunk:gsub("%s+$", "")
+      return out
+    end
+    local head = take_cells(chunk, avail)
     -- Break at the last blank inside the row, if there is one past its first quarter.
     local cut = head:match("^.*()%s")
     if cut and cut > math.floor(#head / 4) and cut <= #head then
-      head = rest:sub(1, cut - 1)
+      head = head:sub(1, cut - 1)
     end
     out[#out + 1] = indent .. head:gsub("%s+$", "")
-    rest = rest:sub(#head + 1):gsub("^%s+", "")
+    pos = line:find("%S", pos + #head) or len + 1
     indent = "  "
-    if rest == "" then
+    if pos > len then
       return out
     end
   end
-  out[#out + 1] = indent .. rest:gsub("%s+$", "")
-  return out
 end
 
 ---The tag of a message: level (WARN/ERROR), Vim error code (`E492`), kind and source.
@@ -181,9 +198,12 @@ function M.entry_tag(entry)
     parts[#parts + 1] = kind
   end
   local source = type(entry.source) == "string" and vim.trim(entry.source) or ""
-  -- A notify prefix the text already starts with would only be said twice.
-  if source ~= "" and text:sub(1, #source) ~= source then
-    parts[#parts + 1] = (source:gsub("^%[(.*)%]$", "%1"))
+  local name = (source:gsub("^%[(.*)%]$", "%1"))
+  -- A notify prefix the text already starts with would only be said twice; `lib.nvim.notify`
+  -- passes the bare name as source and puts "[name]" in front of the text.
+  local bracketed = "[" .. name .. "]"
+  if name ~= "" and text:sub(1, #name) ~= name and text:sub(1, #bracketed) ~= bracketed then
+    parts[#parts + 1] = name
   end
   return table.concat(parts, " ")
 end
@@ -203,21 +223,26 @@ function M.format_content(entry, width)
   local title = vim.trim(lines[first_idx] or "")
   local tag = M.entry_tag(entry)
   local prefix = tag ~= "" and ("[" .. tag .. "] ") or ""
-  local title_w = math.max(10, width - HEADER_PREFIX_W - vim.fn.strdisplaywidth(prefix))
-  local cut = vim.fn.strdisplaywidth(title) > title_w
-  if cut then
-    title = take_cells(title, title_w - 1) .. "…"
-  end
-  local header = prefix .. title
+  -- The header row must fit the window the kit can open (at most `columns - 4`), not only the
+  -- wrap width, or it wraps onto a second screen line and pushes the last entry out of view.
+  local room = math.min(width, vim.o.columns - 4) - HEADER_PREFIX_W - vim.fn.strdisplaywidth(prefix)
 
-  local body_from = cut and first_idx or first_idx + 1
-  if body_from > #lines then
-    return header
+  local rest = {}
+  for i = first_idx + 1, #lines do
+    vim.list_extend(rest, M.wrap_line(lines[i], width))
   end
-  local out = { header }
-  for i = body_from, #lines do
-    vim.list_extend(out, M.wrap_line(lines[i], width))
+  local title_w = vim.fn.strdisplaywidth(title)
+  local cut = title_w > room - suffix_width(#rest)
+  local body = rest
+  if cut then
+    body = M.wrap_line(lines[first_idx], width)
+    vim.list_extend(body, rest)
+    -- A character is at least one cell: the first `room` characters are enough to cut from.
+    local keep = math.max(9, room - suffix_width(#body)) - 1
+    title = take_cells(vim.fn.strcharpart(title, 0, keep + 1), keep) .. "…"
   end
+  local out = { prefix .. title }
+  vim.list_extend(out, body)
   return table.concat(out, "\n")
 end
 
