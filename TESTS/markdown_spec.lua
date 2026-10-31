@@ -167,6 +167,29 @@ return function(H)
     H.ok(not no_log_ok, "open_log: fails cleanly when gather() has not run")
     H.match(no_log_err or "", "run gather%(%) first", "open_log: explains why it failed")
     inline_debug.out_path = prior_out_path
+
+    -- collect_lsp_info lists EVERY client (the log would rather show one too many) and flags the
+    -- ones attached to the buffer from `get_clients({ bufnr })` -- the former `or true` made a
+    -- computed relevance guess dead code; a capability like textDocumentSync is no attachment.
+    local collect_lsp = inline_debug._internal.collect_lsp_info
+    local orig_get_clients = vim.lsp.get_clients
+    local all = {
+      { id = 1, name = "attached_ls", server_capabilities = {} },
+      { id = 2, name = "other_ls", server_capabilities = { textDocumentSync = 1 } },
+    }
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.lsp.get_clients = function(filter)
+      if filter and filter.bufnr == 42 then
+        return { all[1], { name = "no_id_ls" } }
+      end
+      return all
+    end
+    local ok_lsp, lsp_info = pcall(collect_lsp, 42)
+    vim.lsp.get_clients = orig_get_clients
+    H.ok(ok_lsp, "collect_lsp_info: does not throw -- got: " .. tostring(lsp_info))
+    H.eq(#lsp_info.clients, 2, "collect_lsp_info: every client is listed, attached or not")
+    H.eq(lsp_info.clients[1].attached, true, "collect_lsp_info: attached client flagged")
+    H.eq(lsp_info.clients[2].attached, false, "collect_lsp_info: capabilities are no attachment")
   end)
 
   vim.notify = orig_notify

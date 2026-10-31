@@ -193,10 +193,16 @@ function M.check()
     })
   end
 
-  if pcall(require, "nvim-treesitter") then
-    vim.health.ok("nvim-treesitter present (optional; diagnostics use core vim.treesitter)")
+  -- Not `pcall(require, "nvim-treesitter")`: :checkhealth must not load a plugin as a side effect.
+  -- The plugin itself never requires it either (diagnostics use core vim.treesitter); its only
+  -- remaining role is the indentexpr the indent helpers hand over to.
+  local ts_note = "(optional; only its indentexpr is used, diagnostics use core vim.treesitter)"
+  if package.loaded["nvim-treesitter"] ~= nil then
+    vim.health.ok("nvim-treesitter loaded " .. ts_note)
+  elseif vim.api.nvim_get_runtime_file("lua/nvim-treesitter/init.lua", false)[1] then
+    vim.health.ok("nvim-treesitter installed, not loaded yet " .. ts_note)
   else
-    vim.health.info("nvim-treesitter not installed (optional; diagnostics use core vim.treesitter)")
+    vim.health.info("nvim-treesitter not installed " .. ts_note)
   end
 
   -- Not `pcall(require, "noice")`: loading noice here (without its setup) would make the "recent popup"

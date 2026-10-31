@@ -7,8 +7,9 @@
 --
 -- Scenarios 1 and 2 pin two real crashes found in a 2026-09-18 re-audit; scenarios 3 to 12 pin the
 -- "recent popup" section (its requirements, the logger attach state and its cause, and which
--- entries the section holds); 13 to 15 the externals noice line. Every popup run also checks that
--- no info() entry carries an advice argument (Neovim's info() drops it).
+-- entries the section holds); 13 to 15 the externals noice line; 16 to 18 the nvim-treesitter line.
+-- Every popup run also checks that no info() entry carries an advice argument (Neovim's info()
+-- drops it).
 
 ---Run `body` with `vim.health.{start,ok,warn,error,info}` captured into a
 ---list instead of printed, and `require` swapped for `stub_require` for the
@@ -444,6 +445,64 @@ return function(H)
       find(seen, "info", "noice not installed: views capture falls back to :messages"),
       "noice: missing -> info about the :messages fallback"
     )
+  end)
+
+  -- 16..18: the externals nvim-treesitter line. Probed WITHOUT `require("nvim-treesitter")`:
+  -- :checkhealth must not load it; the message names its one remaining use (indentexpr).
+  ---@param loaded any `package.loaded["nvim-treesitter"]` for the run
+  ---@param on_rtp boolean whether `lua/nvim-treesitter/init.lua` is found on the runtimepath
+  ---@param body fun(seen: {level: string, msg: string, advice: any}[], required: boolean)
+  local function with_ts(loaded, on_rtp, body)
+    local mod = "nvim-treesitter"
+    local orig_loaded, orig_preload = package.loaded[mod], package.preload[mod]
+    local orig_rtf = vim.api.nvim_get_runtime_file
+    local required = false
+    package.loaded[mod] = loaded
+    package.preload[mod] = function()
+      required = true
+      return {}
+    end
+    vim.api.nvim_get_runtime_file = function(name, all)
+      if name == "lua/nvim-treesitter/init.lua" then
+        return on_rtp and { "/fake/lua/nvim-treesitter/init.lua" } or {}
+      end
+      return orig_rtf(name, all)
+    end
+    local ok, err = pcall(with_popup_stubs, nil, attached_noice, function(seen)
+      body(seen, required)
+    end)
+    vim.api.nvim_get_runtime_file = orig_rtf
+    package.loaded[mod] = orig_loaded
+    package.preload[mod] = orig_preload
+    if not ok then
+      error(err, 0)
+    end
+  end
+
+  -- 16: already loaded (by the user's config): ok, names the indentexpr.
+  with_ts({}, false, function(seen, required)
+    H.ok(find(seen, "ok", "nvim-treesitter loaded"), "nvim-treesitter: loaded -> ok")
+    H.ok(find(seen, "ok", "only its indentexpr is used"), "nvim-treesitter: names indentexpr")
+    H.ok(not required, "nvim-treesitter: loaded -> not required again")
+  end)
+
+  -- 17: installed but not loaded: reported, and the check does not load it.
+  with_ts(nil, true, function(seen, required)
+    H.ok(
+      find(seen, "ok", "nvim-treesitter installed, not loaded yet"),
+      "nvim-treesitter: on the rtp -> ok, not loaded"
+    )
+    H.ok(not required, "nvim-treesitter: the health check must not require() it")
+    H.eq(package.loaded["nvim-treesitter"], nil, "nvim-treesitter: still unloaded after the check")
+  end)
+
+  -- 18: not installed: optional info, still without trying to require it.
+  with_ts(nil, false, function(seen, required)
+    H.ok(
+      find(seen, "info", "nvim-treesitter not installed (optional; only its indentexpr"),
+      "nvim-treesitter: missing -> info naming the indentexpr"
+    )
+    H.ok(not required, "nvim-treesitter: missing -> no require() attempt either")
   end)
 
   package.loaded["debugging.health"] = nil

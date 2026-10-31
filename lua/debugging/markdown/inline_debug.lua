@@ -187,11 +187,12 @@ end
 --------------------------------------------------------------------------------
 -- collect_lsp_info
 --------------------------------------------------------------------------------
---- Collect LSP clients attached to the buffer.
---- Uses only non-deprecated APIs where possible. If `vim.lsp.get_clients` exists it
---- enumerates them and does a best-effort filter for clients likely relevant to the
---- given buffer. If the modern API is not present, returns an empty table rather
---- than calling deprecated functions.
+--- Collect every LSP client, each flagged with whether it is attached to `bufnr`.
+--- Deliberately unfiltered: a debug log is better off showing a client too many than
+--- missing the one that misbehaves; `attached` says which ones actually serve the
+--- buffer (from `vim.lsp.get_clients({ bufnr = bufnr })`, not from a capability guess).
+--- Without the modern `vim.lsp.get_clients` API it returns an empty list rather than
+--- calling deprecated functions.
 ---@internal
 ---@param bufnr number
 ---@return table info  -- table with `.clients` array or `.error` on failure
@@ -203,60 +204,36 @@ local function collect_lsp_info(bufnr)
     return result
   end
 
-  local ok, clients_or_err = pcall(function()
-    return vim.lsp.get_clients()
-  end)
+  local ok, clients_or_err = pcall(vim.lsp.get_clients)
   if not ok then
     result.error = tostring(clients_or_err)
     return result
   end
 
-  local filtered = {}
-  for _, c in ipairs(clients_or_err) do
-    -- Best-effort heuristics to decide whether client is relevant to this buffer:
-    -- 1) If client explicitly exposes attached_buffers (some LSP wrappers do), prefer that.
-    -- 2) If client supports 'textDocument' capabilities, assume it's relevant.
-    -- 3) Otherwise include the client so the user can inspect it — safer than dropping it.
-    local considered_relevant = false
-
-    if c.attached_buffers and type(c.attached_buffers) == "table" then
-      for _, b in ipairs(c.attached_buffers) do
-        if b == bufnr then
-          considered_relevant = true
-          break
-        end
+  local attached_ids = {}
+  local ok_buf, buf_clients = pcall(vim.lsp.get_clients, { bufnr = bufnr })
+  if ok_buf and type(buf_clients) == "table" then
+    for _, c in ipairs(buf_clients) do
+      if c.id ~= nil then
+        attached_ids[c.id] = true
       end
-    end
-
-    -- If not explicitly attached, check server_capabilities as a loose signal
-    if
-      not considered_relevant
-      and c.server_capabilities
-      and type(c.server_capabilities) == "table"
-    then
-      -- presence of textDocumentSync or completionProvider are normal signs of a document LSP
-      if c.server_capabilities.textDocumentSync or c.server_capabilities.completionProvider then
-        considered_relevant = true
-      end
-    end
-
-    --- CDX: `or true` makes this unconditional -- `considered_relevant` above
-    --- is computed but never actually used to filter. Intentional ("always
-    --- include, better to show extra clients than miss one") or leftover from
-    --- a stricter filter that was disabled? Verify before tightening.
-    if considered_relevant or true then
-      table.insert(filtered, {
-        name = c.name,
-        id = c.id or "<no-id>",
-        -- attached_buffers may not be present; show what is available
-        attached_buffers = c.attached_buffers or "<unknown>",
-        workspace_folders = c.workspace_folders and vim.inspect(c.workspace_folders) or nil,
-        server_capabilities = c.server_capabilities and vim.inspect(c.server_capabilities) or nil,
-      })
     end
   end
 
-  result.clients = filtered
+  local clients = {}
+  for _, c in ipairs(clients_or_err) do
+    table.insert(clients, {
+      name = c.name,
+      id = c.id or "<no-id>",
+      attached = attached_ids[c.id] == true,
+      -- attached_buffers may not be present; show what is available
+      attached_buffers = c.attached_buffers or "<unknown>",
+      workspace_folders = c.workspace_folders and vim.inspect(c.workspace_folders) or nil,
+      server_capabilities = c.server_capabilities and vim.inspect(c.server_capabilities) or nil,
+    })
+  end
+
+  result.clients = clients
   return result
 end
 ---@internal
@@ -472,6 +449,7 @@ end
 --- Not part of the public API; may change shape without notice.
 M._internal = {
   collect_treesitter_info = collect_treesitter_info,
+  collect_lsp_info = collect_lsp_info,
 }
 
 return M
